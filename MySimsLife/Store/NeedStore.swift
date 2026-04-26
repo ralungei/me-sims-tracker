@@ -304,40 +304,57 @@ final class NeedStore {
         return Array(alerts.prefix(3))
     }
 
+    /// Below this, a need is "low" and earns top-up suggestions.
+    private static let lowNeedThreshold = 0.65
+    /// At/above this, a need is "satisfied" — skip its actions to avoid noise.
+    private static let highNeedThreshold = 0.85
+    private static let topUpPerNeed = 2
+
     var smartSuggestions: [QuickAction] {
         let hour = Calendar.current.component(.hour, from: Date())
-        var suggestions: [QuickAction] = []
+        var candidates: [QuickAction] = []
 
         switch hour {
         case 6...9:
-            suggestions += makeActions(.energy, filter: { $0.contains("Dormí") }, limit: 1)
-            suggestions += makeActions(.nutrition, filter: { $0 == "Desayuno" })
-            suggestions += makeActions(.hydration, filter: { $0 == "Café" || $0 == "Agua" })
+            candidates += makeActions(.energy, filter: { $0.contains("Dormí") }, limit: 1)
+            candidates += makeActions(.nutrition, filter: { $0 == "Desayuno" })
+            candidates += makeActions(.hydration, filter: { $0 == "Café" || $0 == "Agua" })
         case 10...13:
-            suggestions += makeActions(.hydration, filter: { $0 == "Agua" })
-            suggestions += makeActions(.nutrition, filter: { $0 == "Almuerzo" })
-            suggestions += makeActions(.environment, limit: 1)
+            candidates += makeActions(.hydration, filter: { $0 == "Agua" })
+            candidates += makeActions(.nutrition, filter: { $0 == "Almuerzo" })
+            candidates += makeActions(.environment, limit: 1)
         case 14...17:
-            suggestions += makeActions(.hydration, filter: { $0 == "Agua" })
-            suggestions += makeActions(.exercise, limit: 1)
+            candidates += makeActions(.hydration, filter: { $0 == "Agua" })
+            candidates += makeActions(.exercise, limit: 1)
         case 18...21:
-            suggestions += makeActions(.nutrition, filter: { $0 == "Cena" })
-            suggestions += makeActions(.leisure, limit: 1)
-            suggestions += makeActions(.social, limit: 1)
+            candidates += makeActions(.nutrition, filter: { $0 == "Cena" })
+            candidates += makeActions(.leisure, limit: 1)
+            candidates += makeActions(.social, limit: 1)
         default:
-            suggestions += makeActions(.hygiene, filter: { $0 == "Ducha" || $0 == "Lavé dientes" })
-            suggestions += makeActions(.leisure, filter: { $0 == "Medité" || $0 == "Leí" })
+            candidates += makeActions(.hygiene, filter: { $0 == "Ducha" || $0 == "Lavé dientes" })
+            candidates += makeActions(.leisure, filter: { $0 == "Medité" || $0 == "Leí" })
         }
 
         for need in criticalNeeds.prefix(2) {
-            if let top = need.positiveActions.first,
-               !suggestions.contains(where: { $0.name == top.name }) {
-                suggestions.insert(withNeed(top, need), at: 0)
+            if let top = need.positiveActions.first {
+                candidates.insert(withNeed(top, need), at: 0)
             }
         }
 
-        var seen = Set<String>()
-        return suggestions.filter { seen.insert($0.name).inserted }.prefix(5).map { $0 }
+        // Backfill from low needs so the chip row never looks empty after filtering.
+        for need in NeedType.sorted where (needs[need] ?? 0) < Self.lowNeedThreshold {
+            candidates += makeActions(need, limit: Self.topUpPerNeed)
+        }
+
+        let recentKeys: Set<String> = NeedType.allCases.reduce(into: []) { acc, need in
+            for rec in recentActions(for: need) { acc.insert("\(need.rawValue):\(rec.actionName)") }
+        }
+
+        let filtered = candidates
+            .filter { !recentKeys.contains("\($0.needType.rawValue):\($0.name)")
+                      && (needs[$0.needType] ?? 0) < Self.highNeedThreshold }
+            .deduplicated()
+        return Array(filtered.prefix(5))
     }
 
     private func makeActions(_ need: NeedType, filter: ((String) -> Bool)? = nil, limit: Int = 5) -> [QuickAction] {
@@ -494,5 +511,12 @@ final class NeedStore {
             gen.impactOccurred()
         }
         #endif
+    }
+}
+
+private extension Array where Element == QuickAction {
+    func deduplicated() -> [QuickAction] {
+        var seen = Set<String>()
+        return filter { seen.insert("\($0.needType.rawValue):\($0.name)").inserted }
     }
 }

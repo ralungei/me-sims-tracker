@@ -106,9 +106,7 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    static var sorted: [NeedType] {
-        allCases.sorted { $0.sortOrder < $1.sortOrder }
-    }
+    static let sorted: [NeedType] = allCases.sorted { $0.sortOrder < $1.sortOrder }
 
     // MARK: - Quick Actions
 
