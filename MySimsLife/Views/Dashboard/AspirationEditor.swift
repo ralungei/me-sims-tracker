@@ -137,18 +137,18 @@ struct AspirationEditor: View {
 
     private var kindField: some View {
         VStack(spacing: 8) {
-            ForEach([AspirationKind.dailySimple, .dailyTimed, .treatment, .weekly], id: \.self) { k in
+            ForEach(AspirationKind.allCases, id: \.self) { k in
                 Button { kind = k } label: {
                     HStack {
-                        Image(systemName: kindIcon(k))
+                        Image(systemName: k.icon)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(kind == k ? SimsTheme.accentWarm : SimsTheme.textSecondary)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(kindTitle(k))
+                            Text(k.title)
                                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                                 .foregroundStyle(SimsTheme.textPrimary)
-                            Text(kindHint(k))
+                            Text(k.hint)
                                 .font(.system(.caption2, design: .rounded))
                                 .foregroundStyle(SimsTheme.textDim)
                         }
@@ -266,33 +266,6 @@ struct AspirationEditor: View {
     }
 
     // MARK: - Helpers
-
-    private func kindIcon(_ k: AspirationKind) -> String {
-        switch k {
-        case .dailySimple: return "sun.max.fill"
-        case .dailyTimed:  return "timer"
-        case .treatment:   return "leaf.fill"
-        case .weekly:      return "calendar"
-        }
-    }
-
-    private func kindTitle(_ k: AspirationKind) -> String {
-        switch k {
-        case .dailySimple: return "Diario"
-        case .dailyTimed:  return "Diario con sesión"
-        case .treatment:   return "Tratamiento"
-        case .weekly:      return "Semanal"
-        }
-    }
-
-    private func kindHint(_ k: AspirationKind) -> String {
-        switch k {
-        case .dailySimple: return "Una vez al día (ej: creatina)"
-        case .dailyTimed:  return "Diario con duración (ej: meditar 25 min)"
-        case .treatment:   return "Curso finito con progreso (ej: prebióticos 30 días)"
-        case .weekly:      return "Una vez por semana (ej: postear reel)"
-        }
-    }
 
     private func loadIfExisting() {
         guard let asp = existing else { return }

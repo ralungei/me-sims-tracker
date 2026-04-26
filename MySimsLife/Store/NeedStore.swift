@@ -14,6 +14,7 @@ final class NeedStore {
     var lastUpdated: [NeedType: Date] = [:]
     var isAlwaysOnMode = false
     var aspirations: [Aspiration] = []
+    private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
 
     static let recentActionsLimit = 3
 
@@ -44,6 +45,7 @@ final class NeedStore {
         modelContext = context
         ensureSeedData()
         refreshAspirations()
+        refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
     }
@@ -51,6 +53,7 @@ final class NeedStore {
     func onBecomeActive() {
         loadNeedsState()
         refreshAspirations()
+        refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
         if isAlwaysOnMode {
@@ -84,17 +87,14 @@ final class NeedStore {
             )
             context.insert(log)
             try? context.save()
+            refreshRecentActionsCache(for: need)
+
+            let count = (try? context.fetchCount(FetchDescriptor<ActivityLog>())) ?? 0
+            if count % 10 == 0 { recalibrate() }
         }
 
         saveNeedsState()
         triggerHaptic(negative: action.isNegative)
-
-        // Recalibrate periodically (every 10 actions)
-        if let context = modelContext {
-            let descriptor = FetchDescriptor<ActivityLog>()
-            let count = (try? context.fetchCount(descriptor)) ?? 0
-            if count % 10 == 0 { recalibrate() }
-        }
     }
 
     /// Undo the Nth most recent log for this need: subtracts boost and deletes the SwiftData row.
@@ -114,6 +114,7 @@ final class NeedStore {
 
         context.delete(removed)
         try? context.save()
+        refreshRecentActionsCache(for: need)
         saveNeedsState()
     }
 
@@ -123,35 +124,45 @@ final class NeedStore {
         saveNeedsState()
     }
 
-    // MARK: - Recent actions (derived from SwiftData)
+    // MARK: - Recent actions (cached; refreshed on log/undo)
 
-    /// Most recent N actions for a given need, fetched from ActivityLog.
-    func recentActions(for need: NeedType, limit: Int = recentActionsLimit) -> [LastActionRecord] {
-        guard let context = modelContext else { return [] }
-        let needRaw = need.rawValue
-        var descriptor = FetchDescriptor<ActivityLog>(
-            predicate: #Predicate { $0.needType == needRaw },
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
-        descriptor.fetchLimit = limit
-        guard let logs = try? context.fetch(descriptor) else { return [] }
-        return logs.map {
-            LastActionRecord(
-                actionName: $0.actionName,
-                icon: $0.actionIcon,
-                boost: $0.boostAmount,
-                at: $0.timestamp
+    /// Most recent N actions for a given need. O(1) read from cache — no SwiftData fetch per call.
+    func recentActions(for need: NeedType) -> [LastActionRecord] {
+        recentActionsCache[need] ?? []
+    }
+
+    private func refreshRecentActionsCache(for need: NeedType? = nil) {
+        guard let context = modelContext else { return }
+        let needsToRefresh: [NeedType] = need.map { [$0] } ?? NeedType.allCases
+        for n in needsToRefresh {
+            let needRaw = n.rawValue
+            var descriptor = FetchDescriptor<ActivityLog>(
+                predicate: #Predicate { $0.needType == needRaw },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
             )
+            descriptor.fetchLimit = Self.recentActionsLimit
+            let logs = (try? context.fetch(descriptor)) ?? []
+            recentActionsCache[n] = logs.map {
+                LastActionRecord(
+                    actionName: $0.actionName,
+                    icon: $0.actionIcon,
+                    boost: $0.boostAmount,
+                    at: $0.timestamp
+                )
+            }
         }
     }
 
     // MARK: - Calibration
 
+    private static let recalibrationWindow = 1000
+
     private func recalibrate() {
         guard let context = modelContext else { return }
-        let descriptor = FetchDescriptor<ActivityLog>(
+        var descriptor = FetchDescriptor<ActivityLog>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
+        descriptor.fetchLimit = Self.recalibrationWindow
         guard let logs = try? context.fetch(descriptor) else { return }
         calibration.calibrate(from: logs)
     }
@@ -385,10 +396,10 @@ final class NeedStore {
     }
 
     func updateAspiration(_ aspiration: Aspiration) {
+        // Aspiration is a @Model class — caller mutates props directly; we just persist.
         guard let context = modelContext else { return }
         try? context.save()
         refreshAspirations()
-        _ = aspiration
     }
 
     func deleteAspiration(_ aspiration: Aspiration) {
@@ -419,6 +430,7 @@ final class NeedStore {
 
     private func applyDecay() {
         let now = Date()
+        var changed = false
         for need in NeedType.allCases {
             guard let last = lastUpdated[need], let current = needs[need] else { continue }
             let hours = now.timeIntervalSince(last) / 3600.0
@@ -428,9 +440,10 @@ final class NeedStore {
             if abs(newValue - current) > 0.00001 {
                 needs[need] = newValue
                 lastUpdated[need] = now
+                changed = true
             }
         }
-        saveNeedsState()
+        if changed { saveNeedsState() }
     }
 
     // MARK: - Persistence (only the live needs values — small + non-critical)

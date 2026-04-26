@@ -126,7 +126,7 @@ struct QuickActionsOverlay: View {
                 Text(rec.actionName)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white)
-                Text(timeAgoLong(from: rec.at))
+                Text(rec.at.timeAgo(style: .long))
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.white.opacity(0.45))
             }
@@ -154,16 +154,6 @@ struct QuickActionsOverlay: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.04))
         )
-    }
-
-    private func timeAgoLong(from date: Date) -> String {
-        let secs = Int(Date().timeIntervalSince(date))
-        if secs < 60 { return "ahora mismo" }
-        let mins = secs / 60
-        if mins < 60 { return "hace \(mins) min" }
-        let hrs = mins / 60
-        if hrs < 24 { return "hace \(hrs) h" }
-        return "hace \(hrs / 24) d"
     }
 
     // MARK: - Header

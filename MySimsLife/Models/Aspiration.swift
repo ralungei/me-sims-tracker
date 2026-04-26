@@ -17,6 +17,33 @@ enum AspirationKind: String, Codable, CaseIterable {
         case .weekly:      return "Semanal"
         }
     }
+
+    var icon: String {
+        switch self {
+        case .dailySimple: return "sun.max.fill"
+        case .dailyTimed:  return "timer"
+        case .treatment:   return "leaf.fill"
+        case .weekly:      return "calendar"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .dailySimple: return "Diario"
+        case .dailyTimed:  return "Diario con sesión"
+        case .treatment:   return "Tratamiento"
+        case .weekly:      return "Semanal"
+        }
+    }
+
+    var hint: String {
+        switch self {
+        case .dailySimple: return "Una vez al día (ej: creatina)"
+        case .dailyTimed:  return "Diario con duración (ej: meditar 25 min)"
+        case .treatment:   return "Curso finito con progreso (ej: prebióticos 30 días)"
+        case .weekly:      return "Una vez por semana (ej: postear reel)"
+        }
+    }
 }
 
 // MARK: - Aspiration (SwiftData @Model — syncs via CloudKit)

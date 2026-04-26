@@ -8,18 +8,20 @@ struct MySimsLifeApp: App {
 
     let modelContainer: ModelContainer = {
         let schema = Schema([ActivityLog.self, Aspiration.self])
-        let cloudConfig = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .private("iCloud.com.mysims.life")
-        )
-        do {
-            return try ModelContainer(for: schema, configurations: [cloudConfig])
-        } catch {
-            // Fallback to local store if CloudKit isn't available (e.g. no iCloud account in simulator)
-            let localConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            return try! ModelContainer(for: schema, configurations: [localConfig])
+        // Try CloudKit → on-disk local → in-memory. The last fallback guarantees the app boots.
+        let configs: [ModelConfiguration] = [
+            ModelConfiguration(schema: schema,
+                               isStoredInMemoryOnly: false,
+                               cloudKitDatabase: .private("iCloud.com.mysims.life")),
+            ModelConfiguration(schema: schema, isStoredInMemoryOnly: false),
+            ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        ]
+        for config in configs {
+            if let container = try? ModelContainer(for: schema, configurations: [config]) {
+                return container
+            }
         }
+        fatalError("Could not initialise any ModelContainer")
     }()
 
     var body: some Scene {

@@ -89,7 +89,7 @@ struct NeedBarView: View {
             Text(rec.actionName)
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
                 .foregroundStyle(fresh ? SimsTheme.textPrimary : SimsTheme.textSecondary)
-            Text(shortTimeAgo(from: rec.at))
+            Text(rec.at.timeAgo(style: .short))
                 .font(.system(size: 9, weight: .medium, design: .rounded))
                 .foregroundStyle(SimsTheme.textDim)
                 .monospacedDigit()
@@ -103,17 +103,6 @@ struct NeedBarView: View {
                     ? Color(hue: hue/360, saturation: 0.50, brightness: 0.20)
                     : Color.white.opacity(0.04))
         )
-    }
-
-    private func shortTimeAgo(from date: Date) -> String {
-        let secs = Int(Date().timeIntervalSince(date))
-        if secs < 60 { return "ahora" }
-        let mins = secs / 60
-        if mins < 60 { return "\(mins)m" }
-        let hrs = mins / 60
-        if hrs < 24 { return "\(hrs)h" }
-        let days = hrs / 24
-        return "\(days)d"
     }
 
     // MARK: - Tile (icon)

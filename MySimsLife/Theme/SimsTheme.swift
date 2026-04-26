@@ -89,19 +89,12 @@ enum SimsTheme {
         }
     }
 
-    // MARK: - Bar Colors (kept for legacy callers)
+    // MARK: - Bar gradient (built from valueColor for coherence)
 
-    static func barColor(for value: Double) -> Color {
-        switch value {
-        case 0.65...:     return Color(red: 0.28, green: 0.88, blue: 0.40)
-        case 0.40..<0.65: return Color(red: 0.96, green: 0.78, blue: 0.08)
-        case 0.20..<0.40: return Color(red: 0.96, green: 0.46, blue: 0.14)
-        default:          return Color(red: 0.94, green: 0.22, blue: 0.20)
-        }
-    }
+    static func barColor(for value: Double) -> Color { valueColor(for: value) }
 
     static func barGradient(for value: Double) -> LinearGradient {
-        let base = barColor(for: value)
+        let base = valueColor(for: value)
         return LinearGradient(
             colors: [base.opacity(0.70), base],
             startPoint: .leading,
