@@ -1,0 +1,171 @@
+import SwiftUI
+
+// MARK: - Need Bar (v2-playful: chunky segmented pips, per-need hue)
+
+struct NeedBarView: View {
+    let need: NeedType
+    let value: Double
+    var recentActions: [NeedStore.LastActionRecord] = []
+    var compact: Bool = true
+    var alwaysOn: Bool = false
+    var onTap: () -> Void = {}
+    var onRemoveAction: (Int) -> Void = { _ in }
+
+    private let segments = 12
+
+    private var hue: Double { need.hue }
+    private var pct: Int { Int((value * 100).rounded()) }
+    private var filled: Int { Int((value * Double(segments)).rounded()) }
+    private var critical: Bool { value < 0.25 }
+
+    private var fill: Color { SimsTheme.needFill(hue: hue, value: value) }
+    private var track: Color { SimsTheme.needTrack(hue: hue) }
+
+    private var pipHeight: CGFloat { alwaysOn ? 14 : (compact ? 10 : 12) }
+    private var tileSize: CGFloat { alwaysOn ? 52 : (compact ? 40 : 46) }
+    private var nameFont: Font {
+        .system(alwaysOn ? .body : (compact ? .subheadline : .body),
+                design: .rounded, weight: .bold)
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: compact ? 12 : 14) {
+                tile
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(need.displayName)
+                            .font(nameFont)
+                            .foregroundStyle(SimsTheme.textPrimary)
+                        Spacer()
+                        HStack(spacing: 3) {
+                            Text("\(pct)")
+                                .font(.system(.caption, design: .rounded, weight: .bold))
+                                .foregroundStyle(SimsTheme.valueColor(for: value))
+                                .monospacedDigit()
+                                .contentTransition(.numericText(value: value))
+                            if critical {
+                                Text("⚠")
+                                    .font(.system(.caption, weight: .bold))
+                                    .foregroundStyle(SimsTheme.valueColor(for: value))
+                            }
+                        }
+                    }
+                    pips
+                    lastActionLabel
+                }
+            }
+            .padding(.vertical, compact ? 4 : 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var lastActionLabel: some View {
+        if !recentActions.isEmpty {
+            HStack(spacing: 5) {
+                ForEach(Array(recentActions.prefix(3).enumerated()), id: \.offset) { index, rec in
+                    actionPill(rec, fresh: index == 0)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                onRemoveAction(index)
+                            } label: {
+                                Label("Eliminar \"\(rec.actionName)\"", systemImage: "arrow.uturn.backward")
+                            }
+                        }
+                }
+            }
+            .padding(.top, 2)
+        }
+    }
+
+    private func actionPill(_ rec: NeedStore.LastActionRecord, fresh: Bool) -> some View {
+        let pillColor = Color(hue: hue/360, saturation: 0.40, brightness: 0.80)
+        return HStack(spacing: 3) {
+            Image(systemName: rec.icon)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(fresh ? pillColor : SimsTheme.textSecondary)
+            Text(rec.actionName)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(fresh ? SimsTheme.textPrimary : SimsTheme.textSecondary)
+            Text(shortTimeAgo(from: rec.at))
+                .font(.system(size: 9, weight: .medium, design: .rounded))
+                .foregroundStyle(SimsTheme.textDim)
+                .monospacedDigit()
+        }
+        .lineLimit(1)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(fresh
+                    ? Color(hue: hue/360, saturation: 0.50, brightness: 0.20)
+                    : Color.white.opacity(0.04))
+        )
+    }
+
+    private func shortTimeAgo(from date: Date) -> String {
+        let secs = Int(Date().timeIntervalSince(date))
+        if secs < 60 { return "ahora" }
+        let mins = secs / 60
+        if mins < 60 { return "\(mins)m" }
+        let hrs = mins / 60
+        if hrs < 24 { return "\(hrs)h" }
+        let days = hrs / 24
+        return "\(days)d"
+    }
+
+    // MARK: - Tile (icon)
+
+    private var tile: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(SimsTheme.needTileGradient(hue: hue))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+                .shadow(color: Color(hue: hue/360, saturation: 0.7, brightness: 0.4).opacity(0.35), radius: 8, y: 3)
+            Image(systemName: need.icon)
+                .font(.system(size: tileSize * 0.42, weight: .bold))
+                .foregroundStyle(Color(hue: hue/360, saturation: 0.45, brightness: 0.95))
+        }
+        .frame(width: tileSize, height: tileSize)
+    }
+
+    // MARK: - Segmented pips
+
+    private var pips: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<segments, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(i < filled ? fill : track)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(LinearGradient(
+                                colors: i < filled
+                                    ? [Color.white.opacity(0.30), .clear]
+                                    : [.clear, .clear],
+                                startPoint: .top, endPoint: .center
+                            ))
+                    )
+                    .frame(height: pipHeight)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.75).delay(Double(i) * 0.015), value: filled)
+            }
+        }
+    }
+}
+
+#Preview {
+    ZStack {
+        SimsTheme.mainBackground.ignoresSafeArea()
+        VStack(spacing: 12) {
+            NeedBarView(need: .energy,    value: 0.9)
+            NeedBarView(need: .nutrition, value: 0.55)
+            NeedBarView(need: .hydration, value: 0.18)
+            NeedBarView(need: .social,    value: 0.31)
+        }
+        .padding()
+    }
+}
