@@ -87,8 +87,11 @@ final class NeedStore {
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
-        Task { await BackendSync.shared.pull(into: context); refreshAspirations(); refreshTasks(); refreshRecentActionsCache() }
         Task { @MainActor in
+            await BackendSync.shared.pull(into: context)
+            refreshAspirations()
+            refreshTasks()
+            refreshRecentActionsCache()
             RealtimeSync.shared.onEvent = { [weak self] _ in
                 self?.refreshAspirations()
                 self?.refreshTasks()

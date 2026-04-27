@@ -1,6 +1,14 @@
 import Foundation
 import SwiftData
 
+// Cloudflare D1 stores ids as TEXT and treats case as significant. Both ends
+// must agree on a single canonical case (Swift's `UUID.uuidString` is uppercase
+// but `crypto.randomUUID()` on Workers is lowercase) — we standardise on
+// lowercase to match the wire format the backend produces.
+extension UUID {
+    var canonical: String { uuidString.lowercased() }
+}
+
 // MARK: - Backend sync client
 
 /// Local-first sync with the Cloudflare Worker backend.
@@ -106,13 +114,13 @@ actor BackendSync {
 
     @MainActor
     private func applyAspirations(_ remotes: [AspirationDTO], context: ModelContext) {
-        guard !remotes.isEmpty else { return }
         let descriptor = FetchDescriptor<Aspiration>()
         let locals = (try? context.fetch(descriptor)) ?? []
-        let byId = Dictionary(uniqueKeysWithValues: locals.compactMap { ($0.id.uuidString, $0) })
+        let byId = dedupeKeepingFirst(locals, key: { $0.id.canonical }) { context.delete($0) }
+        guard !remotes.isEmpty else { return }
         for remote in remotes {
             guard let uuid = UUID(uuidString: remote.id) else { continue }
-            if let existing = byId[remote.id] {
+            if let existing = byId[remote.id.lowercased()] {
                 if remote.deleted_at != nil {
                     context.delete(existing)
                 } else {
@@ -125,6 +133,27 @@ actor BackendSync {
                 context.insert(new)
             }
         }
+    }
+
+    /// Build an id→model lookup that survives duplicate ids (which can happen
+    /// after a fresh install + interrupted pull). Extras get soft-removed via
+    /// the `dropDuplicate` callback so the next sync stops echoing them.
+    @MainActor
+    private func dedupeKeepingFirst<M, K: Hashable>(
+        _ items: [M],
+        key: (M) -> K,
+        dropDuplicate: (M) -> Void
+    ) -> [K: M] {
+        var result: [K: M] = [:]
+        for item in items {
+            let k = key(item)
+            if result[k] == nil {
+                result[k] = item
+            } else {
+                dropDuplicate(item)
+            }
+        }
+        return result
     }
 
     @MainActor
@@ -150,13 +179,13 @@ actor BackendSync {
 
     @MainActor
     private func applyTasks(_ remotes: [TaskDTO], context: ModelContext) {
-        guard !remotes.isEmpty else { return }
         let descriptor = FetchDescriptor<LifeTask>()
         let locals = (try? context.fetch(descriptor)) ?? []
-        let byId = Dictionary(uniqueKeysWithValues: locals.compactMap { ($0.id.uuidString, $0) })
+        let byId = dedupeKeepingFirst(locals, key: { $0.id.canonical }) { context.delete($0) }
+        guard !remotes.isEmpty else { return }
         for remote in remotes {
             guard let uuid = UUID(uuidString: remote.id) else { continue }
-            if let existing = byId[remote.id] {
+            if let existing = byId[remote.id.lowercased()] {
                 if remote.deleted_at != nil {
                     context.delete(existing)
                 } else {
@@ -186,15 +215,15 @@ actor BackendSync {
         guard !remotes.isEmpty else { return }
         let descriptor = FetchDescriptor<ActivityLog>()
         let locals = (try? context.fetch(descriptor)) ?? []
-        let byId = Dictionary(uniqueKeysWithValues: locals.map { ($0.id.uuidString, $0) })
+        let byId = dedupeKeepingFirst(locals, key: { $0.id.canonical }) { context.delete($0) }
         for remote in remotes {
             guard let uuid = UUID(uuidString: remote.id),
                   let need = NeedType(rawValue: remote.need_type) else { continue }
             if remote.deleted_at != nil {
-                if let existing = byId[remote.id] { context.delete(existing) }
+                if let existing = byId[remote.id.lowercased()] { context.delete(existing) }
                 continue
             }
-            if byId[remote.id] != nil { continue }   // already have it
+            if byId[remote.id.lowercased()] != nil { continue }   // already have it
             let log = ActivityLog(needType: need,
                                   actionName: remote.action_name,
                                   actionIcon: remote.action_icon,
@@ -212,23 +241,23 @@ actor BackendSync {
         let dto = AspirationDTO.from(asp)
         do { _ = try await request("/aspirations", method: "POST", body: dto) } catch {
             // If the row already exists upstream, fall back to PATCH.
-            _ = try? await request("/aspirations/\(asp.id.uuidString)", method: "PATCH", body: dto)
+            _ = try? await request("/aspirations/\(asp.id.canonical)", method: "PATCH", body: dto)
         }
     }
 
     func deleteAspiration(id: UUID) async {
-        _ = try? await request("/aspirations/\(id.uuidString)", method: "DELETE")
+        _ = try? await request("/aspirations/\(id.canonical)", method: "DELETE")
     }
 
     func pushTask(_ task: LifeTask) async {
         let dto = TaskDTO.from(task)
         do { _ = try await request("/tasks", method: "POST", body: dto) } catch {
-            _ = try? await request("/tasks/\(task.id.uuidString)", method: "PATCH", body: dto)
+            _ = try? await request("/tasks/\(task.id.canonical)", method: "PATCH", body: dto)
         }
     }
 
     func deleteTask(id: UUID) async {
-        _ = try? await request("/tasks/\(id.uuidString)", method: "DELETE")
+        _ = try? await request("/tasks/\(id.canonical)", method: "DELETE")
     }
 
     func pushActivityLog(_ log: ActivityLog) async {
@@ -237,7 +266,7 @@ actor BackendSync {
     }
 
     func deleteActivityLog(id: UUID) async {
-        _ = try? await request("/activity-log/\(id.uuidString)", method: "DELETE")
+        _ = try? await request("/activity-log/\(id.canonical)", method: "DELETE")
     }
 
     func pushNeedState(_ need: NeedType, value: Double, lastUpdated: Date, enabled: Bool) async {
@@ -272,7 +301,7 @@ struct AspirationDTO: Codable {
     static func from(_ asp: Aspiration) -> AspirationDTO {
         let dates = asp.completionsLog.map { Int64($0.timeIntervalSince1970 * 1000) }
         return AspirationDTO(
-            id: asp.id.uuidString,
+            id: asp.id.canonical,
             name: asp.name,
             emoji: asp.emoji,
             kind: asp.kindRaw,
@@ -306,7 +335,7 @@ struct TaskDTO: Codable {
 
     static func from(_ task: LifeTask) -> TaskDTO {
         TaskDTO(
-            id: task.id.uuidString,
+            id: task.id.canonical,
             title: task.title,
             notes: task.notes,
             due_date: task.dueDate.map { Int64($0.timeIntervalSince1970 * 1000) },
@@ -331,7 +360,7 @@ struct ActivityLogDTO: Codable {
 
     static func from(_ log: ActivityLog) -> ActivityLogDTO {
         ActivityLogDTO(
-            id: log.id.uuidString,
+            id: log.id.canonical,
             need_type: log.needType,
             action_name: log.actionName,
             action_icon: log.actionIcon,
