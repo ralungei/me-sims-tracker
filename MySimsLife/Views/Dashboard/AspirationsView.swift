@@ -9,6 +9,7 @@ struct AspirationsRow: View {
     var onTap: (Aspiration) -> Void
     var onAdd: () -> Void = {}
     var onEdit: (Aspiration) -> Void = { _ in }
+    var onDelete: (Aspiration) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -37,16 +38,21 @@ struct AspirationsRow: View {
                             onTap(asp)
                         }
                         .contextMenu {
-                            Button {
-                                onEdit(asp)
-                            } label: {
+                            Button { onEdit(asp) } label: {
                                 Label("Editar", systemImage: "pencil")
                             }
+                            Button(role: .destructive) { onDelete(asp) } label: {
+                                Label("Eliminar", systemImage: "trash")
+                            }
+                        } preview: {
+                            AspirationCard(aspiration: asp, alwaysOn: false) {}
+                                .allowsHitTesting(false)
                         }
                     }
                 }
                 .padding(.horizontal, horizontalInset)
             }
+            .scrollClipDisabled()
             .padding(.horizontal, -horizontalInset)
         }
     }
@@ -60,25 +66,26 @@ struct AddAspirationCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 8) {
+            VStack(spacing: 5) {
                 ZStack {
                     Circle()
-                        .stroke(SimsTheme.textDim, style: StrokeStyle(lineWidth: 1.4, dash: [3, 3]))
-                        .frame(width: 36, height: 36)
+                        .stroke(SimsTheme.textDim, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+                        .frame(width: 28, height: 28)
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(SimsTheme.textSecondary)
                 }
                 Text("Nueva")
-                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .font(.system(.caption2, design: .rounded, weight: .bold))
                     .foregroundStyle(SimsTheme.textSecondary)
                 Text("aspiración")
-                    .font(.system(.caption2, design: .rounded, weight: .medium))
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
                     .foregroundStyle(SimsTheme.textDim)
             }
-            .frame(width: alwaysOn ? 140 : 120, height: 110)
+            .padding(10)
+            .frame(width: alwaysOn ? 110 : 96, height: 86)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(SimsTheme.textDim.opacity(0.6),
                             style: StrokeStyle(lineWidth: 1.2, dash: [4, 4]))
             )
@@ -112,45 +119,45 @@ struct AspirationCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .top) {
                     Text(aspiration.emoji)
-                        .font(.system(size: 26))
+                        .font(.system(size: 20))
                     Spacer()
                     if done {
                         ZStack {
-                            Circle().fill(color.opacity(0.25)).frame(width: 22, height: 22)
+                            Circle().fill(color.opacity(0.25)).frame(width: 18, height: 18)
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .black))
+                                .font(.system(size: 9, weight: .black))
                                 .foregroundStyle(color)
                         }
                     } else {
                         Text("+\(aspiration.xp)")
-                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(SimsTheme.accentWarm)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
                             .background(Capsule().fill(SimsTheme.accentWarm.opacity(0.15)))
                     }
                 }
 
                 Text(aspiration.name)
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                    .font(.system(.caption, design: .rounded, weight: .bold))
                     .foregroundStyle(SimsTheme.textPrimary)
                     .lineLimit(1)
 
                 detail
             }
-            .frame(width: alwaysOn ? 200 : 168, alignment: .leading)
-            .padding(14)
+            .padding(10)
+            .frame(width: alwaysOn ? 160 : 132, height: 86, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(bgGradient)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(done ? color.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
                     )
-                    .shadow(color: done ? color.opacity(0.25) : .clear, radius: 10, y: 3)
+                    .shadow(color: done ? color.opacity(0.25) : .clear, radius: 8, y: 2)
             )
             .scaleEffect(pulse ? 1.03 : 1.0)
         }

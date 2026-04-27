@@ -3,9 +3,11 @@ import SwiftUI
 // MARK: - Need Type
 
 enum NeedType: String, CaseIterable, Codable, Identifiable {
+    case health
     case energy
     case nutrition
     case hydration
+    case bladder
     case exercise
     case hygiene
     case environment
@@ -16,9 +18,11 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .health:      return "Salud"
         case .energy:      return "Energía"
         case .nutrition:   return "Nutrición"
         case .hydration:   return "Hidratación"
+        case .bladder:     return "Vejiga"
         case .exercise:    return "Ejercicio"
         case .hygiene:     return "Higiene"
         case .environment: return "Entorno"
@@ -29,9 +33,11 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var icon: String {
         switch self {
+        case .health:      return "cross.case.fill"
         case .energy:      return "bolt.fill"
         case .nutrition:   return "fork.knife"
         case .hydration:   return "drop.fill"
+        case .bladder:     return "toilet.fill"
         case .exercise:    return "figure.run"
         case .hygiene:     return "shower.fill"
         case .environment: return "house.fill"
@@ -40,24 +46,32 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    /// Decay rate per hour. 0 = manual-only (doesn't drop on its own).
     var decayRatePerHour: Double {
         switch self {
-        case .energy:      return 6.25   // 16h to empty (wake cycle)
-        case .nutrition:   return 6.0    // ~17h (3 meals sustain a day)
-        case .hydration:   return 7.0    // ~14h (drink every 3-4h)
-        case .exercise:    return 4.17   // 24h (daily movement goal)
-        case .hygiene:     return 4.17   // 24h (daily shower cycle)
-        case .environment: return 2.5    // 40h (cleaning lasts 1-2 days)
-        case .social:      return 2.08   // 48h (slow, deep need)
-        case .leisure:     return 3.5    // ~28h (daily fun + stimulation)
+        case .health:      return 0       // manual-only — only changes when user logs an ailment
+        case .energy:      return 6.25
+        case .nutrition:   return 6.0
+        case .hydration:   return 7.0
+        case .bladder:     return 12.5    // ~8h to empty
+        case .exercise:    return 4.17
+        case .hygiene:     return 4.17
+        case .environment: return 2.5
+        case .social:      return 2.08
+        case .leisure:     return 3.5
         }
     }
 
+    /// Whether this need decays automatically. False for manual-only needs like health.
+    var decaysAutomatically: Bool { decayRatePerHour > 0 }
+
     var moodWeight: Double {
         switch self {
+        case .health:      return 1.8
         case .energy:      return 1.5
         case .nutrition:   return 1.3
         case .hydration:   return 1.2
+        case .bladder:     return 1.0
         case .exercise:    return 1.0
         case .hygiene:     return 0.8
         case .environment: return 0.7
@@ -69,9 +83,11 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
     /// Hue 0–360 — elegant signature color per need (dusty pastel palette)
     var hue: Double {
         switch self {
+        case .health:      return 145   // sage green
         case .energy:      return 38    // champagne
         case .nutrition:   return 22    // honey caramel
         case .hydration:   return 195   // dusty teal
+        case .bladder:     return 50    // amber yellow
         case .exercise:    return 335   // dusty rose
         case .hygiene:     return 158   // sage mint
         case .environment: return 258   // soft lavender
@@ -82,9 +98,11 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var emoji: String {
         switch self {
+        case .health:      return "🩺"
         case .energy:      return "⚡"
         case .nutrition:   return "🍽"
         case .hydration:   return "💧"
+        case .bladder:     return "🚽"
         case .exercise:    return "🏃"
         case .hygiene:     return "🚿"
         case .environment: return "🏠"
@@ -95,14 +113,16 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var sortOrder: Int {
         switch self {
-        case .energy:      return 0
-        case .nutrition:   return 1
-        case .hydration:   return 2
-        case .exercise:    return 3
-        case .hygiene:     return 4
-        case .environment: return 5
-        case .social:      return 6
-        case .leisure:     return 7
+        case .health:      return 0
+        case .energy:      return 1
+        case .nutrition:   return 2
+        case .hydration:   return 3
+        case .bladder:     return 4
+        case .exercise:    return 5
+        case .hygiene:     return 6
+        case .environment: return 7
+        case .social:      return 8
+        case .leisure:     return 9
         }
     }
 
@@ -112,6 +132,27 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var quickActions: [QuickAction] {
         switch self {
+        case .health:
+            return [
+                QuickAction(name: "Estoy sano",       icon: "heart.fill",            boost: 100),
+                QuickAction(name: "Recuperándome",    icon: "leaf.fill",             boost: 30),
+                QuickAction(name: "Cansancio fuerte", icon: "zzz",                   boost: -25),
+                QuickAction(name: "Resfriado",        icon: "wind.snow",             boost: -30),
+                QuickAction(name: "Gripe",            icon: "thermometer.high",      boost: -50),
+                QuickAction(name: "Migraña",          icon: "brain.head.profile",    boost: -40),
+                QuickAction(name: "Mal del estómago", icon: "exclamationmark.bubble.fill", boost: -35),
+                QuickAction(name: "Lesión / dolor",   icon: "bandage.fill",          boost: -30),
+            ]
+        case .bladder:
+            return [
+                QuickAction(name: "Pis claro",      icon: "drop.fill",             boost: 100),
+                QuickAction(name: "Pis amarillo",   icon: "drop.fill",             boost: 80),
+                QuickAction(name: "Pis oscuro",     icon: "drop.triangle.fill",    boost: 60),
+                QuickAction(name: "Caca normal",    icon: "checkmark.seal.fill",   boost: 100),
+                QuickAction(name: "Caca blanda",    icon: "exclamationmark.triangle.fill", boost: 60),
+                QuickAction(name: "Caca dura",      icon: "exclamationmark.triangle.fill", boost: 60),
+                QuickAction(name: "Aguanté mucho",  icon: "clock.fill",            boost: -10),
+            ]
         case .energy:
             return [
                 QuickAction(name: "Dormí 8h",   icon: "bed.double.fill",  boost: 100),

@@ -27,8 +27,8 @@ enum SimsTheme {
 
     // MARK: - Accent (elegant)
 
-    static let accentGreen = Color(hue: 155/360, saturation: 0.40, brightness: 0.70)   // sage
-    static let accentWarm  = Color(hue: 38/360,  saturation: 0.55, brightness: 0.78)   // champagne
+    static let accentGreen = Color(hue: 155/360, saturation: 0.50, brightness: 0.72)   // sage
+    static let accentWarm  = Color(hue: 32/360,  saturation: 0.88, brightness: 0.82)   // honey gold
 
     // MARK: - Negative / Moodlet (dusty rose, not crimson)
 
@@ -52,10 +52,10 @@ enum SimsTheme {
     /// Tones are dusty/elegant rather than fluo.
     static func valueColor(for value: Double) -> Color {
         switch value {
-        case 0.65...:     return Color(hue: 145/360, saturation: 0.50, brightness: 0.68)  // sage green
-        case 0.40..<0.65: return Color(hue:  45/360, saturation: 0.62, brightness: 0.72)  // champagne yellow
-        case 0.20..<0.40: return Color(hue:  22/360, saturation: 0.68, brightness: 0.65)  // caramel orange
-        default:          return Color(hue: 358/360, saturation: 0.55, brightness: 0.62)  // dusty red
+        case 0.65...:     return Color(hue: 148/360, saturation: 0.55, brightness: 0.72)  // vivid sage green
+        case 0.40..<0.65: return Color(hue:  35/360, saturation: 0.90, brightness: 0.82)  // honey gold (no apagado)
+        case 0.20..<0.40: return Color(hue:  18/360, saturation: 0.85, brightness: 0.72)  // warm orange
+        default:          return Color(hue: 358/360, saturation: 0.65, brightness: 0.66)  // crimson red
         }
     }
 

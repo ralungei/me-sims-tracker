@@ -12,8 +12,8 @@ final class NeedStore {
 
     var needs: [NeedType: Double] = [:]
     var lastUpdated: [NeedType: Date] = [:]
-    var isAlwaysOnMode = false
     var aspirations: [Aspiration] = []
+    var tasks: [LifeTask] = []
     private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
 
     static let recentActionsLimit = 3
@@ -35,7 +35,7 @@ final class NeedStore {
 
     init() {
         for need in NeedType.allCases {
-            needs[need] = 0.5
+            needs[need] = need.decaysAutomatically ? 0.5 : 1.0  // health starts full
             lastUpdated[need] = Date()
         }
         loadNeedsState()
@@ -45,6 +45,7 @@ final class NeedStore {
         modelContext = context
         ensureSeedData()
         refreshAspirations()
+        refreshTasks()
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
@@ -53,14 +54,13 @@ final class NeedStore {
     func onBecomeActive() {
         loadNeedsState()
         refreshAspirations()
+        refreshTasks()
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
-        if isAlwaysOnMode {
-            #if os(iOS)
-            UIApplication.shared.isIdleTimerDisabled = true
-            #endif
-        }
+        #if os(iOS)
+        UIApplication.shared.isIdleTimerDisabled = true
+        #endif
     }
 
     func onEnterBackground() {
@@ -426,14 +426,58 @@ final class NeedStore {
         refreshAspirations()
     }
 
-    // MARK: - Always-On Mode
+    // MARK: - Tasks (one-off agenda items)
 
-    func toggleAlwaysOn() {
-        isAlwaysOnMode.toggle()
-        #if os(iOS)
-        UIApplication.shared.isIdleTimerDisabled = isAlwaysOnMode
-        #endif
-        UserDefaults.standard.set(isAlwaysOnMode, forKey: "alwaysOnMode")
+    private func refreshTasks() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<LifeTask>(
+            sortBy: [SortDescriptor(\.dueDate), SortDescriptor(\.createdAt)]
+        )
+        tasks = (try? context.fetch(descriptor)) ?? []
+    }
+
+    func addTask(_ task: LifeTask) {
+        guard let context = modelContext else { return }
+        task.sortOrder = (tasks.map(\.sortOrder).max() ?? 0) + 1
+        context.insert(task)
+        try? context.save()
+        refreshTasks()
+    }
+
+    func updateTask(_ task: LifeTask) {
+        guard let context = modelContext else { return }
+        try? context.save()
+        refreshTasks()
+        _ = task
+    }
+
+    func deleteTask(_ task: LifeTask) {
+        guard let context = modelContext else { return }
+        context.delete(task)
+        try? context.save()
+        refreshTasks()
+    }
+
+    func toggleTask(_ task: LifeTask) {
+        guard let context = modelContext else { return }
+        task.isDone.toggle()
+        task.completedAt = task.isDone ? Date() : nil
+        try? context.save()
+        refreshTasks()
+        triggerHaptic(negative: false)
+    }
+
+    /// Tasks due today or overdue, with not-done first, then ordered by time.
+    var visibleTasks: [LifeTask] {
+        let cal = Calendar.current
+        let now = Date()
+        return tasks.filter { task in
+            if task.isDone {
+                return cal.isDateInToday(task.completedAt ?? task.createdAt)
+            }
+            guard let due = task.dueDate else { return true }     // no date = inbox
+            return cal.isDateInToday(due) || due < now            // today or overdue
+        }
     }
 
     // MARK: - Decay (uses calibrated rates)
@@ -448,7 +492,7 @@ final class NeedStore {
     private func applyDecay() {
         let now = Date()
         var changed = false
-        for need in NeedType.allCases {
+        for need in NeedType.allCases where need.decaysAutomatically {
             guard let last = lastUpdated[need], let current = needs[need] else { continue }
             let hours = now.timeIntervalSince(last) / 3600.0
             let rate = calibration.effectiveDecayRate(for: need)
@@ -479,8 +523,6 @@ final class NeedStore {
     }
 
     private func loadNeedsState() {
-        isAlwaysOnMode = UserDefaults.standard.bool(forKey: "alwaysOnMode")
-
         guard let data = UserDefaults.standard.data(forKey: "needsState"),
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Double]]
         else { return }
@@ -491,10 +533,14 @@ final class NeedStore {
                   let savedValue = state["value"],
                   let ts = state["ts"]
             else { continue }
-            let hours = now.timeIntervalSince(Date(timeIntervalSince1970: ts)) / 3600.0
-            let rate = calibration.effectiveDecayRate(for: needType)
-            let decay = rate * hours / 100.0
-            needs[needType] = max(0.0, savedValue - decay)
+            if needType.decaysAutomatically {
+                let hours = now.timeIntervalSince(Date(timeIntervalSince1970: ts)) / 3600.0
+                let rate = calibration.effectiveDecayRate(for: needType)
+                let decay = rate * hours / 100.0
+                needs[needType] = max(0.0, savedValue - decay)
+            } else {
+                needs[needType] = savedValue   // manual-only: keep as saved
+            }
             lastUpdated[needType] = now
         }
     }

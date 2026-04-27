@@ -3,14 +3,16 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(NeedStore.self) private var store
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @AppStorage("userName") private var userName: String = ""
 
     @State private var selectedNeed: NeedType?
     @State private var editingAspiration: Aspiration?
     @State private var showAspirationEditor: Bool = false
+    @State private var editingTask: LifeTask?
+    @State private var showTaskEditor: Bool = false
     @State private var now = Date()
 
     private var isCompact: Bool { sizeClass == .compact }
-    private var alwaysOn: Bool { store.isAlwaysOnMode }
 
     private let clockTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
@@ -20,30 +22,28 @@ struct DashboardView: View {
 
             VStack(spacing: 0) {
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: isCompact ? 14 : 20) {
+                    VStack(spacing: isCompact ? 14 : 22) {
                         headerSection
                         needsPanel
                         aspirationsSection
+                        tasksSection
                         AlertsStack(alerts: store.activeAlerts)
                     }
                     .padding(.horizontal, isCompact ? 16 : 32)
-                    .padding(.top, isCompact ? 8 : 14)
-                    .padding(.bottom, 12)
+                    .padding(.top, isCompact ? 6 : 10)
+                    .padding(.bottom, 10)
                 }
 
-                if !alwaysOn {
-                    suggestionsBar
-                        .padding(.horizontal, isCompact ? 16 : 32)
-                        .padding(.bottom, 8)
-                        .padding(.top, 6)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.clear, SimsTheme.background.opacity(0.55)],
-                                startPoint: .top, endPoint: .bottom
-                            )
-                            .ignoresSafeArea(.container, edges: .bottom)
+                suggestionsBar
+                    .padding(.bottom, 8)
+                    .padding(.top, 6)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.clear, SimsTheme.background.opacity(0.55)],
+                            startPoint: .top, endPoint: .bottom
                         )
-                }
+                        .ignoresSafeArea(.container, edges: .bottom)
+                    )
             }
 
             if let need = selectedNeed {
@@ -59,6 +59,10 @@ struct DashboardView: View {
             AspirationEditor(existing: editingAspiration)
                 .environment(store)
         }
+        .sheet(isPresented: $showTaskEditor, onDismiss: { editingTask = nil }) {
+            TaskEditor(existing: editingTask)
+                .environment(store)
+        }
     }
 
     // MARK: - Background
@@ -67,107 +71,149 @@ struct DashboardView: View {
         SimsTheme.mainBackground.ignoresSafeArea()
     }
 
-    // MARK: - Header (Mood Gem + VITAL + Always-On)
+    // MARK: - Header (Mood Gem + greeting + VITAL bar)
 
     private var headerSection: some View {
-        HStack(alignment: .center, spacing: isCompact ? 14 : 22) {
+        HStack(alignment: .center, spacing: isCompact ? 8 : 12) {
             PlumbobView(
                 mood: store.overallMood,
                 compact: isCompact,
-                size: isCompact ? 76 : (alwaysOn ? 130 : 110)
+                size: isCompact ? 56 : 78
             )
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(now, format: .dateTime.hour().minute())
-                    .font(.system(size: isCompact ? 36 : (alwaysOn ? 60 : 48), weight: .heavy, design: .rounded))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                    .monospacedDigit()
-                    .tracking(-1)
+            greetingBlock
 
-                HStack(spacing: 8) {
-                    Text(now, format: .dateTime.weekday(.wide).day().month(.wide))
-                        .font(.system(.caption, design: .rounded, weight: .medium))
-                        .foregroundStyle(SimsTheme.textSecondary)
-                        .textCase(.lowercase)
-                    Text("·")
-                        .foregroundStyle(SimsTheme.textDim)
-                    Text(moodCopy)
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(SimsTheme.plumbobColor(for: store.overallMood))
+            Spacer(minLength: 4)
+
+            vitalNumber
+        }
+    }
+
+    // MARK: - Greeting block (saludo · hora · fecha · estado)
+
+    private var greetingBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(timeOfDayGreeting)
+                    .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tracking(-0.5)
+                if !userName.isEmpty {
+                    Text(userName)
+                        .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(SimsTheme.accentWarm)
+                        .tracking(-0.5)
                 }
             }
 
-            Spacer(minLength: 6)
-
-            vitalCard
-
-            if !alwaysOn {
-                alwaysOnButton
+            HStack(spacing: 8) {
+                Text(now, format: .dateTime.hour().minute())
+                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(SimsTheme.textSecondary)
+                    .monospacedDigit()
+                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
+                Text(now, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
+                    .font(.system(size: isCompact ? 13 : 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(SimsTheme.textSecondary)
+                    .textCase(.lowercase)
+                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
+                Text(moodCopy)
+                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(SimsTheme.plumbobColor(for: store.overallMood))
             }
+        }
+    }
+
+    private var timeOfDayGreeting: String {
+        let hour = Calendar.current.component(.hour, from: now)
+        switch hour {
+        case 6..<13:  return "Buenos días,"
+        case 13..<20: return "Buenas tardes,"
+        default:      return "Buenas noches,"
         }
     }
 
     private var moodCopy: String {
         switch store.overallMood {
-        case 0.75...:    return "te ves genial"
+        case 0.75...:     return "te ves genial"
         case 0.55..<0.75: return "estás bien"
         case 0.35..<0.55: return "vas tirando"
         case 0.20..<0.35: return "ojo, andas bajo"
-        default:          return "necesitás cuidarte"
+        default:          return "necesitas cuidarte"
         }
     }
 
-    private var vitalCard: some View {
+    // MARK: - VITAL — segmented pips that fill outward from center (red ← · → green)
+
+    private var vitalNumber: some View {
         let v = store.vitalScore
-        let color = SimsTheme.vitalColor(for: v)
-        return VStack(alignment: .center, spacing: 0) {
-            Text("VITAL")
-                .font(.system(.caption2, design: .rounded, weight: .bold))
-                .tracking(1.6)
-                .foregroundStyle(SimsTheme.textDim)
-            Text("\(v)")
-                .font(.system(size: isCompact ? 30 : 40, weight: .black, design: .rounded))
-                .foregroundStyle(color)
-                .monospacedDigit()
-                .contentTransition(.numericText(value: Double(v)))
-            Text(SimsTheme.vitalLabel(for: v))
-                .font(.system(.caption2, design: .rounded, weight: .bold))
-                .foregroundStyle(color.opacity(0.85))
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(color.opacity(0.35), lineWidth: 1)
-                )
-                .shadow(color: color.opacity(0.25), radius: 12, y: 3)
-        )
-    }
+        let labelColor = SimsTheme.vitalColor(for: v)
+        let segments = 12
+        let half = segments / 2
+        let signedAmount = (Double(v) - 50) / 50.0          // -1 … 0 … +1
+        let isPositive = signedAmount > 0
+        let fillCount = Int((Double(half) * abs(signedAmount)).rounded())
+        let fillColor = isPositive
+            ? SimsTheme.valueColor(for: 0.85)
+            : SimsTheme.valueColor(for: 0.10)
+        let track = Color.white.opacity(0.06)
+        let pipWidth: CGFloat = isCompact ? 7 : 9
 
-    private var alwaysOnButton: some View {
-        Button { store.toggleAlwaysOn() } label: {
-            VStack(spacing: 2) {
-                Image(systemName: store.isAlwaysOnMode ? "sun.max.fill" : "moon.stars.fill")
-                    .font(.system(size: isCompact ? 14 : 16))
-                Text(store.isAlwaysOnMode ? "ON" : "Always")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-            }
-            .foregroundStyle(store.isAlwaysOnMode ? SimsTheme.accentWarm : SimsTheme.textDim)
-            .frame(width: isCompact ? 50 : 60)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(store.isAlwaysOnMode ? SimsTheme.accentWarm.opacity(0.12) : Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                    )
-            )
+        func isFilled(_ index: Int) -> Bool {
+            if abs(signedAmount) < 0.005 { return false }
+            return isPositive
+                ? index >= half && index < half + fillCount
+                : index >= (half - fillCount) && index < half
         }
-        .buttonStyle(BounceButtonStyle())
+
+        return VStack(alignment: .trailing, spacing: 6) {
+            HStack(spacing: 3) {
+                ForEach(0..<segments, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(isFilled(i) ? fillColor : track)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(LinearGradient(
+                                    colors: isFilled(i)
+                                        ? [Color.white.opacity(0.30), .clear]
+                                        : [.clear, .clear],
+                                    startPoint: .top, endPoint: .center
+                                ))
+                        )
+                        .frame(width: pipWidth, height: 10)
+                        .overlay(alignment: .leading) {
+                            // Center divider between pips 5 and 6
+                            if i == half {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.45))
+                                    .frame(width: 1.5, height: 14)
+                                    .offset(x: -3)
+                            }
+                        }
+                        .animation(.spring(response: 0.5, dampingFraction: 0.75)
+                                    .delay(Double(abs(i - half)) * 0.02), value: signedAmount)
+                }
+            }
+
+            HStack(spacing: 4) {
+                Text("VITAL")
+                    .font(.system(.caption2, design: .rounded, weight: .heavy))
+                    .tracking(1.8)
+                    .foregroundStyle(SimsTheme.textDim)
+                Text("·")
+                    .foregroundStyle(SimsTheme.textDim)
+                Text("\(v)")
+                    .font(.system(.caption2, design: .rounded, weight: .heavy))
+                    .foregroundStyle(labelColor)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(v)))
+                Text("·")
+                    .foregroundStyle(SimsTheme.textDim)
+                Text(SimsTheme.vitalLabel(for: v))
+                    .font(.system(.caption2, design: .rounded, weight: .bold))
+                    .foregroundStyle(labelColor.opacity(0.9))
+            }
+        }
     }
 
     // MARK: - Needs Panel (2-col grid on regular, single column on compact)
@@ -183,7 +229,6 @@ struct DashboardView: View {
                     value: store.needs[need] ?? 0,
                     recentActions: store.recentActions(for: need),
                     compact: isCompact,
-                    alwaysOn: alwaysOn,
                     onTap: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             selectedNeed = need
@@ -198,7 +243,7 @@ struct DashboardView: View {
             }
         }
         .padding(.horizontal, SimsTheme.panelPadding)
-        .padding(.vertical, isCompact ? 14 : 22)
+        .padding(.vertical, isCompact ? 10 : 14)
         .background(
             RoundedRectangle(cornerRadius: SimsTheme.cornerRadius)
                 .fill(SimsTheme.panelBackground)
@@ -215,7 +260,6 @@ struct DashboardView: View {
     private var aspirationsSection: some View {
         AspirationsRow(
             aspirations: store.aspirations,
-            alwaysOn: alwaysOn,
             horizontalInset: isCompact ? 16 : 32,
             onTap: { asp in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
@@ -229,6 +273,36 @@ struct DashboardView: View {
             onEdit: { asp in
                 editingAspiration = asp
                 showAspirationEditor = true
+            },
+            onDelete: { asp in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    store.deleteAspiration(asp)
+                }
+            }
+        )
+    }
+
+    private var tasksSection: some View {
+        TasksRow(
+            tasks: store.visibleTasks,
+            horizontalInset: isCompact ? 16 : 32,
+            onToggle: { task in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    store.toggleTask(task)
+                }
+            },
+            onAdd: {
+                editingTask = nil
+                showTaskEditor = true
+            },
+            onEdit: { task in
+                editingTask = task
+                showTaskEditor = true
+            },
+            onDelete: { task in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    store.deleteTask(task)
+                }
             }
         )
     }
@@ -236,7 +310,8 @@ struct DashboardView: View {
     // MARK: - Smart Suggestions
 
     private var suggestionsBar: some View {
-        Group {
+        let inset: CGFloat = isCompact ? 16 : 32
+        return Group {
             if !store.smartSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 0) {
@@ -254,6 +329,7 @@ struct DashboardView: View {
                             }
                         }
                     }
+                    .padding(.horizontal, inset)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
@@ -265,6 +341,7 @@ struct DashboardView: View {
                                 }
                             }
                         }
+                        .padding(.horizontal, inset)
                     }
                 }
             }

@@ -7,7 +7,7 @@ struct MySimsLifeApp: App {
     @State private var store = NeedStore()
 
     let modelContainer: ModelContainer = {
-        let schema = Schema([ActivityLog.self, Aspiration.self])
+        let schema = Schema([ActivityLog.self, Aspiration.self, LifeTask.self])
         // Try CloudKit → on-disk local → in-memory. The last fallback guarantees the app boots.
         let configs: [ModelConfiguration] = [
             ModelConfiguration(schema: schema,
@@ -28,6 +28,7 @@ struct MySimsLifeApp: App {
         WindowGroup {
             ContentView()
                 .environment(store)
+                .environment(\.locale, Locale(identifier: "es_ES"))
                 .preferredColorScheme(.dark)
                 .onChange(of: scenePhase) { _, newPhase in
                     switch newPhase {
