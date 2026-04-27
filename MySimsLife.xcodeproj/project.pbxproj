@@ -1,0 +1,480 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */; };
+		164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC63F42E68BF4CF120400961 /* ActivityLog.swift */; };
+		2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */; };
+		247F296E0D62040182133FA2 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9110DB76EDC23748047200 /* TasksView.swift */; };
+		2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9A1445059387B20FA3F1C97 /* Assets.xcassets */; };
+		2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */; };
+		36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCD270AEA7272BF4535857B /* Aspiration.swift */; };
+		3AF8217AA126411442012216 /* MySimsLifeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B65542E7FDCDD445172D75D /* MySimsLifeApp.swift */; };
+		44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */; };
+		47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138DC9B9C1F133F5234DEA6E /* HistoryView.swift */; };
+		4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */; };
+		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
+		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
+		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
+		AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B910D402E23B4129BCEA86 /* AspirationsView.swift */; };
+		B225030E1A301A4F81994798 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D446C04FF679ABC590F02B /* InsightsView.swift */; };
+		C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0206ECCA122D5D143687FA /* PlumbobView.swift */; };
+		CC86534924BE181C555415DE /* NeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */; };
+		DBD3729B3F256F2FC5E01FF0 /* LifeTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF22A33BD093A1B056C7F20 /* LifeTask.swift */; };
+		DF07AB16C4047E26360064E4 /* NeedType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D96C730292A9BE8FC42050E /* NeedType.swift */; };
+		E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CF46933BBA8EC924A16469 /* DashboardView.swift */; };
+		F55FACB9DC27CCA2615407AD /* NeedBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */; };
+		FF896F51D241A20358C02638 /* AspirationEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditor.swift; sourceTree = "<group>"; };
+		138DC9B9C1F133F5234DEA6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsSheet.swift; sourceTree = "<group>"; };
+		1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedBarView.swift; sourceTree = "<group>"; };
+		4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+TimeAgo.swift"; sourceTree = "<group>"; };
+		57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationEngine.swift; sourceTree = "<group>"; };
+		5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimsTheme.swift; sourceTree = "<group>"; };
+		5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCardView.swift; sourceTree = "<group>"; };
+		7D96C730292A9BE8FC42050E /* NeedType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedType.swift; sourceTree = "<group>"; };
+		8BCD270AEA7272BF4535857B /* Aspiration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aspiration.swift; sourceTree = "<group>"; };
+		94B910D402E23B4129BCEA86 /* AspirationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationsView.swift; sourceTree = "<group>"; };
+		9B65542E7FDCDD445172D75D /* MySimsLifeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySimsLifeApp.swift; sourceTree = "<group>"; };
+		A2D446C04FF679ABC590F02B /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationEditor.swift; sourceTree = "<group>"; };
+		AFF22A33BD093A1B056C7F20 /* LifeTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifeTask.swift; sourceTree = "<group>"; };
+		B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedStore.swift; sourceTree = "<group>"; };
+		BE0206ECCA122D5D143687FA /* PlumbobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlumbobView.swift; sourceTree = "<group>"; };
+		C9A1445059387B20FA3F1C97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CC63F42E68BF4CF120400961 /* ActivityLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLog.swift; sourceTree = "<group>"; };
+		D07D2261F6E77057EF236865 /* MySimsLife.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MySimsLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3CF46933BBA8EC924A16469 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		DB05123DDA91452D04ECF598 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		EC9110DB76EDC23748047200 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		2F919F9F513EBD67BDF7C982 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */,
+				A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */,
+				94B910D402E23B4129BCEA86 /* AspirationsView.swift */,
+				D3CF46933BBA8EC924A16469 /* DashboardView.swift */,
+				1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */,
+				BE0206ECCA122D5D143687FA /* PlumbobView.swift */,
+				16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */,
+				11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */,
+				EC9110DB76EDC23748047200 /* TasksView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		37294A03111412CC558DA16A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D07D2261F6E77057EF236865 /* MySimsLife.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5166E7553F4768CB826CAE3B /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				A2D446C04FF679ABC590F02B /* InsightsView.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		860B1F04B569895CE1A0C172 /* MySimsLife */ = {
+			isa = PBXGroup;
+			children = (
+				C9A1445059387B20FA3F1C97 /* Assets.xcassets */,
+				D25F0B0FBBA6216B5E2A7C1B /* App */,
+				8B8950864803BD5681407477 /* Models */,
+				CF4A6D7E68704DB4F1B2EEA8 /* Store */,
+				D94CDEB6721A72ED9B62A2D2 /* Theme */,
+				B0FB5E5823E505365B2AB1CF /* Views */,
+			);
+			path = MySimsLife;
+			sourceTree = "<group>";
+		};
+		8B8950864803BD5681407477 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CC63F42E68BF4CF120400961 /* ActivityLog.swift */,
+				8BCD270AEA7272BF4535857B /* Aspiration.swift */,
+				AFF22A33BD093A1B056C7F20 /* LifeTask.swift */,
+				7D96C730292A9BE8FC42050E /* NeedType.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA3C9F9D08EBD0C3ED874D6C = {
+			isa = PBXGroup;
+			children = (
+				860B1F04B569895CE1A0C172 /* MySimsLife */,
+				37294A03111412CC558DA16A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B0FB5E5823E505365B2AB1CF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */,
+				2F919F9F513EBD67BDF7C982 /* Dashboard */,
+				E91AB16E6E22AE0C6D9D4EA1 /* History */,
+				5166E7553F4768CB826CAE3B /* Insights */,
+				C4850408F321734EE2C717E5 /* Onboarding */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C4850408F321734EE2C717E5 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				DB05123DDA91452D04ECF598 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		CF4A6D7E68704DB4F1B2EEA8 /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
+				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
+		D25F0B0FBBA6216B5E2A7C1B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				9B65542E7FDCDD445172D75D /* MySimsLifeApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D94CDEB6721A72ED9B62A2D2 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */,
+				5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		E91AB16E6E22AE0C6D9D4EA1 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				138DC9B9C1F133F5234DEA6E /* HistoryView.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		16CCC711D7C9D0AC37FD9D64 /* MySimsLife */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 852320921A8F1338F3526B08 /* Build configuration list for PBXNativeTarget "MySimsLife" */;
+			buildPhases = (
+				250663FE1E981362C7F1D0F3 /* Sources */,
+				7DAB49417F4C3F86FAD84A96 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MySimsLife;
+			packageProductDependencies = (
+			);
+			productName = MySimsLife;
+			productReference = D07D2261F6E77057EF236865 /* MySimsLife.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4F9F5FC4E0EF619C522BB040 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					16CCC711D7C9D0AC37FD9D64 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = EE4C8A8DCF6ABC1F014FE885 /* Build configuration list for PBXProject "MySimsLife" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = AA3C9F9D08EBD0C3ED874D6C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 37294A03111412CC558DA16A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				16CCC711D7C9D0AC37FD9D64 /* MySimsLife */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7DAB49417F4C3F86FAD84A96 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		250663FE1E981362C7F1D0F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */,
+				8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */,
+				36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */,
+				FF896F51D241A20358C02638 /* AspirationEditor.swift in Sources */,
+				AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */,
+				2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */,
+				44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */,
+				E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */,
+				4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */,
+				47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */,
+				B225030E1A301A4F81994798 /* InsightsView.swift in Sources */,
+				DBD3729B3F256F2FC5E01FF0 /* LifeTask.swift in Sources */,
+				3AF8217AA126411442012216 /* MySimsLifeApp.swift in Sources */,
+				F55FACB9DC27CCA2615407AD /* NeedBarView.swift in Sources */,
+				CC86534924BE181C555415DE /* NeedStore.swift in Sources */,
+				DF07AB16C4047E26360064E4 /* NeedType.swift in Sources */,
+				80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */,
+				C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */,
+				2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */,
+				67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */,
+				0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */,
+				247F296E0D62040182133FA2 /* TasksView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0DB6B24057076957EDEB1AFE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		8260B6D178B1D4C82D989AB9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_GENERATION_MODE = GeneratedByXcode;
+				INFOPLIST_KEY_CFBundleDisplayName = "My Sims Life";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mysims.life;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		93C4F67F99A3ECC2EF6B28DB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_GENERATION_MODE = GeneratedByXcode;
+				INFOPLIST_KEY_CFBundleDisplayName = "My Sims Life";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mysims.life;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DD60C5C2739365E0CBC1E9C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		852320921A8F1338F3526B08 /* Build configuration list for PBXNativeTarget "MySimsLife" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93C4F67F99A3ECC2EF6B28DB /* Debug */,
+				8260B6D178B1D4C82D989AB9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EE4C8A8DCF6ABC1F014FE885 /* Build configuration list for PBXProject "MySimsLife" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD60C5C2739365E0CBC1E9C9 /* Debug */,
+				0DB6B24057076957EDEB1AFE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4F9F5FC4E0EF619C522BB040 /* Project object */;
+}

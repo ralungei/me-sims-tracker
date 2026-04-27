@@ -7,7 +7,6 @@ struct NeedBarView: View {
     let value: Double
     var recentActions: [NeedStore.LastActionRecord] = []
     var compact: Bool = true
-    var alwaysOn: Bool = false
     var onTap: () -> Void = {}
     var onRemoveAction: (Int) -> Void = { _ in }
 
@@ -21,11 +20,10 @@ struct NeedBarView: View {
     private var fill: Color { SimsTheme.needFill(hue: hue, value: value) }
     private var track: Color { SimsTheme.needTrack(hue: hue) }
 
-    private var pipHeight: CGFloat { alwaysOn ? 14 : (compact ? 10 : 12) }
-    private var tileSize: CGFloat { alwaysOn ? 52 : (compact ? 40 : 46) }
+    private var pipHeight: CGFloat { compact ? 10 : 12 }
+    private var tileSize: CGFloat { compact ? 40 : 46 }
     private var nameFont: Font {
-        .system(alwaysOn ? .body : (compact ? .subheadline : .body),
-                design: .rounded, weight: .bold)
+        .system(compact ? .subheadline : .body, design: .rounded, weight: .bold)
     }
 
     var body: some View {

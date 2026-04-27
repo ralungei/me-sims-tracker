@@ -10,11 +10,8 @@ struct DashboardView: View {
     @State private var showAspirationEditor: Bool = false
     @State private var editingTask: LifeTask?
     @State private var showTaskEditor: Bool = false
-    @State private var now = Date()
 
     private var isCompact: Bool { sizeClass == .compact }
-
-    private let clockTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
@@ -54,7 +51,6 @@ struct DashboardView: View {
                 .transition(.identity)
             }
         }
-        .onReceive(clockTimer) { _ in now = Date() }
         .sheet(isPresented: $showAspirationEditor, onDismiss: { editingAspiration = nil }) {
             AspirationEditor(existing: editingAspiration)
                 .environment(store)
@@ -92,45 +88,12 @@ struct DashboardView: View {
     // MARK: - Greeting block (saludo · hora · fecha · estado)
 
     private var greetingBlock: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 6) {
-                Text(timeOfDayGreeting)
-                    .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                    .tracking(-0.5)
-                if !userName.isEmpty {
-                    Text(userName)
-                        .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(SimsTheme.accentWarm)
-                        .tracking(-0.5)
-                }
-            }
-
-            HStack(spacing: 8) {
-                Text(now, format: .dateTime.hour().minute())
-                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-                    .monospacedDigit()
-                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
-                Text(now, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
-                    .font(.system(size: isCompact ? 13 : 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-                    .textCase(.lowercase)
-                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
-                Text(moodCopy)
-                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(SimsTheme.plumbobColor(for: store.overallMood))
-            }
-        }
-    }
-
-    private var timeOfDayGreeting: String {
-        let hour = Calendar.current.component(.hour, from: now)
-        switch hour {
-        case 6..<13:  return "Buenos días,"
-        case 13..<20: return "Buenas tardes,"
-        default:      return "Buenas noches,"
-        }
+        TimeAwareGreeting(
+            userName: userName,
+            isCompact: isCompact,
+            moodCopy: moodCopy,
+            moodColor: SimsTheme.plumbobColor(for: store.overallMood)
+        )
     }
 
     private var moodCopy: String {
@@ -345,6 +308,60 @@ struct DashboardView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Time-aware greeting (isolated so the 30s tick doesn't invalidate the whole dashboard)
+
+private struct TimeAwareGreeting: View {
+    let userName: String
+    let isCompact: Bool
+    let moodCopy: String
+    let moodColor: Color
+
+    @State private var now = Date()
+    private let clockTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(greeting)
+                    .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tracking(-0.5)
+                if !userName.isEmpty {
+                    Text(userName)
+                        .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(SimsTheme.accentWarm)
+                        .tracking(-0.5)
+                }
+            }
+
+            HStack(spacing: 8) {
+                Text(now, format: .dateTime.hour().minute())
+                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(SimsTheme.textSecondary)
+                    .monospacedDigit()
+                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
+                Text(now, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
+                    .font(.system(size: isCompact ? 13 : 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(SimsTheme.textSecondary)
+                    .textCase(.lowercase)
+                Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
+                Text(moodCopy)
+                    .font(.system(size: isCompact ? 13 : 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(moodColor)
+            }
+        }
+        .onReceive(clockTimer) { _ in now = Date() }
+    }
+
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: now) {
+        case 6..<13:  return "Buenos días,"
+        case 13..<20: return "Buenas tardes,"
+        default:      return "Buenas noches,"
         }
     }
 }

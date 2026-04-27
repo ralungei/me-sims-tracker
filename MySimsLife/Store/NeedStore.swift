@@ -218,7 +218,10 @@ final class NeedStore {
     }
 
     var activeAlerts: [SimAlert] {
-        let hour = Calendar.current.component(.hour, from: Date())
+        let now = Date()
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: now)
+        let weekday = calendar.component(.weekday, from: now)
         var alerts: [SimAlert] = []
 
         let v = { (n: NeedType) -> Double in self.needs[n] ?? 0.5 }
@@ -294,7 +297,6 @@ final class NeedStore {
                                    icon: "exclamationmark.triangle.fill", severity: .urgent))
         }
 
-        let weekday = Calendar.current.component(.weekday, from: Date())
         let isWeekend = weekday == 1 || weekday == 7
         if isWeekend && v(.social) < 0.40 && hour >= 10 && hour <= 20 {
             alerts.append(SimAlert(message: "Es fin de semana — buen momento para socializar",

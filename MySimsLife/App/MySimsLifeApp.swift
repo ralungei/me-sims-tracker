@@ -8,11 +8,8 @@ struct MySimsLifeApp: App {
 
     let modelContainer: ModelContainer = {
         let schema = Schema([ActivityLog.self, Aspiration.self, LifeTask.self])
-        // Try CloudKit → on-disk local → in-memory. The last fallback guarantees the app boots.
+        // CloudKit disabled: requires paid Apple Developer Program. Local-only for now.
         let configs: [ModelConfiguration] = [
-            ModelConfiguration(schema: schema,
-                               isStoredInMemoryOnly: false,
-                               cloudKitDatabase: .private("iCloud.com.mysims.life")),
             ModelConfiguration(schema: schema, isStoredInMemoryOnly: false),
             ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         ]

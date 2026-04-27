@@ -257,12 +257,3 @@ struct QuickAction: Identifiable, Equatable {
     }
 }
 
-// MARK: - Moodlet (kept for data model compatibility, not shown in UI)
-
-enum Moodlet: String, CaseIterable, Codable, Identifiable {
-    case stress, anxiety, pain, sick, sad, burnout
-    var id: String { rawValue }
-    var displayName: String { rawValue }
-    var icon: String { "circle" }
-    var moodPenalty: Double { 0.1 }
-}

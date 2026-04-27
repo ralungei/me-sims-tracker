@@ -4,7 +4,6 @@ import SwiftUI
 
 struct AspirationsRow: View {
     let aspirations: [Aspiration]
-    var alwaysOn: Bool = false
     var horizontalInset: CGFloat = 32
     var onTap: (Aspiration) -> Void
     var onAdd: () -> Void = {}
@@ -32,9 +31,9 @@ struct AspirationsRow: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    AddAspirationCard(alwaysOn: alwaysOn, onTap: onAdd)
+                    AddAspirationCard(onTap: onAdd)
                     ForEach(aspirations) { asp in
-                        AspirationCard(aspiration: asp, alwaysOn: alwaysOn) {
+                        AspirationCard(aspiration: asp) {
                             onTap(asp)
                         }
                         .contextMenu {
@@ -45,7 +44,7 @@ struct AspirationsRow: View {
                                 Label("Eliminar", systemImage: "trash")
                             }
                         } preview: {
-                            AspirationCard(aspiration: asp, alwaysOn: false) {}
+                            AspirationCard(aspiration: asp) {}
                                 .allowsHitTesting(false)
                         }
                     }
@@ -61,7 +60,6 @@ struct AspirationsRow: View {
 // MARK: - Add card
 
 struct AddAspirationCard: View {
-    var alwaysOn: Bool = false
     let onTap: () -> Void
 
     var body: some View {
@@ -83,7 +81,7 @@ struct AddAspirationCard: View {
                     .foregroundStyle(SimsTheme.textDim)
             }
             .padding(10)
-            .frame(width: alwaysOn ? 110 : 96, height: 86)
+            .frame(width: 96, height: 86)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(SimsTheme.textDim.opacity(0.6),
@@ -98,7 +96,6 @@ struct AddAspirationCard: View {
 
 struct AspirationCard: View {
     let aspiration: Aspiration
-    var alwaysOn: Bool = false
     let onTap: () -> Void
 
     @State private var pulse: Bool = false
@@ -149,7 +146,7 @@ struct AspirationCard: View {
                 detail
             }
             .padding(10)
-            .frame(width: alwaysOn ? 160 : 132, height: 86, alignment: .topLeading)
+            .frame(width: 132, height: 86, alignment: .topLeading)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(bgGradient)

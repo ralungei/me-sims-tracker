@@ -18,6 +18,7 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 Spacer()
 
+                // Outside the .id(step) block so the SCNView isn't recreated on every step change
                 PlumbobView(mood: 0.85, size: 110)
                     .padding(.bottom, 32)
 
