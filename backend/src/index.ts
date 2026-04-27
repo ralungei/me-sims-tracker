@@ -12,6 +12,14 @@ type Env = {
 
 const app = new Hono<{ Bindings: Env }>();
 
+/// Wire-format event types. Must stay in sync with iOS `SyncEventType`.
+const EVENT = {
+  aspirations: "aspirations.changed",
+  tasks: "tasks.changed",
+  activityLog: "activity_log.changed",
+  needsState: "needs_state.changed",
+} as const;
+
 async function broadcast(env: Env, message: object, fromClient?: string | null) {
   const id = env.SYNC_HUB.idFromName("global");
   const stub = env.SYNC_HUB.get(id);
@@ -20,6 +28,12 @@ async function broadcast(env: Env, message: object, fromClient?: string | null) 
     method: "POST",
     body: JSON.stringify(enriched)
   });
+}
+
+/// Notify all connected clients about a change, tagged with the originating
+/// client id so the writer can ignore the echo of its own write.
+async function notify(c: { env: Env; req: { header: (k: string) => string | undefined } }, type: string, extra: Record<string, unknown> = {}) {
+  await broadcast(c.env, { type, ...extra }, c.req.header("X-Client-ID"));
 }
 
 app.use("*", cors());
@@ -94,7 +108,7 @@ app.post("/aspirations", async (c) => {
     ts,
     ts
   ).run();
-  await broadcast(c.env, { type: "aspirations.changed" }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.aspirations);
   return c.json({ id, ok: true });
 });
 
@@ -115,7 +129,7 @@ app.patch("/aspirations/:id", async (c) => {
   await c.env.DB.prepare(
     `UPDATE aspirations SET ${fields.join(", ")} WHERE id = ?`
   ).bind(...values).run();
-  await broadcast(c.env, { type: "aspirations.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.aspirations, { id });
   return c.json({ ok: true });
 });
 
@@ -124,7 +138,7 @@ app.delete("/aspirations/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE aspirations SET deleted_at = ?, updated_at = ? WHERE id = ?"
   ).bind(now(), now(), id).run();
-  await broadcast(c.env, { type: "aspirations.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.aspirations, { id });
   return c.json({ ok: true });
 });
 
@@ -158,7 +172,7 @@ app.post("/tasks", async (c) => {
     ts,
     ts
   ).run();
-  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.tasks, { id });
   return c.json({ id, ok: true });
 });
 
@@ -179,7 +193,7 @@ app.patch("/tasks/:id", async (c) => {
   await c.env.DB.prepare(
     `UPDATE tasks SET ${fields.join(", ")} WHERE id = ?`
   ).bind(...values).run();
-  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.tasks, { id });
   return c.json({ ok: true });
 });
 
@@ -188,7 +202,7 @@ app.delete("/tasks/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE id = ?"
   ).bind(now(), now(), id).run();
-  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.tasks, { id });
   return c.json({ ok: true });
 });
 
@@ -225,7 +239,7 @@ app.post("/activity-log", async (c) => {
     body.timestamp ?? ts,
     ts
   ).run();
-  await broadcast(c.env, { type: "activity_log.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.activityLog, { id });
   return c.json({ id, ok: true });
 });
 
@@ -234,7 +248,7 @@ app.delete("/activity-log/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE activity_log SET deleted_at = ? WHERE id = ?"
   ).bind(now(), id).run();
-  await broadcast(c.env, { type: "activity_log.changed", id }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.activityLog, { id });
   return c.json({ ok: true });
 });
 
@@ -264,7 +278,7 @@ app.put("/needs-state/:need", async (c) => {
     body.enabled === false ? 0 : 1,
     ts
   ).run();
-  await broadcast(c.env, { type: "needs_state.changed", need }, c.req.header("X-Client-ID"));
+  await notify(c, EVENT.needsState, { need });
   return c.json({ ok: true });
 });
 

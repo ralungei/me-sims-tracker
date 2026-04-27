@@ -16,18 +16,17 @@ actor BackendSync {
 
     /// Stable per-install identifier so we can ignore broadcasts originated by ourselves.
     nonisolated static let clientID: String = {
-        let key = "backendClientID"
-        if let existing = UserDefaults.standard.string(forKey: key) { return existing }
+        if let existing = UserDefaults.standard.string(forKey: UDKey.backendClientID) { return existing }
         let new = UUID().uuidString
-        UserDefaults.standard.set(new, forKey: key)
+        UserDefaults.standard.set(new, forKey: UDKey.backendClientID)
         return new
     }()
 
     private init() {}
 
     private var lastSync: Int64 {
-        get { Int64(UserDefaults.standard.integer(forKey: "backendLastSyncMs")) }
-        set { UserDefaults.standard.set(newValue, forKey: "backendLastSyncMs") }
+        get { Int64(UserDefaults.standard.integer(forKey: UDKey.backendLastSyncMs)) }
+        set { UserDefaults.standard.set(newValue, forKey: UDKey.backendLastSyncMs) }
     }
 
     // MARK: Generic request
@@ -42,8 +41,8 @@ actor BackendSync {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue(Self.apiKey, forHTTPHeaderField: "X-API-Key")
-        req.setValue(Self.clientID, forHTTPHeaderField: "X-Client-ID")
+        req.setValue(Self.apiKey, forHTTPHeaderField: HTTPHeader.apiKey)
+        req.setValue(Self.clientID, forHTTPHeaderField: HTTPHeader.clientID)
         if let body {
             req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }

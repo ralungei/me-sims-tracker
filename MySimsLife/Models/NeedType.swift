@@ -243,17 +243,14 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - Quick Action
 
-struct QuickAction: Identifiable, Equatable {
-    let id = UUID()
+struct QuickAction: Identifiable, Equatable, Hashable {
     let name: String
     let icon: String
     let boost: Double
     var needType: NeedType = .energy
 
+    /// Stable identity so SwiftUI doesn't recreate the chip on every parent render.
+    var id: String { "\(needType.rawValue):\(name)" }
     var isNegative: Bool { boost < 0 }
-
-    static func == (lhs: QuickAction, rhs: QuickAction) -> Bool {
-        lhs.id == rhs.id
-    }
 }
 

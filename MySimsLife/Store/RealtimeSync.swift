@@ -47,8 +47,8 @@ final class RealtimeSync {
         guard let url = URL(string: "\(scheme)://\(host)\(port)/events") else { return }
 
         var req = URLRequest(url: url)
-        req.setValue(BackendCredentials.apiKey, forHTTPHeaderField: "X-API-Key")
-        req.setValue(BackendSync.clientID, forHTTPHeaderField: "X-Client-ID")
+        req.setValue(BackendCredentials.apiKey, forHTTPHeaderField: HTTPHeader.apiKey)
+        req.setValue(BackendSync.clientID, forHTTPHeaderField: HTTPHeader.clientID)
 
         let task = URLSession.shared.webSocketTask(with: req)
         self.task = task
@@ -82,7 +82,8 @@ final class RealtimeSync {
         guard let data = text.data(using: .utf8),
               let event = try? JSONDecoder().decode(ServerEvent.self, from: data)
         else { return }
-        if event.type == "hello" || event.type == "pong" { return }
+        let kind = SyncEventType(rawValue: event.type)
+        if kind == .hello || kind == .pong { return }
         if event.from_client == BackendSync.clientID { return }   // echo of our own write
         if let context = modelContext {
             Task { await BackendSync.shared.pull(into: context) }

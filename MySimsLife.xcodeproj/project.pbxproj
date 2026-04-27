@@ -13,6 +13,7 @@
 		180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */; };
 		2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */; };
 		247F296E0D62040182133FA2 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9110DB76EDC23748047200 /* TasksView.swift */; };
+		26608A9C2B68F76CB2EBB835 /* SyncConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06DAE4DF442CEB63E0E98903 /* SyncConstants.swift */; };
 		2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9A1445059387B20FA3F1C97 /* Assets.xcassets */; };
 		2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */; };
 		36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCD270AEA7272BF4535857B /* Aspiration.swift */; };
@@ -38,6 +39,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		06DAE4DF442CEB63E0E98903 /* SyncConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncConstants.swift; sourceTree = "<group>"; };
 		11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditor.swift; sourceTree = "<group>"; };
 		138DC9B9C1F133F5234DEA6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsSheet.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
 				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
 				890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */,
+				06DAE4DF442CEB63E0E98903 /* SyncConstants.swift */,
 			);
 			path = Store;
 			sourceTree = "<group>";
@@ -297,6 +300,7 @@
 				2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */,
 				180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */,
 				67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */,
+				26608A9C2B68F76CB2EBB835 /* SyncConstants.swift in Sources */,
 				0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */,
 				247F296E0D62040182133FA2 /* TasksView.swift in Sources */,
 			);

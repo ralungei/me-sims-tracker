@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-#if os(iOS)
+#if canImport(UIKit)
 import UIKit
 #endif
 
@@ -16,6 +16,8 @@ final class NeedStore {
     var aspirations: [Aspiration] = []
     var tasks: [LifeTask] = []
     private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
+    private var recentActionKeys: Set<String> = []
+    private var alertsCache: (hour: Int, hash: Int, alerts: [SimAlert])?
 
     static let recentActionsLimit = 3
 
@@ -53,15 +55,25 @@ final class NeedStore {
         saveEnabledNeeds()
     }
 
+    // MARK: - Sync helpers
+
+    private func firePush(_ asp: Aspiration) {
+        Task { await BackendSync.shared.pushAspiration(asp) }
+    }
+
+    private func firePush(_ task: LifeTask) {
+        Task { await BackendSync.shared.pushTask(task) }
+    }
+
     private func saveEnabledNeeds() {
         let raw = enabledNeeds.map { $0.rawValue }
         if let data = try? JSONEncoder().encode(raw) {
-            UserDefaults.standard.set(data, forKey: "enabledNeeds")
+            UserDefaults.standard.set(data, forKey: UDKey.enabledNeeds)
         }
     }
 
     private func loadEnabledNeeds() {
-        guard let data = UserDefaults.standard.data(forKey: "enabledNeeds"),
+        guard let data = UserDefaults.standard.data(forKey: UDKey.enabledNeeds),
               let raw = try? JSONDecoder().decode([String].self, from: data),
               !raw.isEmpty
         else { return }
@@ -208,6 +220,17 @@ final class NeedStore {
                 )
             }
         }
+        rebuildRecentActionKeys()
+    }
+
+    private func rebuildRecentActionKeys() {
+        var set = Set<String>()
+        for (need, records) in recentActionsCache {
+            for rec in records {
+                set.insert("\(need.rawValue):\(rec.actionName)")
+            }
+        }
+        recentActionKeys = set
     }
 
     // MARK: - Calibration
@@ -279,6 +302,14 @@ final class NeedStore {
         let calendar = Calendar.current
         let hour = calendar.component(.hour, from: now)
         let weekday = calendar.component(.weekday, from: now)
+
+        // Re-use the previous result while neither the hour nor the rounded
+        // need values have changed — alerts are stable second-to-second.
+        let stateHash = needsStateHash()
+        if let cached = alertsCache, cached.hour == hour, cached.hash == stateHash {
+            return cached.alerts
+        }
+
         var alerts: [SimAlert] = []
 
         let v = { (n: NeedType) -> Double in self.needs[n] ?? 0.5 }
@@ -360,7 +391,20 @@ final class NeedStore {
                                    icon: "person.3.fill", severity: .nudge))
         }
 
-        return Array(alerts.prefix(3))
+        let result = Array(alerts.prefix(3))
+        alertsCache = (hour: hour, hash: stateHash, alerts: result)
+        return result
+    }
+
+    /// Cheap hash that only changes when an alert-relevant value tier flips
+    /// (we round to the closest 5% so tiny decay ticks don't bust the cache).
+    private func needsStateHash() -> Int {
+        var hasher = Hasher()
+        for need in NeedType.allCases {
+            hasher.combine(need.rawValue)
+            hasher.combine(Int(((needs[need] ?? 0) * 20).rounded()))
+        }
+        return hasher.finalize()
     }
 
     /// Below this, a need is "low" and earns top-up suggestions.
@@ -405,13 +449,9 @@ final class NeedStore {
             candidates += makeActions(need, limit: Self.topUpPerNeed)
         }
 
-        let recentKeys: Set<String> = NeedType.allCases.reduce(into: []) { acc, need in
-            for rec in recentActions(for: need) { acc.insert("\(need.rawValue):\(rec.actionName)") }
-        }
-
         let filtered = candidates
             .filter { enabledNeeds.contains($0.needType)
-                      && !recentKeys.contains("\($0.needType.rawValue):\($0.name)")
+                      && !recentActionKeys.contains("\($0.needType.rawValue):\($0.name)")
                       && (needs[$0.needType] ?? 0) < Self.highNeedThreshold }
             .deduplicated()
         return Array(filtered.prefix(5))
@@ -466,7 +506,7 @@ final class NeedStore {
         try? context.save()
         refreshAspirations()
         triggerHaptic(negative: false)
-        Task { await BackendSync.shared.pushAspiration(aspiration) }
+        firePush(aspiration)
     }
 
     func addAspiration(_ aspiration: Aspiration) {
@@ -475,7 +515,7 @@ final class NeedStore {
         context.insert(aspiration)
         try? context.save()
         refreshAspirations()
-        Task { await BackendSync.shared.pushAspiration(aspiration) }
+        firePush(aspiration)
     }
 
     func updateAspiration(_ aspiration: Aspiration) {
@@ -483,7 +523,7 @@ final class NeedStore {
         guard let context = modelContext else { return }
         try? context.save()
         refreshAspirations()
-        Task { await BackendSync.shared.pushAspiration(aspiration) }
+        firePush(aspiration)
     }
 
     func deleteAspiration(_ aspiration: Aspiration) {
@@ -511,14 +551,14 @@ final class NeedStore {
         context.insert(task)
         try? context.save()
         refreshTasks()
-        Task { await BackendSync.shared.pushTask(task) }
+        firePush(task)
     }
 
     func updateTask(_ task: LifeTask) {
         guard let context = modelContext else { return }
         try? context.save()
         refreshTasks()
-        Task { await BackendSync.shared.pushTask(task) }
+        firePush(task)
     }
 
     func deleteTask(_ task: LifeTask) {
@@ -553,7 +593,7 @@ final class NeedStore {
         try? context.save()
         refreshTasks()
         triggerHaptic(negative: false)
-        Task { await BackendSync.shared.pushTask(task) }
+        firePush(task)
     }
 
     /// Tasks due today or overdue, with not-done first, then ordered by time.
@@ -607,12 +647,12 @@ final class NeedStore {
             ]
         }
         if let data = try? JSONSerialization.data(withJSONObject: dict) {
-            UserDefaults.standard.set(data, forKey: "needsState")
+            UserDefaults.standard.set(data, forKey: UDKey.needsState)
         }
     }
 
     private func loadNeedsState() {
-        guard let data = UserDefaults.standard.data(forKey: "needsState"),
+        guard let data = UserDefaults.standard.data(forKey: UDKey.needsState),
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Double]]
         else { return }
 

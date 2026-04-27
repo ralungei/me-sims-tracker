@@ -138,9 +138,9 @@ struct NeedBarView: View {
                             ))
                     )
                     .frame(height: pipHeight)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.75).delay(Double(i) * 0.015), value: filled)
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: filled)
     }
 }
 

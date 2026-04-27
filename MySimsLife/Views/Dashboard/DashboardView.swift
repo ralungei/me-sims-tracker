@@ -163,7 +163,6 @@ struct DashboardView: View {
                         )
                         .frame(width: pipWidth, height: 10)
                         .overlay(alignment: .leading) {
-                            // Center divider between pips 5 and 6
                             if i == half {
                                 Rectangle()
                                     .fill(Color.white.opacity(0.45))
@@ -171,10 +170,9 @@ struct DashboardView: View {
                                     .offset(x: -3)
                             }
                         }
-                        .animation(.spring(response: 0.5, dampingFraction: 0.75)
-                                    .delay(Double(abs(i - half)) * 0.02), value: signedAmount)
                 }
             }
+            .animation(.easeInOut(duration: 0.3), value: signedAmount)
 
             HStack(spacing: 4) {
                 Text("VITAL")

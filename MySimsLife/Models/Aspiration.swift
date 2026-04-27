@@ -191,38 +191,4 @@ final class Aspiration {
         return min(max(1, diff + 1), total)
     }
 
-    func progress(reference: Date = Date()) -> Double {
-        switch kind {
-        case .dailySimple, .dailyTimed, .weekly:
-            return isDoneNow(reference: reference) ? 1.0 : 0.0
-        case .treatment:
-            guard let day = treatmentDay(reference: reference), let total = totalDays else { return 0 }
-            return Double(day) / Double(total)
-        }
-    }
-
-    // MARK: - Defaults seed
-
-    static func seedDefaults(into context: ModelContext) {
-        let aspirations: [Aspiration] = [
-            Aspiration(
-                name: "Gateway Tapes", emoji: "🧘",
-                kind: .dailyTimed, hue: 258, xp: 25,
-                durationMinutes: 25
-            ),
-            Aspiration(
-                name: "Creatina 5g", emoji: "💊",
-                kind: .dailySimple, hue: 22, xp: 10
-            ),
-            Aspiration(
-                name: "Reel en IG", emoji: "🎬",
-                kind: .weekly, hue: 295, xp: 50
-            )
-        ]
-        for (i, asp) in aspirations.enumerated() {
-            asp.sortOrder = i
-            context.insert(asp)
-        }
-        try? context.save()
-    }
 }
