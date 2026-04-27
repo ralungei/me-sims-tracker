@@ -3,6 +3,7 @@
 *.xcworkspace/xcuserdata/
 DerivedData/
 build/
+build-device/
 *.pbxuser
 *.mode1v3
 *.mode2v3
