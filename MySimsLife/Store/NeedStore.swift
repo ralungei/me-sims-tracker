@@ -204,7 +204,10 @@ final class NeedStore {
         let removed = logs[index]
         let current = needs[need] ?? 0
         let delta = removed.boostAmount / 100.0
+        let now = Date()
         needs[need] = max(0.0, min(1.0, current - delta))
+        // Bump the timestamp so other devices accept the lower value over their cached one.
+        lastUpdated[need] = now
 
         let removedID = removed.id
         context.delete(removed)
@@ -212,11 +215,10 @@ final class NeedStore {
         refreshRecentActionsCache(for: need)
         saveNeedsState()
         let value = needs[need] ?? 0
-        let needLastUpdated = lastUpdated[need] ?? Date()
         let enabled = enabledNeeds.contains(need)
         Task {
             await BackendSync.shared.deleteActivityLog(id: removedID)
-            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: needLastUpdated, enabled: enabled)
+            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: now, enabled: enabled)
         }
     }
 

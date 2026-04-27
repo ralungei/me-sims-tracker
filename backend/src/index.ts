@@ -294,8 +294,9 @@ app.get("/sync", async (c) => {
       "SELECT * FROM tasks WHERE updated_at > ? ORDER BY sort_order"
     ).bind(since).all(),
     c.env.DB.prepare(
-      "SELECT * FROM activity_log WHERE created_at > ? ORDER BY timestamp DESC LIMIT 500"
-    ).bind(since).all(),
+      // Include soft-deleted rows so undo propagates: created_at OR deleted_at past `since`.
+      "SELECT * FROM activity_log WHERE created_at > ? OR (deleted_at IS NOT NULL AND deleted_at > ?) ORDER BY timestamp DESC LIMIT 500"
+    ).bind(since, since).all(),
     c.env.DB.prepare(
       "SELECT * FROM needs_state WHERE updated_at > ?"
     ).bind(since).all()
