@@ -34,12 +34,16 @@ struct HistoryView: View {
                         }
                     }
                     .scrollContentBackground(.hidden)
+                    #if os(iOS)
                     .listStyle(.insetGrouped)
+                    #else
+                    .listStyle(.inset)
+                    #endif
                 }
             }
             .navigationTitle("Historial")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     filterMenu
                 }
             }

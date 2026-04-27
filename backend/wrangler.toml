@@ -7,6 +7,14 @@ binding = "DB"
 database_name = "me-sims-tracker"
 database_id = "f6b10917-9007-4103-a832-22205ca5ad1b"
 
+[[durable_objects.bindings]]
+name = "SYNC_HUB"
+class_name = "SyncHub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SyncHub"]
+
 [vars]
 # API_KEY se setea como secret en producción con: wrangler secret put API_KEY
 # En dev se lee de .dev.vars

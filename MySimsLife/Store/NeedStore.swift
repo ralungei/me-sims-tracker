@@ -70,13 +70,20 @@ final class NeedStore {
 
     func configure(with context: ModelContext) {
         modelContext = context
-        ensureSeedData()
         refreshAspirations()
         refreshTasks()
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
         Task { await BackendSync.shared.pull(into: context); refreshAspirations(); refreshTasks(); refreshRecentActionsCache() }
+        Task { @MainActor in
+            RealtimeSync.shared.onEvent = { [weak self] _ in
+                self?.refreshAspirations()
+                self?.refreshTasks()
+                self?.refreshRecentActionsCache()
+            }
+            RealtimeSync.shared.start(with: context)
+        }
     }
 
     func onBecomeActive() {
@@ -86,6 +93,9 @@ final class NeedStore {
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
+        if let context = modelContext {
+            Task { @MainActor in RealtimeSync.shared.start(with: context) }
+        }
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         #endif
@@ -95,6 +105,7 @@ final class NeedStore {
         saveNeedsState()
         decayTimer?.invalidate()
         decayTimer = nil
+        Task { @MainActor in RealtimeSync.shared.stop() }
     }
 
     // MARK: - Actions
@@ -437,13 +448,6 @@ final class NeedStore {
     var upcomingAspirations: [Aspiration] {
         aspirations.filter { $0.isScheduledForFuture() }
             .sorted { ($0.startedAt ?? Date.distantFuture) < ($1.startedAt ?? Date.distantFuture) }
-    }
-
-    private func ensureSeedData() {
-        guard let context = modelContext else { return }
-        let count = (try? context.fetchCount(FetchDescriptor<Aspiration>())) ?? 0
-        guard count == 0 else { return }
-        Aspiration.seedDefaults(into: context)
     }
 
     func toggleAspiration(_ aspiration: Aspiration) {

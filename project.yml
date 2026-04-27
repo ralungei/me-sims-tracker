@@ -11,7 +11,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: T6Q58Y6KX7
+    CODE_SIGN_STYLE: Automatic
 
 targets:
   MySimsLife:
@@ -28,7 +29,7 @@ targets:
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "My Sims Life"
+        INFOPLIST_KEY_CFBundleDisplayName: "Me"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.lifestyle"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

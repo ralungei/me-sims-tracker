@@ -13,6 +13,16 @@ actor BackendSync {
     static var apiKey:  String { BackendCredentials.apiKey }
 
     static let shared = BackendSync()
+
+    /// Stable per-install identifier so we can ignore broadcasts originated by ourselves.
+    nonisolated static let clientID: String = {
+        let key = "backendClientID"
+        if let existing = UserDefaults.standard.string(forKey: key) { return existing }
+        let new = UUID().uuidString
+        UserDefaults.standard.set(new, forKey: key)
+        return new
+    }()
+
     private init() {}
 
     private var lastSync: Int64 {
@@ -33,6 +43,7 @@ actor BackendSync {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(Self.apiKey, forHTTPHeaderField: "X-API-Key")
+        req.setValue(Self.clientID, forHTTPHeaderField: "X-Client-ID")
         if let body {
             req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }
@@ -58,7 +69,25 @@ actor BackendSync {
     func pull(into context: ModelContext) async {
         do {
             let data = try await request("/sync?since=\(lastSync)")
-            let decoded = try JSONDecoder().decode(SyncResponse.self, from: data)
+            let decoded: SyncResponse
+            do {
+                decoded = try JSONDecoder().decode(SyncResponse.self, from: data)
+            } catch let DecodingError.dataCorrupted(ctx) {
+                print("[BackendSync] decode dataCorrupted: \(ctx)")
+                return
+            } catch let DecodingError.keyNotFound(key, ctx) {
+                print("[BackendSync] decode keyNotFound: \(key.stringValue) — \(ctx.codingPath.map(\.stringValue))")
+                return
+            } catch let DecodingError.typeMismatch(type, ctx) {
+                print("[BackendSync] decode typeMismatch: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)")
+                return
+            } catch let DecodingError.valueNotFound(type, ctx) {
+                print("[BackendSync] decode valueNotFound: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)")
+                return
+            } catch {
+                print("[BackendSync] decode other: \(error)")
+                return
+            }
             await MainActor.run {
                 applyAspirations(decoded.aspirations, context: context)
                 applyTasks(decoded.tasks, context: context)
@@ -210,7 +239,7 @@ actor BackendSync {
     func pushNeedState(_ need: NeedType, value: Double, lastUpdated: Date, enabled: Bool) async {
         let body = NeedStateDTO(value: value,
                                 last_updated: Int64(lastUpdated.timeIntervalSince1970 * 1000),
-                                enabled: enabled)
+                                enabled: enabled ? 1 : 0)
         _ = try? await request("/needs-state/\(need.rawValue)", method: "PUT", body: body)
     }
 }
@@ -313,7 +342,8 @@ struct ActivityLogDTO: Codable {
 struct NeedStateDTO: Codable {
     let value: Double
     let last_updated: Int64
-    let enabled: Bool
+    /// SQLite stores booleans as INTEGER (0/1). Keep the wire-format Int and convert at use sites.
+    let enabled: Int
 }
 
 // MARK: - Type-erased encoder helper

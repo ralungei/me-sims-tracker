@@ -1,20 +1,37 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { SyncHub } from "./syncHub";
+
+export { SyncHub };
 
 type Env = {
   DB: D1Database;
   API_KEY: string;
+  SYNC_HUB: DurableObjectNamespace;
 };
 
 const app = new Hono<{ Bindings: Env }>();
 
+async function broadcast(env: Env, message: object, fromClient?: string | null) {
+  const id = env.SYNC_HUB.idFromName("global");
+  const stub = env.SYNC_HUB.get(id);
+  const enriched = fromClient ? { ...message, from_client: fromClient } : message;
+  await stub.fetch("https://hub/broadcast", {
+    method: "POST",
+    body: JSON.stringify(enriched)
+  });
+}
+
 app.use("*", cors());
 
-// Auth middleware: requires X-API-Key header matching env.API_KEY
+// Auth middleware: requires X-API-Key header matching env.API_KEY.
+// `/events` accepts the key as a query string too, since browsers/URLSession
+// can't always set custom headers on the WebSocket upgrade handshake.
 app.use("*", async (c, next) => {
   if (c.req.path === "/" || c.req.path === "/health") return next();
-  const provided = c.req.header("X-API-Key");
-  if (!provided || provided !== c.env.API_KEY) {
+  const headerKey = c.req.header("X-API-Key");
+  const queryKey = c.req.query("key");
+  if (headerKey !== c.env.API_KEY && queryKey !== c.env.API_KEY) {
     return c.json({ error: "unauthorized" }, 401);
   }
   await next();
@@ -22,6 +39,16 @@ app.use("*", async (c, next) => {
 
 app.get("/", (c) => c.text("me-sims-tracker backend ok"));
 app.get("/health", (c) => c.json({ ok: true, ts: Date.now() }));
+
+// WebSocket endpoint: clients connect here to receive real-time change events.
+app.get("/events", (c) => {
+  if (c.req.header("upgrade")?.toLowerCase() !== "websocket") {
+    return c.text("expected websocket upgrade", 400);
+  }
+  const id = c.env.SYNC_HUB.idFromName("global");
+  const stub = c.env.SYNC_HUB.get(id);
+  return stub.fetch("https://hub/connect", c.req.raw);
+});
 
 const now = () => Date.now();
 const newId = () => crypto.randomUUID();
@@ -37,6 +64,12 @@ app.get("/aspirations", async (c) => {
 
 app.post("/aspirations", async (c) => {
   const body = await c.req.json<any>();
+  if (!body?.name || typeof body.name !== "string") {
+    return c.json({ error: "name is required" }, 400);
+  }
+  if (!body?.kind || typeof body.kind !== "string") {
+    return c.json({ error: "kind is required" }, 400);
+  }
   const id = body.id ?? newId();
   const ts = now();
   await c.env.DB.prepare(
@@ -61,6 +94,7 @@ app.post("/aspirations", async (c) => {
     ts,
     ts
   ).run();
+  await broadcast(c.env, { type: "aspirations.changed" }, c.req.header("X-Client-ID"));
   return c.json({ id, ok: true });
 });
 
@@ -81,6 +115,7 @@ app.patch("/aspirations/:id", async (c) => {
   await c.env.DB.prepare(
     `UPDATE aspirations SET ${fields.join(", ")} WHERE id = ?`
   ).bind(...values).run();
+  await broadcast(c.env, { type: "aspirations.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 
@@ -89,6 +124,7 @@ app.delete("/aspirations/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE aspirations SET deleted_at = ?, updated_at = ? WHERE id = ?"
   ).bind(now(), now(), id).run();
+  await broadcast(c.env, { type: "aspirations.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 
@@ -103,6 +139,9 @@ app.get("/tasks", async (c) => {
 
 app.post("/tasks", async (c) => {
   const body = await c.req.json<any>();
+  if (!body?.title || typeof body.title !== "string") {
+    return c.json({ error: "title is required" }, 400);
+  }
   const id = body.id ?? newId();
   const ts = now();
   await c.env.DB.prepare(
@@ -119,6 +158,7 @@ app.post("/tasks", async (c) => {
     ts,
     ts
   ).run();
+  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ id, ok: true });
 });
 
@@ -139,6 +179,7 @@ app.patch("/tasks/:id", async (c) => {
   await c.env.DB.prepare(
     `UPDATE tasks SET ${fields.join(", ")} WHERE id = ?`
   ).bind(...values).run();
+  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 
@@ -147,6 +188,7 @@ app.delete("/tasks/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE id = ?"
   ).bind(now(), now(), id).run();
+  await broadcast(c.env, { type: "tasks.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 
@@ -183,6 +225,7 @@ app.post("/activity-log", async (c) => {
     body.timestamp ?? ts,
     ts
   ).run();
+  await broadcast(c.env, { type: "activity_log.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ id, ok: true });
 });
 
@@ -191,6 +234,7 @@ app.delete("/activity-log/:id", async (c) => {
   await c.env.DB.prepare(
     "UPDATE activity_log SET deleted_at = ? WHERE id = ?"
   ).bind(now(), id).run();
+  await broadcast(c.env, { type: "activity_log.changed", id }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 
@@ -220,6 +264,7 @@ app.put("/needs-state/:need", async (c) => {
     body.enabled === false ? 0 : 1,
     ts
   ).run();
+  await broadcast(c.env, { type: "needs_state.changed", need }, c.req.header("X-Client-ID"));
   return c.json({ ok: true });
 });
 

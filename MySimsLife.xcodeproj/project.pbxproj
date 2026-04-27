@@ -10,6 +10,7 @@
 		0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */; };
 		158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */; };
 		164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC63F42E68BF4CF120400961 /* ActivityLog.swift */; };
+		180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */; };
 		2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */; };
 		247F296E0D62040182133FA2 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9110DB76EDC23748047200 /* TasksView.swift */; };
 		2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9A1445059387B20FA3F1C97 /* Assets.xcassets */; };
@@ -48,6 +49,7 @@
 		696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoriesEditor.swift; sourceTree = "<group>"; };
 		6A41ADAD8AE08CDEA828817B /* BackendSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSync.swift; sourceTree = "<group>"; };
 		7D96C730292A9BE8FC42050E /* NeedType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedType.swift; sourceTree = "<group>"; };
+		890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeSync.swift; sourceTree = "<group>"; };
 		8BCD270AEA7272BF4535857B /* Aspiration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aspiration.swift; sourceTree = "<group>"; };
 		94B910D402E23B4129BCEA86 /* AspirationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationsView.swift; sourceTree = "<group>"; };
 		9B65542E7FDCDD445172D75D /* MySimsLifeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySimsLifeApp.swift; sourceTree = "<group>"; };
@@ -161,6 +163,7 @@
 				6A41ADAD8AE08CDEA828817B /* BackendSync.swift */,
 				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
 				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
+				890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */,
 			);
 			path = Store;
 			sourceTree = "<group>";
@@ -229,7 +232,8 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					16CCC711D7C9D0AC37FD9D64 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = T6Q58Y6KX7;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -291,6 +295,7 @@
 				80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */,
 				C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */,
 				2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */,
+				180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */,
 				67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */,
 				0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */,
 				247F296E0D62040182133FA2 /* TasksView.swift in Sources */,
@@ -333,9 +338,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = T6Q58Y6KX7;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -367,7 +373,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedByXcode;
-				INFOPLIST_KEY_CFBundleDisplayName = "My Sims Life";
+				INFOPLIST_KEY_CFBundleDisplayName = Me;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -394,7 +400,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedByXcode;
-				INFOPLIST_KEY_CFBundleDisplayName = "My Sims Life";
+				INFOPLIST_KEY_CFBundleDisplayName = Me;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -445,9 +451,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = T6Q58Y6KX7;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
