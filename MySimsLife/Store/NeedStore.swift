@@ -88,16 +88,46 @@ final class NeedStore {
         startDecayTimer()
         recalibrate()
         Task { @MainActor in
-            await BackendSync.shared.pull(into: context)
-            refreshAspirations()
-            refreshTasks()
-            refreshRecentActionsCache()
+            await pullAndApply(context: context)
             RealtimeSync.shared.onEvent = { [weak self] _ in
-                self?.refreshAspirations()
-                self?.refreshTasks()
-                self?.refreshRecentActionsCache()
+                guard let self, let ctx = self.modelContext else { return }
+                Task { @MainActor in await self.pullAndApply(context: ctx) }
             }
             RealtimeSync.shared.start(with: context)
+        }
+    }
+
+    /// Single entry point used both at boot and after every realtime event.
+    /// Pulls the backend delta, applies SwiftData rows, then merges the
+    /// in-memory needs state and refreshes derived caches.
+    @MainActor
+    private func pullAndApply(context: ModelContext) async {
+        let result = await BackendSync.shared.pull(into: context)
+        applyRemoteNeeds(result.needsState)
+        refreshAspirations()
+        refreshTasks()
+        refreshRecentActionsCache()
+    }
+
+    @MainActor
+    private func applyRemoteNeeds(_ remotes: [BackendSync.RemoteNeedState]) {
+        guard !remotes.isEmpty else { return }
+        var changed = false
+        for remote in remotes {
+            guard let need = NeedType(rawValue: remote.needType) else { continue }
+            let remoteUpdated = Date(timeIntervalSince1970: TimeInterval(remote.lastUpdatedMs) / 1000)
+            // Only overwrite if the server's value is newer than what we have.
+            if let local = lastUpdated[need], local >= remoteUpdated { continue }
+            needs[need] = max(0, min(1, remote.value))
+            lastUpdated[need] = remoteUpdated
+            if remote.enabled { enabledNeeds.insert(need) }
+            else              { enabledNeeds.remove(need) }
+            changed = true
+        }
+        if changed {
+            saveNeedsState()
+            saveEnabledNeeds()
+            alertsCache = nil   // bust the cache, value tier may have flipped
         }
     }
 

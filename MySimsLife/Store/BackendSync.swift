@@ -77,28 +77,38 @@ actor BackendSync {
         let needs_state: [NeedStateDTO]
     }
 
+    struct PullResult {
+        let needsState: [RemoteNeedState]
+    }
+
+    struct RemoteNeedState {
+        let needType: String
+        let value: Double
+        let lastUpdatedMs: Int64
+        let enabled: Bool
+    }
+
     /// Fetches everything modified since `lastSync` and applies it to the local SwiftData store.
-    func pull(into context: ModelContext) async {
+    /// Returns the remote `needs_state` rows so the caller can merge them into `NeedStore.needs`
+    /// (those values live in-memory + UserDefaults, not in SwiftData).
+    @discardableResult
+    func pull(into context: ModelContext) async -> PullResult {
+        let empty = PullResult(needsState: [])
         do {
             let data = try await request("/sync?since=\(lastSync)")
             let decoded: SyncResponse
             do {
                 decoded = try Self.decoder.decode(SyncResponse.self, from: data)
             } catch let DecodingError.dataCorrupted(ctx) {
-                print("[BackendSync] decode dataCorrupted: \(ctx)")
-                return
+                print("[BackendSync] decode dataCorrupted: \(ctx)"); return empty
             } catch let DecodingError.keyNotFound(key, ctx) {
-                print("[BackendSync] decode keyNotFound: \(key.stringValue) — \(ctx.codingPath.map(\.stringValue))")
-                return
+                print("[BackendSync] decode keyNotFound: \(key.stringValue) — \(ctx.codingPath.map(\.stringValue))"); return empty
             } catch let DecodingError.typeMismatch(type, ctx) {
-                print("[BackendSync] decode typeMismatch: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)")
-                return
+                print("[BackendSync] decode typeMismatch: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)"); return empty
             } catch let DecodingError.valueNotFound(type, ctx) {
-                print("[BackendSync] decode valueNotFound: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)")
-                return
+                print("[BackendSync] decode valueNotFound: \(type) at \(ctx.codingPath.map(\.stringValue)) — \(ctx.debugDescription)"); return empty
             } catch {
-                print("[BackendSync] decode other: \(error)")
-                return
+                print("[BackendSync] decode other: \(error)"); return empty
             }
             await MainActor.run {
                 applyAspirations(decoded.aspirations, context: context)
@@ -107,8 +117,18 @@ actor BackendSync {
                 try? context.save()
             }
             lastSync = decoded.server_time
+            return PullResult(needsState: decoded.needs_state.compactMap {
+                guard let type = $0.need_type else { return nil }
+                return RemoteNeedState(
+                    needType: type,
+                    value: $0.value,
+                    lastUpdatedMs: $0.last_updated,
+                    enabled: $0.enabled != 0
+                )
+            })
         } catch {
             print("[BackendSync] pull failed: \(error.localizedDescription)")
+            return empty
         }
     }
 
@@ -270,7 +290,8 @@ actor BackendSync {
     }
 
     func pushNeedState(_ need: NeedType, value: Double, lastUpdated: Date, enabled: Bool) async {
-        let body = NeedStateDTO(value: value,
+        let body = NeedStateDTO(need_type: nil,
+                                value: value,
                                 last_updated: Int64(lastUpdated.timeIntervalSince1970 * 1000),
                                 enabled: enabled ? 1 : 0)
         _ = try? await request("/needs-state/\(need.rawValue)", method: "PUT", body: body)
@@ -373,6 +394,9 @@ struct ActivityLogDTO: Codable {
 }
 
 struct NeedStateDTO: Codable {
+    /// Optional because PUT /needs-state/:need takes the type from the URL path
+    /// while GET /needs-state and /sync include it inline.
+    let need_type: String?
     let value: Double
     let last_updated: Int64
     /// SQLite stores booleans as INTEGER (0/1). Keep the wire-format Int and convert at use sites.
