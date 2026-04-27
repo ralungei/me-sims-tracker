@@ -27,8 +27,9 @@ enum SimsTheme {
 
     // MARK: - Accent (elegant)
 
-    static let accentGreen = Color(hue: 155/360, saturation: 0.50, brightness: 0.72)   // sage
-    static let accentWarm  = Color(hue: 32/360,  saturation: 0.88, brightness: 0.82)   // honey gold
+    static let accentPrimary = Color(hue: 210/360, saturation: 0.70, brightness: 0.88) // app-wide blue (toolbar, controls)
+    static let accentGreen   = Color(hue: 155/360, saturation: 0.50, brightness: 0.72) // semantic — positive / done
+    static let accentWarm    = Color(hue: 32/360,  saturation: 0.88, brightness: 0.82) // honey gold
 
     // MARK: - Negative / Moodlet (dusty rose, not crimson)
 

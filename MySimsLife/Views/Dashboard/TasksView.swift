@@ -9,6 +9,7 @@ struct TasksRow: View {
     var onAdd: () -> Void = {}
     var onEdit: (LifeTask) -> Void = { _ in }
     var onDelete: (LifeTask) -> Void = { _ in }
+    var onMove: (UUID, UUID) -> Void = { _, _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -21,11 +22,11 @@ struct TasksRow: View {
                     .tracking(1.4)
                     .foregroundStyle(SimsTheme.textDim)
                 Spacer()
-                let pending = tasks.filter { !$0.isDone }.count
-                if pending > 0 {
-                    Text("\(pending) por hacer")
+                if !tasks.isEmpty {
+                    let done = tasks.filter { $0.isDone }.count
+                    Text("\(done)/\(tasks.count) hechas")
                         .font(.system(.caption2, design: .rounded, weight: .semibold))
-                        .foregroundStyle(SimsTheme.accentWarm)
+                        .foregroundStyle(done == tasks.count ? SimsTheme.accentGreen : SimsTheme.accentWarm)
                 }
             }
 
@@ -44,6 +45,17 @@ struct TasksRow: View {
                             } preview: {
                                 TaskCard(task: task) {}
                                     .allowsHitTesting(false)
+                            }
+                            .draggable(task.id.uuidString) {
+                                TaskCard(task: task) {}
+                                    .opacity(0.85)
+                            }
+                            .dropDestination(for: String.self) { droppedIds, _ in
+                                guard let droppedRaw = droppedIds.first,
+                                      let dragged = UUID(uuidString: droppedRaw),
+                                      dragged != task.id else { return false }
+                                onMove(dragged, task.id)
+                                return true
                             }
                     }
                 }

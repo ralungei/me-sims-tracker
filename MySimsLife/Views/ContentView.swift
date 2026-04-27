@@ -11,6 +11,7 @@ struct ContentView: View {
         Group {
             if userName.isEmpty {
                 OnboardingView(onFinish: {})
+                    .environment(store)
                     .transition(.opacity)
             } else {
                 mainTabs
@@ -44,7 +45,7 @@ struct ContentView: View {
                 .tabItem { Label("Insights", systemImage: "chart.bar.fill") }
                 .tag(2)
         }
-        .tint(SimsTheme.accentGreen)
+        .tint(SimsTheme.accentPrimary)
     }
 }
 

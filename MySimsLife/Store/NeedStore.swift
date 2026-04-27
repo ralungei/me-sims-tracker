@@ -12,6 +12,7 @@ final class NeedStore {
 
     var needs: [NeedType: Double] = [:]
     var lastUpdated: [NeedType: Date] = [:]
+    var enabledNeeds: Set<NeedType> = Set(NeedType.allCases)
     var aspirations: [Aspiration] = []
     var tasks: [LifeTask] = []
     private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
@@ -38,7 +39,33 @@ final class NeedStore {
             needs[need] = need.decaysAutomatically ? 0.5 : 1.0  // health starts full
             lastUpdated[need] = Date()
         }
+        loadEnabledNeeds()
         loadNeedsState()
+    }
+
+    var sortedEnabledNeeds: [NeedType] {
+        NeedType.sorted.filter { enabledNeeds.contains($0) }
+    }
+
+    func setEnabled(_ enabled: Bool, for need: NeedType) {
+        if enabled { enabledNeeds.insert(need) }
+        else       { enabledNeeds.remove(need) }
+        saveEnabledNeeds()
+    }
+
+    private func saveEnabledNeeds() {
+        let raw = enabledNeeds.map { $0.rawValue }
+        if let data = try? JSONEncoder().encode(raw) {
+            UserDefaults.standard.set(data, forKey: "enabledNeeds")
+        }
+    }
+
+    private func loadEnabledNeeds() {
+        guard let data = UserDefaults.standard.data(forKey: "enabledNeeds"),
+              let raw = try? JSONDecoder().decode([String].self, from: data),
+              !raw.isEmpty
+        else { return }
+        enabledNeeds = Set(raw.compactMap { NeedType(rawValue: $0) })
     }
 
     func configure(with context: ModelContext) {
@@ -49,6 +76,7 @@ final class NeedStore {
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
+        Task { await BackendSync.shared.pull(into: context); refreshAspirations(); refreshTasks(); refreshRecentActionsCache() }
     }
 
     func onBecomeActive() {
@@ -78,6 +106,7 @@ final class NeedStore {
         let now = Date()
         lastUpdated[need] = now
 
+        var pushedLog: ActivityLog?
         if let context = modelContext {
             let log = ActivityLog(
                 needType: need,
@@ -88,6 +117,7 @@ final class NeedStore {
             context.insert(log)
             try? context.save()
             refreshRecentActionsCache(for: need)
+            pushedLog = log
 
             let count = (try? context.fetchCount(FetchDescriptor<ActivityLog>())) ?? 0
             if count % 10 == 0 { recalibrate() }
@@ -95,6 +125,14 @@ final class NeedStore {
 
         saveNeedsState()
         triggerHaptic(negative: action.isNegative)
+
+        let value = needs[need] ?? 0
+        let needLastUpdated = lastUpdated[need] ?? now
+        let enabled = enabledNeeds.contains(need)
+        Task {
+            if let log = pushedLog { await BackendSync.shared.pushActivityLog(log) }
+            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: needLastUpdated, enabled: enabled)
+        }
     }
 
     /// Undo the Nth most recent log for this need: subtracts boost and deletes the SwiftData row.
@@ -112,10 +150,18 @@ final class NeedStore {
         let delta = removed.boostAmount / 100.0
         needs[need] = max(0.0, min(1.0, current - delta))
 
+        let removedID = removed.id
         context.delete(removed)
         try? context.save()
         refreshRecentActionsCache(for: need)
         saveNeedsState()
+        let value = needs[need] ?? 0
+        let needLastUpdated = lastUpdated[need] ?? Date()
+        let enabled = enabledNeeds.contains(need)
+        Task {
+            await BackendSync.shared.deleteActivityLog(id: removedID)
+            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: needLastUpdated, enabled: enabled)
+        }
     }
 
     func setValue(_ value: Double, for need: NeedType) {
@@ -173,7 +219,7 @@ final class NeedStore {
         guard !needs.isEmpty else { return 0.5 }
         var totalWeight = 0.0
         var weightedSum = 0.0
-        for (need, value) in needs {
+        for (need, value) in needs where enabledNeeds.contains(need) {
             weightedSum += value * need.moodWeight
             totalWeight += need.moodWeight
         }
@@ -195,7 +241,7 @@ final class NeedStore {
     }
 
     var criticalNeeds: [NeedType] {
-        needs.filter { $0.value < 0.30 }
+        needs.filter { enabledNeeds.contains($0.key) && $0.value < 0.30 }
             .sorted { $0.value < $1.value }
             .map(\.key)
     }
@@ -353,7 +399,8 @@ final class NeedStore {
         }
 
         let filtered = candidates
-            .filter { !recentKeys.contains("\($0.needType.rawValue):\($0.name)")
+            .filter { enabledNeeds.contains($0.needType)
+                      && !recentKeys.contains("\($0.needType.rawValue):\($0.name)")
                       && (needs[$0.needType] ?? 0) < Self.highNeedThreshold }
             .deduplicated()
         return Array(filtered.prefix(5))
@@ -404,6 +451,7 @@ final class NeedStore {
         try? context.save()
         refreshAspirations()
         triggerHaptic(negative: false)
+        Task { await BackendSync.shared.pushAspiration(aspiration) }
     }
 
     func addAspiration(_ aspiration: Aspiration) {
@@ -412,6 +460,7 @@ final class NeedStore {
         context.insert(aspiration)
         try? context.save()
         refreshAspirations()
+        Task { await BackendSync.shared.pushAspiration(aspiration) }
     }
 
     func updateAspiration(_ aspiration: Aspiration) {
@@ -419,13 +468,16 @@ final class NeedStore {
         guard let context = modelContext else { return }
         try? context.save()
         refreshAspirations()
+        Task { await BackendSync.shared.pushAspiration(aspiration) }
     }
 
     func deleteAspiration(_ aspiration: Aspiration) {
         guard let context = modelContext else { return }
+        let id = aspiration.id
         context.delete(aspiration)
         try? context.save()
         refreshAspirations()
+        Task { await BackendSync.shared.deleteAspiration(id: id) }
     }
 
     // MARK: - Tasks (one-off agenda items)
@@ -433,7 +485,7 @@ final class NeedStore {
     private func refreshTasks() {
         guard let context = modelContext else { return }
         let descriptor = FetchDescriptor<LifeTask>(
-            sortBy: [SortDescriptor(\.dueDate), SortDescriptor(\.createdAt)]
+            sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
         )
         tasks = (try? context.fetch(descriptor)) ?? []
     }
@@ -444,18 +496,37 @@ final class NeedStore {
         context.insert(task)
         try? context.save()
         refreshTasks()
+        Task { await BackendSync.shared.pushTask(task) }
     }
 
     func updateTask(_ task: LifeTask) {
         guard let context = modelContext else { return }
         try? context.save()
         refreshTasks()
-        _ = task
+        Task { await BackendSync.shared.pushTask(task) }
     }
 
     func deleteTask(_ task: LifeTask) {
         guard let context = modelContext else { return }
+        let id = task.id
         context.delete(task)
+        try? context.save()
+        refreshTasks()
+        Task { await BackendSync.shared.deleteTask(id: id) }
+    }
+
+    func moveTask(withID draggedID: UUID, toBefore targetID: UUID) {
+        guard let context = modelContext,
+              let from = tasks.firstIndex(where: { $0.id == draggedID }),
+              let to = tasks.firstIndex(where: { $0.id == targetID }),
+              from != to else { return }
+        var reordered = tasks
+        let moved = reordered.remove(at: from)
+        let insertIndex = to > from ? to - 1 : to
+        reordered.insert(moved, at: insertIndex)
+        for (i, t) in reordered.enumerated() {
+            t.sortOrder = i
+        }
         try? context.save()
         refreshTasks()
     }
@@ -467,6 +538,7 @@ final class NeedStore {
         try? context.save()
         refreshTasks()
         triggerHaptic(negative: false)
+        Task { await BackendSync.shared.pushTask(task) }
     }
 
     /// Tasks due today or overdue, with not-done first, then ordered by time.
@@ -494,7 +566,7 @@ final class NeedStore {
     private func applyDecay() {
         let now = Date()
         var changed = false
-        for need in NeedType.allCases where need.decaysAutomatically {
+        for need in NeedType.allCases where need.decaysAutomatically && enabledNeeds.contains(need) {
             guard let last = lastUpdated[need], let current = needs[need] else { continue }
             let hours = now.timeIntervalSince(last) / 3600.0
             let rate = calibration.effectiveDecayRate(for: need)

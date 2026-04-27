@@ -1,0 +1,12 @@
+name = "me-sims-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "me-sims-tracker"
+database_id = "f6b10917-9007-4103-a832-22205ca5ad1b"
+
+[vars]
+# API_KEY se setea como secret en producción con: wrangler secret put API_KEY
+# En dev se lee de .dev.vars

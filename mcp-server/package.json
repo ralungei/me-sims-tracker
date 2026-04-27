@@ -1,0 +1,21 @@
+{
+  "name": "me-sims-tracker-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "me-sims-tracker-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "typescript": "^5.7.3"
+  }
+}

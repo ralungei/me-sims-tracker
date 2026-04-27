@@ -7,7 +7,7 @@ struct OnboardingView: View {
     @State private var step: Step = .welcome
     @FocusState private var nameFocused: Bool
 
-    enum Step: Int, CaseIterable { case welcome, intro, name }
+    enum Step: Int, CaseIterable { case welcome, intro, categories, name }
 
     let onFinish: () -> Void
 
@@ -24,9 +24,10 @@ struct OnboardingView: View {
 
                 Group {
                     switch step {
-                    case .welcome: welcome
-                    case .intro:   intro
-                    case .name:    nameStep
+                    case .welcome:    welcome
+                    case .intro:      intro
+                    case .categories: categoriesStep
+                    case .name:       nameStep
                     }
                 }
                 .frame(maxWidth: 460)
@@ -120,6 +121,22 @@ struct OnboardingView: View {
 
     // MARK: - Name
 
+    private var categoriesStep: some View {
+        VStack(spacing: 12) {
+            Text("¿Qué quieres seguir?")
+                .font(.system(.title2, design: .rounded, weight: .bold))
+                .foregroundStyle(SimsTheme.textPrimary)
+                .multilineTextAlignment(.center)
+            Text("Activa solo las que te interesen. Puedes cambiarlo después en Categorías.")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(SimsTheme.textDim)
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 8)
+            CategoriesEditor(embedded: true)
+                .frame(maxHeight: 320)
+        }
+    }
+
     private var nameStep: some View {
         VStack(spacing: 18) {
             VStack(spacing: 8) {
@@ -199,9 +216,10 @@ struct OnboardingView: View {
     private func advance() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
             switch step {
-            case .welcome: step = .intro
-            case .intro:   step = .name
-            case .name:    commit()
+            case .welcome:    step = .intro
+            case .intro:      step = .categories
+            case .categories: step = .name
+            case .name:       commit()
             }
         }
     }

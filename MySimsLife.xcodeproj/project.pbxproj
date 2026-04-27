@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */; };
+		158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */; };
 		164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC63F42E68BF4CF120400961 /* ActivityLog.swift */; };
 		2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */; };
 		247F296E0D62040182133FA2 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9110DB76EDC23748047200 /* TasksView.swift */; };
@@ -19,6 +20,7 @@
 		47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138DC9B9C1F133F5234DEA6E /* HistoryView.swift */; };
 		4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */; };
 		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
+		76EBA2A5841E36F582A42BAB /* BackendSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A41ADAD8AE08CDEA828817B /* BackendSync.swift */; };
 		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
 		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
 		AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B910D402E23B4129BCEA86 /* AspirationsView.swift */; };
@@ -41,6 +43,8 @@
 		57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationEngine.swift; sourceTree = "<group>"; };
 		5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimsTheme.swift; sourceTree = "<group>"; };
 		5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCardView.swift; sourceTree = "<group>"; };
+		696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoriesEditor.swift; sourceTree = "<group>"; };
+		6A41ADAD8AE08CDEA828817B /* BackendSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSync.swift; sourceTree = "<group>"; };
 		7D96C730292A9BE8FC42050E /* NeedType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedType.swift; sourceTree = "<group>"; };
 		8BCD270AEA7272BF4535857B /* Aspiration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aspiration.swift; sourceTree = "<group>"; };
 		94B910D402E23B4129BCEA86 /* AspirationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationsView.swift; sourceTree = "<group>"; };
@@ -132,6 +136,7 @@
 				E91AB16E6E22AE0C6D9D4EA1 /* History */,
 				5166E7553F4768CB826CAE3B /* Insights */,
 				C4850408F321734EE2C717E5 /* Onboarding */,
+				F4B7740BE66EBB07DE312CD5 /* Settings */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -147,6 +152,7 @@
 		CF4A6D7E68704DB4F1B2EEA8 /* Store */ = {
 			isa = PBXGroup;
 			children = (
+				6A41ADAD8AE08CDEA828817B /* BackendSync.swift */,
 				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
 				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
 			);
@@ -176,6 +182,14 @@
 				138DC9B9C1F133F5234DEA6E /* HistoryView.swift */,
 			);
 			path = History;
+			sourceTree = "<group>";
+		};
+		F4B7740BE66EBB07DE312CD5 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -253,7 +267,9 @@
 				36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */,
 				FF896F51D241A20358C02638 /* AspirationEditor.swift in Sources */,
 				AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */,
+				76EBA2A5841E36F582A42BAB /* BackendSync.swift in Sources */,
 				2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */,
+				158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */,
 				44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */,
 				E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */,
 				4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */,

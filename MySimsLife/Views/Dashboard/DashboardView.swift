@@ -10,6 +10,7 @@ struct DashboardView: View {
     @State private var showAspirationEditor: Bool = false
     @State private var editingTask: LifeTask?
     @State private var showTaskEditor: Bool = false
+    @State private var showCategoriesEditor: Bool = false
 
     private var isCompact: Bool { sizeClass == .compact }
 
@@ -32,13 +33,26 @@ struct DashboardView: View {
                 }
 
                 suggestionsBar
-                    .padding(.bottom, 8)
-                    .padding(.top, 6)
+                    .padding(.top, 14)
+                    .padding(.bottom, 16)
                     .background(
-                        LinearGradient(
-                            colors: [Color.clear, SimsTheme.background.opacity(0.55)],
-                            startPoint: .top, endPoint: .bottom
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 28,
+                            bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0,
+                            topTrailingRadius: 28
                         )
+                        .fill(SimsTheme.panelBackground)
+                        .overlay(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 28,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 28
+                            )
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.4), radius: 20, y: -6)
                         .ignoresSafeArea(.container, edges: .bottom)
                     )
             }
@@ -57,6 +71,10 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showTaskEditor, onDismiss: { editingTask = nil }) {
             TaskEditor(existing: editingTask)
+                .environment(store)
+        }
+        .sheet(isPresented: $showCategoriesEditor) {
+            CategoriesEditor()
                 .environment(store)
         }
     }
@@ -182,11 +200,36 @@ struct DashboardView: View {
     // MARK: - Needs Panel (2-col grid on regular, single column on compact)
 
     private var needsPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "heart.fill")
+                    .font(.system(.caption, weight: .bold))
+                    .foregroundStyle(SimsTheme.accentWarm)
+                Text("NECESIDADES")
+                    .font(.system(.caption2, design: .rounded, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundStyle(SimsTheme.textDim)
+                Spacer()
+                Button { showCategoriesEditor = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                        .padding(6)
+                        .background(Circle().fill(Color.white.opacity(0.05)))
+                }
+                .buttonStyle(.plain)
+            }
+
+            needsGrid
+        }
+    }
+
+    private var needsGrid: some View {
         let columns: [GridItem] = isCompact
             ? [GridItem(.flexible(), spacing: 10)]
             : [GridItem(.flexible(), spacing: 28), GridItem(.flexible(), spacing: 28)]
         return LazyVGrid(columns: columns, alignment: .leading, spacing: SimsTheme.barSpacing(compact: isCompact)) {
-            ForEach(NeedType.sorted) { need in
+            ForEach(store.sortedEnabledNeeds) { need in
                 NeedBarView(
                     need: need,
                     value: store.needs[need] ?? 0,
@@ -266,6 +309,11 @@ struct DashboardView: View {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     store.deleteTask(task)
                 }
+            },
+            onMove: { dragged, target in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    store.moveTask(withID: dragged, toBefore: target)
+                }
             }
         )
     }
@@ -277,22 +325,11 @@ struct DashboardView: View {
         return Group {
             if !store.smartSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 0) {
-                        Text("⚡ RÁPIDO")
-                            .font(.system(.caption2, design: .rounded, weight: .bold))
-                            .foregroundStyle(SimsTheme.textDim)
-                            .tracking(1.4)
-                        Spacer()
-                        if !store.criticalNeeds.isEmpty {
-                            HStack(spacing: 4) {
-                                Circle().fill(SimsTheme.negativeTint).frame(width: 5, height: 5)
-                                Text("\(store.criticalNeeds.count) en rojo")
-                                    .font(.system(.caption2, design: .rounded, weight: .semibold))
-                                    .foregroundStyle(SimsTheme.negativeTint.opacity(0.85))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, inset)
+                    Text("⚡ RÁPIDO")
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .foregroundStyle(SimsTheme.textDim)
+                        .tracking(1.4)
+                        .padding(.horizontal, inset)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
