@@ -275,7 +275,9 @@ app.put("/needs-state/:need", async (c) => {
     need,
     body.value,
     body.last_updated ?? ts,
-    body.enabled === false ? 0 : 1,
+    // Client wires bools as ints (0/1). Treat 0/false as disabled, anything
+    // else (including missing) as enabled.
+    body.enabled === 0 || body.enabled === false ? 0 : 1,
     ts
   ).run();
   await notify(c, EVENT.needsState, { need });

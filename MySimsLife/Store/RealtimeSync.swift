@@ -83,8 +83,12 @@ final class RealtimeSync {
               let event = try? JSONDecoder().decode(ServerEvent.self, from: data)
         else { return }
         let kind = SyncEventType(rawValue: event.type)
-        if kind == .hello || kind == .pong { return }
-        if event.from_client == BackendSync.clientID { return }   // echo of our own write
+        if kind == .pong { return }
+        // Skip echoes of our own writes — local state is already authoritative.
+        if event.from_client == BackendSync.clientID { return }
+        // `hello` arrives on connect/reconnect: trigger a pull to catch up on
+        // anything that changed while the WS was down. All `*.changed` events
+        // also trigger one.
         if let context = modelContext {
             Task { await BackendSync.shared.pull(into: context) }
         }

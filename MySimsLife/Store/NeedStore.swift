@@ -11,7 +11,12 @@ final class NeedStore {
     // MARK: - State (in-memory; aspirations + history live in SwiftData/CloudKit)
 
     var needs: [NeedType: Double] = [:]
+    /// Timestamp of the last *user* mutation per need (action / undo / toggle).
+    /// Drives last-write-wins conflict resolution on pull. NEVER bumped by decay.
     var lastUpdated: [NeedType: Date] = [:]
+    /// Internal: when the decay loop last subtracted from each need.
+    /// Local-only, never synced.
+    private var lastDecayTick: [NeedType: Date] = [:]
     var enabledNeeds: Set<NeedType> = Set(NeedType.allCases)
     var aspirations: [Aspiration] = []
     var tasks: [LifeTask] = []
@@ -143,7 +148,12 @@ final class NeedStore {
         startDecayTimer()
         recalibrate()
         if let context = modelContext {
-            Task { @MainActor in RealtimeSync.shared.start(with: context) }
+            // Catch up on anything the backend changed while we were in the
+            // background, then re-open the WS for live events.
+            Task { @MainActor in
+                await pullAndApply(context: context)
+                RealtimeSync.shared.start(with: context)
+            }
         }
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
@@ -665,14 +675,19 @@ final class NeedStore {
         let now = Date()
         var changed = false
         for need in NeedType.allCases where need.decaysAutomatically && enabledNeeds.contains(need) {
-            guard let last = lastUpdated[need], let current = needs[need] else { continue }
-            let hours = now.timeIntervalSince(last) / 3600.0
+            guard let current = needs[need] else { continue }
+            // Decay measures time since the previous decay tick (or last user
+            // mutation, whichever is more recent). It does NOT touch
+            // `lastUpdated` — that field carries the LWW timestamp for sync.
+            let lastTick = lastDecayTick[need] ?? lastUpdated[need] ?? now
+            let hours = now.timeIntervalSince(lastTick) / 3600.0
+            guard hours > 0 else { continue }
             let rate = calibration.effectiveDecayRate(for: need)
             let decay = rate * hours / 100.0
             let newValue = max(0.0, current - decay)
+            lastDecayTick[need] = now
             if abs(newValue - current) > 0.00001 {
                 needs[need] = newValue
-                lastUpdated[need] = now
                 changed = true
             }
         }
