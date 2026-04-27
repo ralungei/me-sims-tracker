@@ -21,10 +21,12 @@
 		4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */; };
 		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
 		76EBA2A5841E36F582A42BAB /* BackendSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A41ADAD8AE08CDEA828817B /* BackendSync.swift */; };
+		7F40914A6715EDC992B9CED4 /* BackendCredentials.swift.example in Resources */ = {isa = PBXBuildFile; fileRef = EED77436DEA8ADA3BA2EEFA4 /* BackendCredentials.swift.example */; };
 		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
 		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
 		AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B910D402E23B4129BCEA86 /* AspirationsView.swift */; };
 		B225030E1A301A4F81994798 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D446C04FF679ABC590F02B /* InsightsView.swift */; };
+		C46743CDAC43E40198166D1D /* BackendCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D250492436FD9D7C6C075A8B /* BackendCredentials.swift */; };
 		C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0206ECCA122D5D143687FA /* PlumbobView.swift */; };
 		CC86534924BE181C555415DE /* NeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */; };
 		DBD3729B3F256F2FC5E01FF0 /* LifeTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF22A33BD093A1B056C7F20 /* LifeTask.swift */; };
@@ -57,9 +59,11 @@
 		C9A1445059387B20FA3F1C97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CC63F42E68BF4CF120400961 /* ActivityLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLog.swift; sourceTree = "<group>"; };
 		D07D2261F6E77057EF236865 /* MySimsLife.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MySimsLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D250492436FD9D7C6C075A8B /* BackendCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendCredentials.swift; sourceTree = "<group>"; };
 		D3CF46933BBA8EC924A16469 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		DB05123DDA91452D04ECF598 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		EC9110DB76EDC23748047200 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		EED77436DEA8ADA3BA2EEFA4 /* BackendCredentials.swift.example */ = {isa = PBXFileReference; path = BackendCredentials.swift.example; sourceTree = "<group>"; };
 		EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -152,6 +156,8 @@
 		CF4A6D7E68704DB4F1B2EEA8 /* Store */ = {
 			isa = PBXGroup;
 			children = (
+				D250492436FD9D7C6C075A8B /* BackendCredentials.swift */,
+				EED77436DEA8ADA3BA2EEFA4 /* BackendCredentials.swift.example */,
 				6A41ADAD8AE08CDEA828817B /* BackendSync.swift */,
 				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
 				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
@@ -252,6 +258,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */,
+				7F40914A6715EDC992B9CED4 /* BackendCredentials.swift.example in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,6 +274,7 @@
 				36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */,
 				FF896F51D241A20358C02638 /* AspirationEditor.swift in Sources */,
 				AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */,
+				C46743CDAC43E40198166D1D /* BackendCredentials.swift in Sources */,
 				76EBA2A5841E36F582A42BAB /* BackendSync.swift in Sources */,
 				2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */,
 				158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */,

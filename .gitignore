@@ -24,3 +24,6 @@ xcuserdata/
 # SPM
 .build/
 Packages/
+
+# Secrets — backend credentials live in a separate file (template at .swift.example)
+MySimsLife/Store/BackendCredentials.swift

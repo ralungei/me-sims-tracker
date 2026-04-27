@@ -7,11 +7,10 @@ import SwiftData
 /// Pull on launch + push on every mutation. Last-write-wins by `updated_at`.
 actor BackendSync {
 
-    // MARK: Config
+    // MARK: Config (read from gitignored BackendCredentials.swift)
 
-    static let baseURL = URL(string: "https://me-sims-tracker.ras-alungei.workers.dev")!
-    /// Personal-use API key. Rotate any time with `openssl rand -hex 32` + `wrangler secret put API_KEY`.
-    static let apiKey = "2bbaed88b90e741c798b4e1203d7f8f079f7b554d9cff0f2ea6978e0f6ce47b5"
+    static var baseURL: URL { BackendCredentials.baseURL }
+    static var apiKey:  String { BackendCredentials.apiKey }
 
     static let shared = BackendSync()
     private init() {}
