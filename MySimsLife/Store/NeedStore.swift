@@ -53,6 +53,10 @@ final class NeedStore {
         if enabled { enabledNeeds.insert(need) }
         else       { enabledNeeds.remove(need) }
         saveEnabledNeeds()
+        let now = Date()
+        lastUpdated[need] = now
+        let value = needs[need] ?? 0
+        Task { await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: now, enabled: enabled) }
     }
 
     // MARK: - Sync helpers
@@ -619,6 +623,10 @@ final class NeedStore {
         }
         try? context.save()
         refreshTasks()
+        // Push every task whose sortOrder changed so the order replicates.
+        Task {
+            for task in reordered { await BackendSync.shared.pushTask(task) }
+        }
     }
 
     func toggleTask(_ task: LifeTask) {
