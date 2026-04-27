@@ -40,8 +40,8 @@ app.post("/aspirations", async (c) => {
   const id = body.id ?? newId();
   const ts = now();
   await c.env.DB.prepare(
-    `INSERT INTO aspirations (id,name,emoji,kind,hue,xp,duration_minutes,total_days,started_at,last_completed_at,completions_log,sort_order,created_at,updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO aspirations (id,name,emoji,kind,hue,xp,duration_minutes,total_days,started_at,last_completed_at,completions_log,notes,dosing_moment,reminder_time,sort_order,created_at,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,
     body.name,
@@ -54,6 +54,9 @@ app.post("/aspirations", async (c) => {
     body.started_at ?? null,
     body.last_completed_at ?? null,
     JSON.stringify(body.completions_log ?? []),
+    body.notes ?? null,
+    body.dosing_moment ?? null,
+    body.reminder_time ?? null,
     body.sort_order ?? 0,
     ts,
     ts

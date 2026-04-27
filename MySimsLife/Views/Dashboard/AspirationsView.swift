@@ -4,6 +4,7 @@ import SwiftUI
 
 struct AspirationsRow: View {
     let aspirations: [Aspiration]
+    var upcoming: [Aspiration] = []
     var horizontalInset: CGFloat = 32
     var onTap: (Aspiration) -> Void
     var onAdd: () -> Void = {}
@@ -53,7 +54,56 @@ struct AspirationsRow: View {
             }
             .scrollClipDisabled()
             .padding(.horizontal, -horizontalInset)
+
+            if !upcoming.isEmpty {
+                upcomingRow
+            }
         }
+    }
+
+    private var upcomingRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("PRÓXIMAMENTE")
+                .font(.system(.caption2, design: .rounded, weight: .bold))
+                .tracking(1.4)
+                .foregroundStyle(SimsTheme.textDim)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(upcoming) { asp in
+                        Button {
+                            onEdit(asp)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text(asp.emoji).font(.system(size: 14))
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(asp.name)
+                                        .font(.system(.caption, design: .rounded, weight: .bold))
+                                        .foregroundStyle(SimsTheme.textPrimary)
+                                        .lineLimit(1)
+                                    if let started = asp.startedAt {
+                                        Text("empieza \(started.relativeFutureLabel())")
+                                            .font(.system(size: 9, weight: .medium, design: .rounded))
+                                            .foregroundStyle(SimsTheme.textDim)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.04))
+                                    .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, horizontalInset)
+            }
+            .scrollClipDisabled()
+            .padding(.horizontal, -horizontalInset)
+        }
+        .padding(.top, 4)
     }
 }
 
@@ -167,8 +217,36 @@ struct AspirationCard: View {
         }
     }
 
+    /// Compact "moment · hour" line, e.g. "media mañana · 11:00".
+    private var dosingLabel: (text: String, icon: String)? {
+        let formatter: (Date) -> String = { d in
+            let f = DateFormatter()
+            f.dateFormat = "HH:mm"
+            return f.string(from: d)
+        }
+        if let moment = aspiration.dosingMoment, let time = aspiration.reminderTime {
+            return ("\(moment.label.lowercased()) · \(formatter(time))", moment.icon)
+        }
+        if let moment = aspiration.dosingMoment {
+            return (moment.label.lowercased(), moment.icon)
+        }
+        if let time = aspiration.reminderTime {
+            return (formatter(time), "clock.fill")
+        }
+        return nil
+    }
+
     @ViewBuilder
     private var detail: some View {
+        if let dosing = dosingLabel {
+            label(dosing.text, systemImage: dosing.icon)
+        } else {
+            kindDetail
+        }
+    }
+
+    @ViewBuilder
+    private var kindDetail: some View {
         switch aspiration.kind {
         case .dailySimple:
             label("Diario", systemImage: "sun.max.fill")

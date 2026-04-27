@@ -3,6 +3,59 @@ import SwiftData
 
 // MARK: - Aspiration Kind
 
+// MARK: - Dosing Moment (when to take a recurring intake)
+
+enum DosingMoment: String, Codable, CaseIterable {
+    case fasting       // en ayunas
+    case midMorning    // media mañana
+    case beforeMeal    // antes de la comida
+    case beforeLunch   // antes del almuerzo
+    case beforeDinner  // antes de cenar
+    case withMeal      // con la comida
+    case afterMeal     // después de comer
+    case beforeBed     // antes de dormir
+
+    var label: String {
+        switch self {
+        case .fasting:      return "En ayunas"
+        case .midMorning:   return "Media mañana"
+        case .beforeMeal:   return "Antes de comida"
+        case .beforeLunch:  return "Antes del almuerzo"
+        case .beforeDinner: return "Antes de cenar"
+        case .withMeal:     return "Con la comida"
+        case .afterMeal:    return "Después de comer"
+        case .beforeBed:    return "Al acostarse"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .fasting:      return "sunrise"
+        case .midMorning:   return "sun.max.fill"
+        case .beforeMeal,
+             .beforeLunch,
+             .beforeDinner: return "fork.knife.circle"
+        case .withMeal:     return "fork.knife"
+        case .afterMeal:    return "checkmark.circle"
+        case .beforeBed:    return "moon.stars.fill"
+        }
+    }
+
+    /// Suggested wall-clock hour (Europe/Madrid-ish defaults).
+    var defaultHour: Int {
+        switch self {
+        case .fasting:      return 8
+        case .midMorning:   return 11
+        case .beforeMeal,
+             .beforeLunch:  return 14
+        case .beforeDinner: return 21
+        case .withMeal:     return 14
+        case .afterMeal:    return 15
+        case .beforeBed:    return 23
+        }
+    }
+}
+
 enum AspirationKind: String, Codable, CaseIterable {
     case dailySimple    // Tap once per day. Ej: creatina 5g
     case dailyTimed     // Daily + duration. Ej: Gateway Tapes 25min
@@ -61,6 +114,10 @@ final class Aspiration {
     var totalDays: Int?
     var startedAt: Date?
 
+    var notes: String?
+    var dosingMomentRaw: String?
+    /// Stored as a `Date`; only the hour/minute components are meaningful.
+    var reminderTime: Date?
     var lastCompletedAt: Date?
     var completionsLog: [Date] = []
 
@@ -75,7 +132,10 @@ final class Aspiration {
         xp: Int = 10,
         durationMinutes: Int? = nil,
         totalDays: Int? = nil,
-        startedAt: Date? = nil
+        startedAt: Date? = nil,
+        notes: String? = nil,
+        dosingMoment: DosingMoment? = nil,
+        reminderTime: Date? = nil
     ) {
         self.id = UUID()
         self.name = name
@@ -86,8 +146,22 @@ final class Aspiration {
         self.durationMinutes = durationMinutes
         self.totalDays = totalDays
         self.startedAt = startedAt
+        self.notes = notes
+        self.dosingMomentRaw = dosingMoment?.rawValue
+        self.reminderTime = reminderTime
         self.completionsLog = []
         self.createdAt = Date()
+    }
+
+    var dosingMoment: DosingMoment? {
+        get { dosingMomentRaw.flatMap { DosingMoment(rawValue: $0) } }
+        set { dosingMomentRaw = newValue?.rawValue }
+    }
+
+    /// True if `startedAt` is in the future. Treatment-kind aspirations should be hidden until then.
+    func isScheduledForFuture(reference: Date = Date()) -> Bool {
+        guard kind == .treatment, let started = startedAt else { return false }
+        return started > reference
     }
 
     var kind: AspirationKind {
@@ -139,12 +213,6 @@ final class Aspiration {
             Aspiration(
                 name: "Creatina 5g", emoji: "💊",
                 kind: .dailySimple, hue: 22, xp: 10
-            ),
-            Aspiration(
-                name: "Prebióticos", emoji: "🌱",
-                kind: .treatment, hue: 158, xp: 10,
-                totalDays: 30,
-                startedAt: Calendar.current.date(byAdding: .day, value: -11, to: Date())
             ),
             Aspiration(
                 name: "Reel en IG", emoji: "🎬",

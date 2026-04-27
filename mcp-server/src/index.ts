@@ -60,7 +60,8 @@ server.tool(
     xp: z.number().optional().describe("Points awarded on completion"),
     duration_minutes: z.number().optional().describe("For dailyTimed"),
     total_days: z.number().optional().describe("For treatment"),
-    started_at_iso: z.string().optional().describe("ISO date for treatment start. Defaults to now.")
+    started_at_iso: z.string().optional().describe("ISO date for treatment start. Can be in the future — the aspiration stays hidden until that date arrives. Defaults to today."),
+    notes: z.string().optional().describe("Free-form notes (dose schedule, brand name, instructions, etc.).")
   },
   async (args) => {
     const body: Record<string, unknown> = {
@@ -72,6 +73,7 @@ server.tool(
     };
     if (args.duration_minutes) body.duration_minutes = args.duration_minutes;
     if (args.total_days) body.total_days = args.total_days;
+    if (args.notes) body.notes = args.notes;
     if (args.kind === "treatment") {
       body.started_at = args.started_at_iso
         ? Date.parse(args.started_at_iso)

@@ -265,7 +265,8 @@ struct DashboardView: View {
 
     private var aspirationsSection: some View {
         AspirationsRow(
-            aspirations: store.aspirations,
+            aspirations: store.activeAspirations,
+            upcoming: store.upcomingAspirations,
             horizontalInset: isCompact ? 16 : 32,
             onTap: { asp in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {

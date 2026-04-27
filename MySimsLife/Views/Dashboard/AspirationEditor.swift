@@ -15,6 +15,10 @@ struct AspirationEditor: View {
     @State private var xp: Int = 10
     @State private var durationMinutes: Int = 25
     @State private var totalDays: Int = 30
+    @State private var notes: String = ""
+    @State private var startDate: Date = Date()
+    @State private var dosingMoment: DosingMoment? = nil
+    @State private var reminderTime: Date? = nil
 
     private let suggestedEmojis = ["🧘","💊","🌱","🎬","📚","💪","🏃","🥗","💧","🛏","☀️","🧠","✍️","🎨","🎵","🙏","💧","🦷","🧴","📞"]
     private let huePresets: [Double] = [22, 38, 158, 195, 220, 258, 295, 335]
@@ -36,7 +40,11 @@ struct AspirationEditor: View {
                         }
                         if kind == .treatment {
                             section("Días totales") { totalDaysField }
+                            section("Empieza el") { startDateField }
                         }
+                        section("Cuándo tomarla (opcional)") { dosingField }
+                        section("Hora exacta (opcional)") { reminderField }
+                        section("Notas (opcional)") { notesField }
                         if existing != nil {
                             deleteButton
                                 .padding(.top, 12)
@@ -247,6 +255,93 @@ struct AspirationEditor: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
     }
 
+    private var startDateField: some View {
+        DatePicker("", selection: $startDate, displayedComponents: .date)
+            .datePickerStyle(.compact)
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+    }
+
+    private var dosingField: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(label: "ninguno", icon: "minus", isSelected: dosingMoment == nil) {
+                    dosingMoment = nil
+                }
+                ForEach(DosingMoment.allCases, id: \.self) { m in
+                    chip(label: m.label, icon: m.icon, isSelected: dosingMoment == m) {
+                        dosingMoment = m
+                        if reminderTime == nil {
+                            reminderTime = Calendar.current.date(bySettingHour: m.defaultHour, minute: 0, second: 0, of: Date())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func chip(label: String, icon: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 10, weight: .bold))
+                Text(label).font(.system(.caption, design: .rounded, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .foregroundStyle(isSelected ? Color.black.opacity(0.85) : SimsTheme.textSecondary)
+            .background(
+                Capsule()
+                    .fill(isSelected ? SimsTheme.accentWarm : Color.white.opacity(0.06))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var reminderField: some View {
+        HStack {
+            if let time = reminderTime {
+                DatePicker("",
+                           selection: Binding(
+                               get: { time },
+                               set: { reminderTime = $0 }),
+                           displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+                Spacer()
+                Button { reminderTime = nil } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(SimsTheme.textDim)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button {
+                    reminderTime = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                        Text("Añadir hora").font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    }
+                    .foregroundStyle(SimsTheme.textSecondary)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+    }
+
+    private var notesField: some View {
+        TextField("", text: $notes, prompt: Text("Posología, marca, instrucciones...").foregroundStyle(SimsTheme.textDim), axis: .vertical)
+            .lineLimit(3...8)
+            .textFieldStyle(.plain)
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+            .foregroundStyle(SimsTheme.textPrimary)
+    }
+
     private var deleteButton: some View {
         Button(role: .destructive) {
             if let existing { store.deleteAspiration(existing) }
@@ -276,6 +371,10 @@ struct AspirationEditor: View {
         xp = asp.xp
         durationMinutes = asp.durationMinutes ?? 25
         totalDays = asp.totalDays ?? 30
+        notes = asp.notes ?? ""
+        startDate = asp.startedAt ?? Date()
+        dosingMoment = asp.dosingMoment
+        reminderTime = asp.reminderTime
     }
 
     // MARK: - XP Level
@@ -333,16 +432,21 @@ struct AspirationEditor: View {
     private func save() {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
         let safeEmoji = emoji.isEmpty ? "✨" : emoji
+        let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedNotes: String? = trimmedNotes.isEmpty ? nil : trimmedNotes
         if let asp = existing {
             asp.name = trimmedName
             asp.emoji = safeEmoji
             asp.kind = kind
             asp.hue = hue
             asp.xp = xp
+            asp.notes = resolvedNotes
+            asp.dosingMoment = dosingMoment
+            asp.reminderTime = reminderTime
             asp.durationMinutes = kind == .dailyTimed ? durationMinutes : nil
             if kind == .treatment {
                 asp.totalDays = totalDays
-                if asp.startedAt == nil { asp.startedAt = Date() }
+                asp.startedAt = startDate
             } else {
                 asp.totalDays = nil
                 asp.startedAt = nil
@@ -357,7 +461,10 @@ struct AspirationEditor: View {
                 xp: xp,
                 durationMinutes: kind == .dailyTimed ? durationMinutes : nil,
                 totalDays: kind == .treatment ? totalDays : nil,
-                startedAt: kind == .treatment ? Date() : nil
+                startedAt: kind == .treatment ? startDate : nil,
+                notes: resolvedNotes,
+                dosingMoment: dosingMoment,
+                reminderTime: reminderTime
             )
             store.addAspiration(asp)
         }

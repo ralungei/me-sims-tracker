@@ -428,6 +428,17 @@ final class NeedStore {
         aspirations = (try? context.fetch(descriptor)) ?? []
     }
 
+    /// Only the aspirations the user can interact with right now (excludes future-scheduled ones).
+    var activeAspirations: [Aspiration] {
+        aspirations.filter { !$0.isScheduledForFuture() }
+    }
+
+    /// Aspirations whose `startedAt` is in the future — shown separately as "upcoming".
+    var upcomingAspirations: [Aspiration] {
+        aspirations.filter { $0.isScheduledForFuture() }
+            .sorted { ($0.startedAt ?? Date.distantFuture) < ($1.startedAt ?? Date.distantFuture) }
+    }
+
     private func ensureSeedData() {
         guard let context = modelContext else { return }
         let count = (try? context.fetchCount(FetchDescriptor<Aspiration>())) ?? 0

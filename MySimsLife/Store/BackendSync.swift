@@ -109,6 +109,9 @@ actor BackendSync {
            let dates = try? JSONDecoder().decode([Int64].self, from: Data(raw.utf8)) {
             model.completionsLog = dates.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
         }
+        model.notes = dto.notes
+        model.dosingMomentRaw = dto.dosing_moment
+        model.reminderTime = dto.reminder_time.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
         model.sortOrder = dto.sort_order
     }
 
@@ -226,6 +229,9 @@ struct AspirationDTO: Codable {
     let started_at: Int64?
     let last_completed_at: Int64?
     let completions_log: String?
+    let notes: String?
+    let dosing_moment: String?
+    let reminder_time: Int64?
     let sort_order: Int
     let updated_at: Int64?
     let deleted_at: Int64?
@@ -244,6 +250,9 @@ struct AspirationDTO: Codable {
             started_at: asp.startedAt.map { Int64($0.timeIntervalSince1970 * 1000) },
             last_completed_at: asp.lastCompletedAt.map { Int64($0.timeIntervalSince1970 * 1000) },
             completions_log: String(data: (try? JSONEncoder().encode(dates)) ?? Data("[]".utf8), encoding: .utf8),
+            notes: asp.notes,
+            dosing_moment: asp.dosingMomentRaw,
+            reminder_time: asp.reminderTime.map { Int64($0.timeIntervalSince1970 * 1000) },
             sort_order: asp.sortOrder,
             updated_at: nil,
             deleted_at: nil
