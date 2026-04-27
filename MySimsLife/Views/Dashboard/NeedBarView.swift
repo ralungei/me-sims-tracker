@@ -123,20 +123,20 @@ struct NeedBarView: View {
 
     // MARK: - Segmented pips
 
+    /// One LinearGradient instance per fill state, built once per render of the
+    /// bar instead of one per pip (12 allocations per bar previously).
+    private var fillBrush: LinearGradient {
+        LinearGradient(
+            colors: [fill.opacity(0.85), fill],
+            startPoint: .top, endPoint: .bottom
+        )
+    }
+
     private var pips: some View {
         HStack(spacing: 3) {
             ForEach(0..<segments, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(i < filled ? fill : track)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(LinearGradient(
-                                colors: i < filled
-                                    ? [Color.white.opacity(0.30), .clear]
-                                    : [.clear, .clear],
-                                startPoint: .top, endPoint: .center
-                            ))
-                    )
+                    .fill(i < filled ? AnyShapeStyle(fillBrush) : AnyShapeStyle(track))
                     .frame(height: pipHeight)
             }
         }

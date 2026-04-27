@@ -15,6 +15,11 @@ actor BackendSync {
     static let shared = BackendSync()
 
     /// Stable per-install identifier so we can ignore broadcasts originated by ourselves.
+    /// Stateless codecs — reused across every push/pull so we don't allocate
+    /// a fresh encoder on each call.
+    nonisolated static let encoder = JSONEncoder()
+    nonisolated static let decoder = JSONDecoder()
+
     nonisolated static let clientID: String = {
         if let existing = UserDefaults.standard.string(forKey: UDKey.backendClientID) { return existing }
         let new = UUID().uuidString
@@ -44,7 +49,7 @@ actor BackendSync {
         req.setValue(Self.apiKey, forHTTPHeaderField: HTTPHeader.apiKey)
         req.setValue(Self.clientID, forHTTPHeaderField: HTTPHeader.clientID)
         if let body {
-            req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
+            req.httpBody = try Self.encoder.encode(AnyEncodable(body))
         }
         let (data, response) = try await URLSession.shared.data(for: req)
         if let http = response as? HTTPURLResponse, http.statusCode >= 400 {
@@ -70,7 +75,7 @@ actor BackendSync {
             let data = try await request("/sync?since=\(lastSync)")
             let decoded: SyncResponse
             do {
-                decoded = try JSONDecoder().decode(SyncResponse.self, from: data)
+                decoded = try Self.decoder.decode(SyncResponse.self, from: data)
             } catch let DecodingError.dataCorrupted(ctx) {
                 print("[BackendSync] decode dataCorrupted: \(ctx)")
                 return
@@ -134,7 +139,7 @@ actor BackendSync {
         model.startedAt = dto.started_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
         model.lastCompletedAt = dto.last_completed_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
         if let raw = dto.completions_log,
-           let dates = try? JSONDecoder().decode([Int64].self, from: Data(raw.utf8)) {
+           let dates = try? Self.decoder.decode([Int64].self, from: Data(raw.utf8)) {
             model.completionsLog = dates.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
         }
         model.notes = dto.notes
@@ -277,7 +282,7 @@ struct AspirationDTO: Codable {
             total_days: asp.totalDays,
             started_at: asp.startedAt.map { Int64($0.timeIntervalSince1970 * 1000) },
             last_completed_at: asp.lastCompletedAt.map { Int64($0.timeIntervalSince1970 * 1000) },
-            completions_log: String(data: (try? JSONEncoder().encode(dates)) ?? Data("[]".utf8), encoding: .utf8),
+            completions_log: String(data: (try? BackendSync.encoder.encode(dates)) ?? Data("[]".utf8), encoding: .utf8),
             notes: asp.notes,
             dosing_moment: asp.dosingMomentRaw,
             reminder_time: asp.reminderTime.map { Int64($0.timeIntervalSince1970 * 1000) },

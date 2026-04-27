@@ -88,14 +88,22 @@ struct DashboardView: View {
     // MARK: - Header (Mood Gem + greeting + VITAL bar)
 
     private var headerSection: some View {
-        HStack(alignment: .center, spacing: isCompact ? 8 : 12) {
+        // Compute once per render — overallMood walks the needs dict and is
+        // read by the orb, the mood copy, and the mood color tint.
+        let mood = store.overallMood
+        return HStack(alignment: .center, spacing: isCompact ? 8 : 12) {
             PlumbobView(
-                mood: store.overallMood,
+                mood: mood,
                 compact: isCompact,
                 size: isCompact ? 56 : 78
             )
 
-            greetingBlock
+            TimeAwareGreeting(
+                userName: userName,
+                isCompact: isCompact,
+                moodCopy: moodCopy(for: mood),
+                moodColor: SimsTheme.plumbobColor(for: mood)
+            )
 
             Spacer(minLength: 4)
 
@@ -103,19 +111,8 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Greeting block (saludo · hora · fecha · estado)
-
-    private var greetingBlock: some View {
-        TimeAwareGreeting(
-            userName: userName,
-            isCompact: isCompact,
-            moodCopy: moodCopy,
-            moodColor: SimsTheme.plumbobColor(for: store.overallMood)
-        )
-    }
-
-    private var moodCopy: String {
-        switch store.overallMood {
+    private func moodCopy(for mood: Double) -> String {
+        switch mood {
         case 0.75...:     return "te ves genial"
         case 0.55..<0.75: return "estás bien"
         case 0.35..<0.55: return "vas tirando"
@@ -321,8 +318,10 @@ struct DashboardView: View {
 
     private var suggestionsBar: some View {
         let inset: CGFloat = isCompact ? 16 : 32
+        // Compute once — both the empty-check and the ForEach used to access this twice.
+        let suggestions = store.smartSuggestions
         return Group {
-            if !store.smartSuggestions.isEmpty {
+            if !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("⚡ RÁPIDO")
                         .font(.system(.caption2, design: .rounded, weight: .bold))
@@ -332,7 +331,7 @@ struct DashboardView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
-                            ForEach(store.smartSuggestions) { action in
+                            ForEach(suggestions) { action in
                                 SuggestionChip(action: action) {
                                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                         store.logAction(action, for: action.needType)
@@ -408,14 +407,19 @@ struct SuggestionChip: View {
     let action: QuickAction
     let onTap: () -> Void
 
-    private var hue: Double { action.needType.hue }
+    private var hueDeg: Double { action.needType.hue }
+    private var hue: Double { hueDeg / 360 }
+    private var iconColor:   Color { Color(hue: hue, saturation: 0.50, brightness: 0.95) }
+    private var bgTop:       Color { Color(hue: hue, saturation: 0.65, brightness: 0.30) }
+    private var bgBottom:    Color { Color(hue: hue, saturation: 0.55, brightness: 0.20) }
+    private var strokeColor: Color { Color(hue: hue, saturation: 0.65, brightness: 0.55).opacity(0.5) }
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 8) {
                 Image(systemName: action.icon)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color(hue: hue/360, saturation: 0.5, brightness: 0.95))
+                    .foregroundStyle(iconColor)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(action.name)
                         .font(.system(.caption, design: .rounded, weight: .bold))
@@ -429,17 +433,9 @@ struct SuggestionChip: View {
             .padding(.vertical, 9)
             .background(
                 Capsule()
-                    .fill(LinearGradient(
-                        colors: [
-                            Color(hue: hue/360, saturation: 0.65, brightness: 0.30),
-                            Color(hue: hue/360, saturation: 0.55, brightness: 0.20)
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    ))
-                    .overlay(
-                        Capsule()
-                            .stroke(Color(hue: hue/360, saturation: 0.65, brightness: 0.55).opacity(0.5), lineWidth: 1)
-                    )
+                    .fill(LinearGradient(colors: [bgTop, bgBottom],
+                                         startPoint: .top, endPoint: .bottom))
+                    .overlay(Capsule().stroke(strokeColor, lineWidth: 1))
             )
         }
         .buttonStyle(BounceButtonStyle())
