@@ -34,19 +34,13 @@ struct NeedBarView: View {
                     HStack(alignment: .firstTextBaseline) {
                         Text(need.displayName)
                             .font(nameFont)
+                            .tracking(0.6)
                             .foregroundStyle(SimsTheme.textPrimary)
                         Spacer()
-                        HStack(spacing: 3) {
-                            Text("\(pct)")
-                                .font(.system(.caption, design: .rounded, weight: .bold))
+                        if critical {
+                            Text("⚠")
+                                .font(.system(.caption, weight: .bold))
                                 .foregroundStyle(SimsTheme.valueColor(for: value))
-                                .monospacedDigit()
-                                .contentTransition(.numericText(value: value))
-                            if critical {
-                                Text("⚠")
-                                    .font(.system(.caption, weight: .bold))
-                                    .foregroundStyle(SimsTheme.valueColor(for: value))
-                            }
                         }
                     }
                     pips
@@ -69,7 +63,7 @@ struct NeedBarView: View {
                             Button(role: .destructive) {
                                 onRemoveAction(index)
                             } label: {
-                                Label("Eliminar \"\(rec.actionName)\"", systemImage: "arrow.uturn.backward")
+                                Label("Eliminar \"\(rec.localizedName)\"", systemImage: "arrow.uturn.backward")
                             }
                         }
                 }
@@ -79,44 +73,55 @@ struct NeedBarView: View {
     }
 
     private func actionPill(_ rec: NeedStore.LastActionRecord, fresh: Bool) -> some View {
-        let pillColor = Color(hue: hue/360, saturation: 0.40, brightness: 0.80)
+        _ = fresh   // recent / older chips render identically — neutral grey
         return HStack(spacing: 3) {
             Image(systemName: rec.icon)
                 .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(fresh ? pillColor : SimsTheme.textSecondary)
-            Text(rec.actionName)
+                .foregroundStyle(SimsTheme.textPrimary)
+            Text(rec.localizedName)
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .foregroundStyle(fresh ? SimsTheme.textPrimary : SimsTheme.textSecondary)
+                .foregroundStyle(SimsTheme.textPrimary)
             Text(rec.at.timeAgo(style: .short))
                 .font(.system(size: 9, weight: .medium, design: .rounded))
-                .foregroundStyle(SimsTheme.textDim)
+                .foregroundStyle(SimsTheme.textSecondary)
                 .monospacedDigit()
         }
         .lineLimit(1)
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(
             Capsule()
-                .fill(fresh
-                    ? Color(hue: hue/360, saturation: 0.50, brightness: 0.20)
-                    : Color.white.opacity(0.04))
+                .fill(Color.white.opacity(0.55))
+                .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.35), lineWidth: 0.8))
         )
     }
 
     // MARK: - Tile (icon)
 
     private var tile: some View {
-        ZStack {
+        // Sims-style icon: white fill with a navy outline. SF Symbols don't
+        // have a native stroke, so we layer a slightly larger navy version
+        // behind a slightly thinner white version to fake the outline.
+        let stateColor = SimsTheme.valueColor(for: value)
+        let iconSize = tileSize * 0.42
+        return ZStack {
             RoundedRectangle(cornerRadius: 14)
-                .fill(SimsTheme.needTileGradient(hue: hue))
+                .fill(LinearGradient(
+                    colors: [stateColor.opacity(0.85), stateColor.opacity(0.55)],
+                    startPoint: .top, endPoint: .bottom
+                ))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(SimsTheme.frame, lineWidth: 1.5)
                 )
-                .shadow(color: Color(hue: hue/360, saturation: 0.7, brightness: 0.4).opacity(0.35), radius: 8, y: 3)
+            // Outline (slightly bigger + heavier weight, navy).
             Image(systemName: need.icon)
-                .font(.system(size: tileSize * 0.42, weight: .bold))
-                .foregroundStyle(Color(hue: hue/360, saturation: 0.45, brightness: 0.95))
+                .font(.system(size: iconSize + 2, weight: .black))
+                .foregroundStyle(SimsTheme.frame)
+            // Fill (white, regular weight).
+            Image(systemName: need.icon)
+                .font(.system(size: iconSize, weight: .bold))
+                .foregroundStyle(Color.white)
         }
         .frame(width: tileSize, height: tileSize)
     }
@@ -133,20 +138,39 @@ struct NeedBarView: View {
     }
 
     private var pips: some View {
-        HStack(spacing: 3) {
+        // Deep navy (#0E135B) — used both for the outer frame and the gaps
+        // between pips so the bar reads as a sectioned gauge.
+        let frame = Color(red: 0.055, green: 0.075, blue: 0.357)
+        return HStack(spacing: 2) {
             ForEach(0..<segments, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 3)
+                // First pip: round only the LEFT corners (outer cap).
+                // Last pip:  round only the RIGHT corners (outer cap).
+                // Inner pips: square; the navy gaps + frame do the rest.
+                let isFirst = i == 0
+                let isLast  = i == segments - 1
+                let shape = UnevenRoundedRectangle(
+                    topLeadingRadius:     isFirst ? 6 : 1,
+                    bottomLeadingRadius:  isFirst ? 6 : 1,
+                    bottomTrailingRadius: isLast  ? 6 : 1,
+                    topTrailingRadius:    isLast  ? 6 : 1
+                )
+                shape
                     .fill(i < filled ? AnyShapeStyle(fillBrush) : AnyShapeStyle(track))
                     .frame(height: pipHeight)
             }
         }
+        .padding(2)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(frame)
+        )
         .animation(.easeInOut(duration: 0.25), value: filled)
     }
 }
 
 #Preview {
     ZStack {
-        SimsTheme.mainBackground.ignoresSafeArea()
+        SimsTheme.background.ignoresSafeArea()
         VStack(spacing: 12) {
             NeedBarView(need: .energy,    value: 0.9)
             NeedBarView(need: .nutrition, value: 0.55)

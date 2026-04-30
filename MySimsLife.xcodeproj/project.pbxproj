@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */; };
+		0C80EAAC8C0650FF9027AE97 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */; };
 		158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */; };
 		164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC63F42E68BF4CF120400961 /* ActivityLog.swift */; };
 		180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */; };
@@ -21,19 +22,22 @@
 		44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */; };
 		47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138DC9B9C1F133F5234DEA6E /* HistoryView.swift */; };
 		4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */; };
+		5D17DB49EBE8F3442244032F /* SimsTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */; };
 		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
 		76EBA2A5841E36F582A42BAB /* BackendSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A41ADAD8AE08CDEA828817B /* BackendSync.swift */; };
 		7F40914A6715EDC992B9CED4 /* BackendCredentials.swift.example in Resources */ = {isa = PBXBuildFile; fileRef = EED77436DEA8ADA3BA2EEFA4 /* BackendCredentials.swift.example */; };
 		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
 		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
 		AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B910D402E23B4129BCEA86 /* AspirationsView.swift */; };
-		B225030E1A301A4F81994798 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D446C04FF679ABC590F02B /* InsightsView.swift */; };
+		BDDAD58B7DEEC6C7870D4463 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89EBC43D813E16A28F59F91 /* NotificationManager.swift */; };
+		C3EE1BDE7BE5AC46EBE4B29F /* CustomActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23304E01401252603966EA4 /* CustomActionSheet.swift */; };
 		C46743CDAC43E40198166D1D /* BackendCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = D250492436FD9D7C6C075A8B /* BackendCredentials.swift */; };
 		C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0206ECCA122D5D143687FA /* PlumbobView.swift */; };
 		CC86534924BE181C555415DE /* NeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */; };
 		DBD3729B3F256F2FC5E01FF0 /* LifeTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF22A33BD093A1B056C7F20 /* LifeTask.swift */; };
 		DF07AB16C4047E26360064E4 /* NeedType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D96C730292A9BE8FC42050E /* NeedType.swift */; };
 		E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3CF46933BBA8EC924A16469 /* DashboardView.swift */; };
+		ED427AEE763517E2DD3F6BFD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19B7E317406B92C357536FFC /* SettingsView.swift */; };
 		F55FACB9DC27CCA2615407AD /* NeedBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */; };
 		FF896F51D241A20358C02638 /* AspirationEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */; };
 /* End PBXBuildFile section */
@@ -43,7 +47,9 @@
 		11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditor.swift; sourceTree = "<group>"; };
 		138DC9B9C1F133F5234DEA6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsSheet.swift; sourceTree = "<group>"; };
+		19B7E317406B92C357536FFC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedBarView.swift; sourceTree = "<group>"; };
+		3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+TimeAgo.swift"; sourceTree = "<group>"; };
 		57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationEngine.swift; sourceTree = "<group>"; };
 		5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimsTheme.swift; sourceTree = "<group>"; };
@@ -55,10 +61,11 @@
 		8BCD270AEA7272BF4535857B /* Aspiration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aspiration.swift; sourceTree = "<group>"; };
 		94B910D402E23B4129BCEA86 /* AspirationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationsView.swift; sourceTree = "<group>"; };
 		9B65542E7FDCDD445172D75D /* MySimsLifeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySimsLifeApp.swift; sourceTree = "<group>"; };
-		A2D446C04FF679ABC590F02B /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspirationEditor.swift; sourceTree = "<group>"; };
 		AFF22A33BD093A1B056C7F20 /* LifeTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifeTask.swift; sourceTree = "<group>"; };
+		B23304E01401252603966EA4 /* CustomActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomActionSheet.swift; sourceTree = "<group>"; };
 		B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedStore.swift; sourceTree = "<group>"; };
+		B89EBC43D813E16A28F59F91 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		BE0206ECCA122D5D143687FA /* PlumbobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlumbobView.swift; sourceTree = "<group>"; };
 		C9A1445059387B20FA3F1C97 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CC63F42E68BF4CF120400961 /* ActivityLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLog.swift; sourceTree = "<group>"; };
@@ -69,6 +76,7 @@
 		EC9110DB76EDC23748047200 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
 		EED77436DEA8ADA3BA2EEFA4 /* BackendCredentials.swift.example */ = {isa = PBXFileReference; path = BackendCredentials.swift.example; sourceTree = "<group>"; };
 		EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimsTabBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -78,10 +86,12 @@
 				5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */,
 				A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */,
 				94B910D402E23B4129BCEA86 /* AspirationsView.swift */,
+				B23304E01401252603966EA4 /* CustomActionSheet.swift */,
 				D3CF46933BBA8EC924A16469 /* DashboardView.swift */,
 				1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */,
 				BE0206ECCA122D5D143687FA /* PlumbobView.swift */,
 				16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */,
+				F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */,
 				11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */,
 				EC9110DB76EDC23748047200 /* TasksView.swift */,
 			);
@@ -96,18 +106,11 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		5166E7553F4768CB826CAE3B /* Insights */ = {
-			isa = PBXGroup;
-			children = (
-				A2D446C04FF679ABC590F02B /* InsightsView.swift */,
-			);
-			path = Insights;
-			sourceTree = "<group>";
-		};
 		860B1F04B569895CE1A0C172 /* MySimsLife */ = {
 			isa = PBXGroup;
 			children = (
 				C9A1445059387B20FA3F1C97 /* Assets.xcassets */,
+				3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */,
 				D25F0B0FBBA6216B5E2A7C1B /* App */,
 				8B8950864803BD5681407477 /* Models */,
 				CF4A6D7E68704DB4F1B2EEA8 /* Store */,
@@ -142,7 +145,6 @@
 				EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */,
 				2F919F9F513EBD67BDF7C982 /* Dashboard */,
 				E91AB16E6E22AE0C6D9D4EA1 /* History */,
-				5166E7553F4768CB826CAE3B /* Insights */,
 				C4850408F321734EE2C717E5 /* Onboarding */,
 				F4B7740BE66EBB07DE312CD5 /* Settings */,
 			);
@@ -165,6 +167,7 @@
 				6A41ADAD8AE08CDEA828817B /* BackendSync.swift */,
 				57E5DF92CEB888F67912BDFA /* CalibrationEngine.swift */,
 				B7418E1C3290F0270C9EF7E2 /* NeedStore.swift */,
+				B89EBC43D813E16A28F59F91 /* NotificationManager.swift */,
 				890B52B8C3206516C2A12CB3 /* RealtimeSync.swift */,
 				06DAE4DF442CEB63E0E98903 /* SyncConstants.swift */,
 			);
@@ -200,6 +203,7 @@
 			isa = PBXGroup;
 			children = (
 				696130E65ABAB3AE13CFEAC3 /* CategoriesEditor.swift */,
+				19B7E317406B92C357536FFC /* SettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -241,11 +245,12 @@
 				};
 			};
 			buildConfigurationList = EE4C8A8DCF6ABC1F014FE885 /* Build configuration list for PBXProject "MySimsLife" */;
-			developmentRegion = en;
+			developmentRegion = es;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
+				es,
 			);
 			mainGroup = AA3C9F9D08EBD0C3ED874D6C;
 			minimizedProjectReferenceProxies = 1;
@@ -266,6 +271,7 @@
 			files = (
 				2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */,
 				7F40914A6715EDC992B9CED4 /* BackendCredentials.swift.example in Resources */,
+				0C80EAAC8C0650FF9027AE97 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,19 +292,22 @@
 				2CE6A0B33A9F35DAE12CBCB0 /* CalibrationEngine.swift in Sources */,
 				158AC2A56421EA6F810EF65C /* CategoriesEditor.swift in Sources */,
 				44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */,
+				C3EE1BDE7BE5AC46EBE4B29F /* CustomActionSheet.swift in Sources */,
 				E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */,
 				4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */,
 				47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */,
-				B225030E1A301A4F81994798 /* InsightsView.swift in Sources */,
 				DBD3729B3F256F2FC5E01FF0 /* LifeTask.swift in Sources */,
 				3AF8217AA126411442012216 /* MySimsLifeApp.swift in Sources */,
 				F55FACB9DC27CCA2615407AD /* NeedBarView.swift in Sources */,
 				CC86534924BE181C555415DE /* NeedStore.swift in Sources */,
 				DF07AB16C4047E26360064E4 /* NeedType.swift in Sources */,
+				BDDAD58B7DEEC6C7870D4463 /* NotificationManager.swift in Sources */,
 				80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */,
 				C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */,
 				2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */,
 				180A63232651C5241D3887D0 /* RealtimeSync.swift in Sources */,
+				ED427AEE763517E2DD3F6BFD /* SettingsView.swift in Sources */,
+				5D17DB49EBE8F3442244032F /* SimsTabBar.swift in Sources */,
 				67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */,
 				26608A9C2B68F76CB2EBB835 /* SyncConstants.swift in Sources */,
 				0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */,

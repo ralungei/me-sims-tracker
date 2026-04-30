@@ -5,7 +5,13 @@ import SwiftUI
 struct AspirationsRow: View {
     let aspirations: [Aspiration]
     var upcoming: [Aspiration] = []
-    var horizontalInset: CGFloat = 32
+    /// How far the scroll viewport extends past the parent (negative outer
+    /// padding). Use this to escape parent paddings so the scroll bleeds to
+    /// the panel / screen edge.
+    var outerEscape: CGFloat = 32
+    /// Distance from the scroll viewport's edge to the first / last card.
+    /// This is the visible card margin when scrolled to the start / end.
+    var cardInset: CGFloat = 16
     var onTap: (Aspiration) -> Void
     var onAdd: () -> Void = {}
     var onEdit: (Aspiration) -> Void = { _ in }
@@ -13,23 +19,6 @@ struct AspirationsRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Text("✦")
-                    .font(.system(.caption, weight: .bold))
-                    .foregroundStyle(SimsTheme.accentWarm)
-                Text("ASPIRACIONES")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .tracking(1.4)
-                    .foregroundStyle(SimsTheme.textDim)
-                Spacer()
-                let donesToday = aspirations.filter { $0.isDoneNow() }.count
-                if donesToday > 0 {
-                    Text("\(donesToday)/\(aspirations.count) hoy")
-                        .font(.system(.caption2, design: .rounded, weight: .semibold))
-                        .foregroundStyle(SimsTheme.accentGreen)
-                }
-            }
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     AddAspirationCard(onTap: onAdd)
@@ -50,10 +39,10 @@ struct AspirationsRow: View {
                         }
                     }
                 }
-                .padding(.horizontal, horizontalInset)
+                .padding(.horizontal, cardInset)
             }
             .scrollClipDisabled()
-            .padding(.horizontal, -horizontalInset)
+            .padding(.horizontal, -outerEscape)
 
             if !upcoming.isEmpty {
                 upcomingRow
@@ -91,17 +80,17 @@ struct AspirationsRow: View {
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .fill(Color.white.opacity(0.04))
-                                    .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
+                                    .fill(Color.white.opacity(0.45))
+                                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
                             )
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, horizontalInset)
+                .padding(.horizontal, cardInset)
             }
             .scrollClipDisabled()
-            .padding(.horizontal, -horizontalInset)
+            .padding(.horizontal, -outerEscape)
         }
         .padding(.top, 4)
     }
@@ -117,25 +106,30 @@ struct AddAspirationCard: View {
             VStack(spacing: 5) {
                 ZStack {
                     Circle()
-                        .stroke(SimsTheme.textDim, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+                        .stroke(SimsTheme.frame.opacity(0.6),
+                                style: StrokeStyle(lineWidth: 1.4, dash: [3, 3]))
                         .frame(width: 28, height: 28)
                     Image(systemName: "plus")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(SimsTheme.textSecondary)
+                        .foregroundStyle(SimsTheme.textPrimary)
                 }
                 Text("Nueva")
                     .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textSecondary)
+                    .foregroundStyle(SimsTheme.textPrimary)
                 Text("aspiración")
                     .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(SimsTheme.textDim)
+                    .foregroundStyle(SimsTheme.textSecondary)
             }
             .padding(10)
-            .frame(width: 96, height: 86)
+            .frame(width: 96, height: 100)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(SimsTheme.textDim.opacity(0.6),
-                            style: StrokeStyle(lineWidth: 1.2, dash: [4, 4]))
+                    .fill(SimsTheme.panelPeriwinkle.opacity(0.55))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(SimsTheme.frame,
+                                    style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -152,16 +146,11 @@ struct AspirationCard: View {
 
     private var hue: Double { aspiration.hue }
     private var done: Bool { aspiration.isDoneNow() }
-    private var doneColor: Color { SimsTheme.valueColor(for: 1.0) }   // sage green
-    private var hueColor:  Color { Color(hue: hue/360, saturation: 0.55, brightness: 0.55) }
-    private var color:     Color { done ? doneColor : hueColor }
-    private var bgGradient: LinearGradient {
-        LinearGradient(
-            colors: done
-                ? [doneColor.opacity(0.30), doneColor.opacity(0.18)]
-                : [Color.white.opacity(0.07), Color.white.opacity(0.03)],
-            startPoint: .top, endPoint: .bottom
-        )
+    private var hueColor:  Color { SimsTheme.hueBody(hue) }
+    private var color:     Color { done ? SimsTheme.frame : hueColor }
+    /// Periwinkle when active, soft Sims green when completed.
+    private var cardBG: Color {
+        done ? SimsTheme.simsGreen.opacity(0.65) : SimsTheme.panelPeriwinkle
     }
 
     var body: some View {
@@ -173,38 +162,45 @@ struct AspirationCard: View {
                     Spacer()
                     if done {
                         ZStack {
-                            Circle().fill(color.opacity(0.25)).frame(width: 18, height: 18)
+                            Circle()
+                                .fill(SimsTheme.frame.opacity(0.18))
+                                .frame(width: 20, height: 20)
+                                .overlay(Circle().stroke(SimsTheme.frame, lineWidth: 1))
                             Image(systemName: "checkmark")
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundStyle(color)
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundStyle(SimsTheme.frame)
                         }
                     } else {
                         Text("+\(aspiration.xp)")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(SimsTheme.accentWarm)
+                            .foregroundStyle(SimsTheme.textPrimary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(SimsTheme.accentWarm.opacity(0.15)))
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.55))
+                                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.4), lineWidth: 0.8))
+                            )
                     }
                 }
 
                 Text(aspiration.name)
                     .font(.system(.caption, design: .rounded, weight: .bold))
+                    .tracking(0.3)
                     .foregroundStyle(SimsTheme.textPrimary)
                     .lineLimit(1)
 
                 detail
             }
             .padding(10)
-            .frame(width: 132, height: 86, alignment: .topLeading)
+            .frame(width: 132, height: 100, alignment: .topLeading)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(bgGradient)
+                    .fill(cardBG)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(done ? color.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
+                            .stroke(SimsTheme.frame, lineWidth: 1.5)
                     )
-                    .shadow(color: done ? color.opacity(0.25) : .clear, radius: 8, y: 2)
             )
             .scaleEffect(pulse ? 1.03 : 1.0)
         }
@@ -238,7 +234,14 @@ struct AspirationCard: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let dosing = dosingLabel {
+        let dose = aspiration.currentDoseLabel()
+        if aspiration.kind == .treatment,
+           let day = aspiration.treatmentDay(),
+           let total = aspiration.totalDays {
+            treatmentDetail(day: day, total: total, dose: dose)
+        } else if let dose {
+            label(dose, systemImage: "pills.fill")
+        } else if let dosing = dosingLabel {
             label(dosing.text, systemImage: dosing.icon)
         } else {
             kindDetail
@@ -246,40 +249,66 @@ struct AspirationCard: View {
     }
 
     @ViewBuilder
+    private func treatmentDetail(day: Int, total: Int, dose: String?) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Image(systemName: dose != nil ? "pills.fill" : "leaf.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(color)
+                if let dose {
+                    Text(dose)
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text("\(day)/\(total)")
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .foregroundStyle(SimsTheme.textDim)
+                } else {
+                    Text("Día \(day) de \(total)")
+                        .font(.system(.caption2, design: .rounded, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                }
+            }
+            if let dosing = dosingLabel {
+                HStack(spacing: 3) {
+                    Image(systemName: dosing.icon)
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textDim)
+                    Text(dosing.text)
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(SimsTheme.frame.opacity(0.18))
+                    Capsule()
+                        .fill(LinearGradient(
+                            colors: [SimsTheme.frame, SimsTheme.frame.opacity(0.6)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                        .frame(width: max(4, geo.size.width * (Double(day) / Double(total))))
+                }
+                .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 0.8))
+            }
+            .frame(height: 5)
+        }
+    }
+
+    @ViewBuilder
     private var kindDetail: some View {
         switch aspiration.kind {
         case .dailySimple:
-            label("Diario", systemImage: "sun.max.fill")
+            label(String(localized: "Diario"), systemImage: "sun.max.fill")
         case .dailyTimed:
-            label("\(aspiration.durationMinutes ?? 0) min · diario",
-                  systemImage: "timer")
+            let mins = aspiration.durationMinutes ?? 0
+            label(String(localized: "\(mins) min · diario"), systemImage: "timer")
         case .weekly:
-            label("Esta semana", systemImage: "calendar")
+            label(String(localized: "Esta semana"), systemImage: "calendar")
         case .treatment:
-            if let day = aspiration.treatmentDay(), let total = aspiration.totalDays {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "leaf.fill")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(color)
-                        Text("Día \(day) de \(total)")
-                            .font(.system(.caption2, design: .rounded, weight: .semibold))
-                            .foregroundStyle(SimsTheme.textSecondary)
-                    }
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Color.white.opacity(0.08))
-                            Capsule()
-                                .fill(LinearGradient(
-                                    colors: [color, color.opacity(0.65)],
-                                    startPoint: .leading, endPoint: .trailing
-                                ))
-                                .frame(width: max(4, geo.size.width * (Double(day) / Double(total))))
-                        }
-                    }
-                    .frame(height: 4)
-                }
-            }
+            EmptyView()
         }
     }
 
@@ -297,7 +326,7 @@ struct AspirationCard: View {
 
 #Preview {
     ZStack {
-        SimsTheme.mainBackground.ignoresSafeArea()
+        SimsTheme.background.ignoresSafeArea()
         AspirationsRow(aspirations: []) { _ in }
             .padding()
     }

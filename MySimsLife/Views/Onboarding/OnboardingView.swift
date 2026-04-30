@@ -13,7 +13,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            SimsTheme.mainBackground.ignoresSafeArea()
+            SimsTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -95,15 +95,15 @@ struct OnboardingView: View {
         }
     }
 
-    private func row(_ icon: String, _ title: String, _ desc: String) -> some View {
+    private func row(_ icon: String, _ title: LocalizedStringKey, _ desc: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(SimsTheme.accentWarm.opacity(0.14))
+                    .fill(SimsTheme.accentPrimary.opacity(0.14))
                     .frame(width: 34, height: 34)
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(SimsTheme.accentWarm)
+                    .foregroundStyle(SimsTheme.accentPrimary)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -161,7 +161,7 @@ struct OnboardingView: View {
                         .fill(Color.white.opacity(0.06))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(nameFocused ? SimsTheme.accentWarm.opacity(0.5) : Color.white.opacity(0.05),
+                                .stroke(nameFocused ? SimsTheme.accentPrimary.opacity(0.5) : Color.white.opacity(0.05),
                                         lineWidth: 1)
                         )
                 )
@@ -180,7 +180,7 @@ struct OnboardingView: View {
         HStack(spacing: 6) {
             ForEach(Step.allCases, id: \.rawValue) { s in
                 Capsule()
-                    .fill(s == step ? SimsTheme.accentWarm : SimsTheme.textDim.opacity(0.5))
+                    .fill(s == step ? SimsTheme.accentPrimary : SimsTheme.textDim.opacity(0.5))
                     .frame(width: s == step ? 22 : 6, height: 6)
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: step)
             }
@@ -190,7 +190,7 @@ struct OnboardingView: View {
     // MARK: - Primary button
 
     private var primaryButton: some View {
-        let label = step == .name ? "Listo" : "Siguiente"
+        let label: LocalizedStringKey = step == .name ? "Listo" : "Siguiente"
         let disabled = step == .name && name.trimmingCharacters(in: .whitespaces).isEmpty
         return Button { advance() } label: {
             HStack(spacing: 8) {
@@ -203,7 +203,7 @@ struct OnboardingView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(SimsTheme.accentWarm)
+                    .fill(SimsTheme.accentPrimary)
             )
             .foregroundStyle(Color.black.opacity(0.85))
         }

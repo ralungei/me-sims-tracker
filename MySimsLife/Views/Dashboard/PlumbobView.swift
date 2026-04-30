@@ -39,8 +39,10 @@ struct Plumbob3DScene {
         material.lightingModel = .blinn
         material.diffuse.contents = PlatformColor(color)
         material.specular.contents = PlatformColor.white
-        material.shininess = 0.8
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.25)
+        // Concentrated highlight + barely-there inner glow so the facets read
+        // their own light/shadow gradient rather than washing out flat.
+        material.shininess = 0.45
+        material.emission.contents = PlatformColor(color).withAlphaComponent(0.06)
         geometry.firstMaterial = material
 
         let node = SCNNode(geometry: geometry)
@@ -61,9 +63,10 @@ struct Plumbob3DScene {
         cameraNode.position = SCNVector3(0, 0, 5)
         scene.rootNode.addChildNode(cameraNode)
 
+        // Strong key light from upper-right hits one set of facets bright.
         let key = SCNLight()
         key.type = .directional
-        key.intensity = 900
+        key.intensity = 1200
         key.color = PlatformColor.white
         let keyNode = SCNNode()
         keyNode.light = key
@@ -71,19 +74,22 @@ struct Plumbob3DScene {
         keyNode.eulerAngles = SCNVector3(-0.5, 0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
+        // Cool blue rim light from the opposite side — gives the shadowed
+        // facets a subtle blue tint instead of dead-flat dark.
         let fill = SCNLight()
         fill.type = .directional
-        fill.intensity = 250
-        fill.color = PlatformColor(color)
+        fill.intensity = 320
+        fill.color = PlatformColor(red: 0.55, green: 0.65, blue: 0.95, alpha: 1)
         let fillNode = SCNNode()
         fillNode.light = fill
         fillNode.position = SCNVector3(-3, -1, 2)
         fillNode.eulerAngles = SCNVector3(0.3, -0.6, 0)
         scene.rootNode.addChildNode(fillNode)
 
+        // Ambient kept low so the light/shadow contrast survives.
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 180
+        ambient.intensity = 70
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
@@ -160,7 +166,7 @@ private extension Plumbob3DScene {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
               let material = node.geometry?.firstMaterial else { return }
         material.diffuse.contents = PlatformColor(color)
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.25)
+        material.emission.contents = PlatformColor(color).withAlphaComponent(0.06)
     }
 }
 
@@ -183,7 +189,7 @@ private func normalize(_ v: SCNVector3) -> SCNVector3 {
 
 #Preview {
     ZStack {
-        SimsTheme.mainBackground.ignoresSafeArea()
+        SimsTheme.background.ignoresSafeArea()
         HStack(spacing: 30) {
             PlumbobView(mood: 0.90)
             PlumbobView(mood: 0.55)

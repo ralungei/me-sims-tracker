@@ -78,7 +78,6 @@ final class RealtimeSync {
 
     private func handle(_ message: URLSessionWebSocketTask.Message) {
         guard case .string(let text) = message else { return }
-        onEvent?(text)
         guard let data = text.data(using: .utf8),
               let event = try? JSONDecoder().decode(ServerEvent.self, from: data)
         else { return }
@@ -86,12 +85,10 @@ final class RealtimeSync {
         if kind == .pong { return }
         // Skip echoes of our own writes — local state is already authoritative.
         if event.from_client == BackendSync.clientID { return }
-        // `hello` arrives on connect/reconnect: trigger a pull to catch up on
-        // anything that changed while the WS was down. All `*.changed` events
-        // also trigger one.
-        if let context = modelContext {
-            Task { await BackendSync.shared.pull(into: context) }
-        }
+        // Forward only to NeedStore's onEvent — a second pull here would race
+        // it, advancing `lastSync` first and leaving NeedStore with an empty
+        // needs_state delta.
+        onEvent?(text)
     }
 
     private func schedulePing() {

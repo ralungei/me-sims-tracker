@@ -1,12 +1,17 @@
 name: MySimsLife
 options:
   bundleIdPrefix: com.mysims
+  developmentLanguage: es
   deploymentTarget:
     iOS: "17.0"
     macOS: "14.0"
   xcodeVersion: "16.0"
   createIntermediateGroups: true
   defaultConfig: Debug
+  knownRegions:
+    - es
+    - en
+    - Base
 
 settings:
   base:

@@ -13,22 +13,8 @@ struct TasksRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: "checklist")
-                    .font(.system(.caption, weight: .bold))
-                    .foregroundStyle(SimsTheme.accentWarm)
-                Text("AGENDA")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .tracking(1.4)
-                    .foregroundStyle(SimsTheme.textDim)
-                Spacer()
-                if !tasks.isEmpty {
-                    let done = tasks.filter { $0.isDone }.count
-                    Text("\(done)/\(tasks.count) hechas")
-                        .font(.system(.caption2, design: .rounded, weight: .semibold))
-                        .foregroundStyle(done == tasks.count ? SimsTheme.accentGreen : SimsTheme.accentWarm)
-                }
-            }
+            // Counter ("X/Y hechas") rendered up in the dashboard's tab
+            // title row instead of here.
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
@@ -111,7 +97,7 @@ struct TaskCard: View {
     private var statusColor: Color {
         if task.isDone { return SimsTheme.valueColor(for: 1.0) }     // sage green
         if task.isOverdue { return SimsTheme.negativeTint }
-        return SimsTheme.accentWarm
+        return SimsTheme.accentPrimary
     }
 
     private var bgGradient: LinearGradient {
@@ -177,7 +163,7 @@ struct TaskCard: View {
 
 #Preview {
     ZStack {
-        SimsTheme.mainBackground.ignoresSafeArea()
+        SimsTheme.background.ignoresSafeArea()
         TasksRow(tasks: []) { _ in }
             .padding()
     }

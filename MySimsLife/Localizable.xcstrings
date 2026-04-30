@@ -1,0 +1,2035 @@
+{
+  "sourceLanguage" : "es",
+  "strings" : {
+    "¿Cómo te llamas?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's your name?"
+          }
+        }
+      }
+    },
+    "¿Marcar todo como estable?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark everything as stable?"
+          }
+        }
+      }
+    },
+    "¿Qué quieres seguir?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you want to track?"
+          }
+        }
+      }
+    },
+    "¿Qué tan grande es?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How big is it?"
+          }
+        }
+      }
+    },
+    "%@" : {
+
+    },
+    "%@ · +%@%%" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · +%2$@%%"
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ días" : {
+
+    },
+    "%@ en %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ en %2$@"
+          }
+        }
+      }
+    },
+    "%@ h" : {
+
+    },
+    "%@ min" : {
+
+    },
+    "%@/%@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@/%2$@"
+          }
+        }
+      }
+    },
+    "%@/%@ hechas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/%@ done"
+          }
+        }
+      }
+    },
+    "%@/%@ hoy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/%@ today"
+          }
+        }
+      }
+    },
+    "%@%@%%" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@%%"
+          }
+        }
+      }
+    },
+    "%@%%" : {
+
+    },
+    "+%@" : {
+
+    },
+    "⚠" : {
+
+    },
+    "⚡ RÁPIDO" : {
+
+    },
+    "a" : {
+
+    },
+    "ACCIONES" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ACTIONS"
+          }
+        }
+      }
+    },
+    "Activa solo las que te interesen. Puedes cambiarlo después en Categorías." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable only the ones you care about. You can change this later in Categories."
+          }
+        }
+      }
+    },
+    "Agenda" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agenda"
+          }
+        }
+      }
+    },
+    "Agua" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water"
+          }
+        }
+      }
+    },
+    "Aguanté mucho" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Held it too long"
+          }
+        }
+      }
+    },
+    "Ajustes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "Al acostarse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At bedtime"
+          }
+        }
+      }
+    },
+    "Alcohol" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alcohol"
+          }
+        }
+      }
+    },
+    "Algo rápido de 2–5 min — un vaso de agua, escribir tres líneas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick 2–5 min — a glass of water, jot three lines"
+          }
+        }
+      }
+    },
+    "Almuerzo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lunch"
+          }
+        }
+      }
+    },
+    "Añadir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "Añadir hora" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add time"
+          }
+        }
+      }
+    },
+    "Añadir tramo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add range"
+          }
+        }
+      }
+    },
+    "Antes de cenar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before dinner"
+          }
+        }
+      }
+    },
+    "Antes de comida" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before meal"
+          }
+        }
+      }
+    },
+    "Antes del almuerzo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before lunch"
+          }
+        }
+      }
+    },
+    "Aparece en el saludo cuando abres la app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows up in the greeting when you open the app."
+          }
+        }
+      }
+    },
+    "Arreglé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got ready"
+          }
+        }
+      }
+    },
+    "aspiración" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aspiration"
+          }
+        }
+      }
+    },
+    "Aspiraciones" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aspirations"
+          }
+        }
+      }
+    },
+    "atrasada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "overdue"
+          }
+        }
+      }
+    },
+    "Avisar cuando una necesidad esté baja" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify when a need is low"
+          }
+        }
+      }
+    },
+    "Bajo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low"
+          }
+        }
+      }
+    },
+    "Banner local (no usa servidor)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local banner (no server)."
+          }
+        }
+      }
+    },
+    "Buenas noches," : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good evening,"
+          }
+        }
+      }
+    },
+    "Buenas tardes," : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good afternoon,"
+          }
+        }
+      }
+    },
+    "Buenos días," : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good morning,"
+          }
+        }
+      }
+    },
+    "Caca blanda" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loose poo"
+          }
+        }
+      }
+    },
+    "Caca dura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard poo"
+          }
+        }
+      }
+    },
+    "Caca normal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal poo"
+          }
+        }
+      }
+    },
+    "Café" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coffee"
+          }
+        }
+      }
+    },
+    "Caminata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        }
+      }
+    },
+    "Cancelar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Cansancio fuerte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strong fatigue"
+          }
+        }
+      }
+    },
+    "Cantidad por toma" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amount per intake"
+          }
+        }
+      }
+    },
+    "Cena" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dinner"
+          }
+        }
+      }
+    },
+    "Cerrar" : {
+
+    },
+    "Cerrar aviso" : {
+
+    },
+    "Color" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color"
+          }
+        }
+      }
+    },
+    "Comida basura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Junk food"
+          }
+        }
+      }
+    },
+    "Con la comida" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With meal"
+          }
+        }
+      }
+    },
+    "Configurar necesidades" : {
+
+    },
+    "Continuar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "Correr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
+          }
+        }
+      }
+    },
+    "Crítico" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Critical"
+          }
+        }
+      }
+    },
+    "Cuándo tomarla (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When to take (optional)"
+          }
+        }
+      }
+    },
+    "Cuidado" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Careful"
+          }
+        }
+      }
+    },
+    "Curso finito con progreso (ej: prebióticos 30 días)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finite course with progress (e.g. probiotics 30 days)"
+          }
+        }
+      }
+    },
+    "Deporte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport"
+          }
+        }
+      }
+    },
+    "Desayuno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breakfast"
+          }
+        }
+      }
+    },
+    "Descansé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rested"
+          }
+        }
+      }
+    },
+    "Desorden" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messy"
+          }
+        }
+      }
+    },
+    "Después de comer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After meal"
+          }
+        }
+      }
+    },
+    "Día %@ de %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Día %1$@ de %2$@"
+          }
+        }
+      }
+    },
+    "Día %lld de %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day %lld of %lld"
+          }
+        }
+      }
+    },
+    "Día sedentario" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sedentary day"
+          }
+        }
+      }
+    },
+    "Diario" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily"
+          }
+        }
+      }
+    },
+    "Diario · sesión" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily · session"
+          }
+        }
+      }
+    },
+    "Diario con duración (ej: meditar 25 min)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily with duration (e.g. meditate 25 min)"
+          }
+        }
+      }
+    },
+    "Diario con sesión" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily with session"
+          }
+        }
+      }
+    },
+    "Días totales" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total days"
+          }
+        }
+      }
+    },
+    "Dormí 6h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slept 6h"
+          }
+        }
+      }
+    },
+    "Dormí 7h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slept 7h"
+          }
+        }
+      }
+    },
+    "Dormí 8h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slept 8h"
+          }
+        }
+      }
+    },
+    "Ducha" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shower"
+          }
+        }
+      }
+    },
+    "Duración" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
+          }
+        }
+      }
+    },
+    "Editar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "Editar tarea" : {
+
+    },
+    "Ej: Meditar 25 min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E.g. Meditate 25 min"
+          }
+        }
+      }
+    },
+    "Ej: yoga, cena con Pablo, helado…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E.g. yoga, dinner with Pablo, ice cream…"
+          }
+        }
+      }
+    },
+    "Ejercicio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise"
+          }
+        }
+      }
+    },
+    "Eliminar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "Eliminar \"%@\"" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete \"%@\""
+          }
+        }
+      }
+    },
+    "Eliminar aspiración" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete aspiration"
+          }
+        }
+      }
+    },
+    "Eliminar tarea" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete task"
+          }
+        }
+      }
+    },
+    "Emoji" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji"
+          }
+        }
+      }
+    },
+    "Empezar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get started"
+          }
+        }
+      }
+    },
+    "empieza %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "starts %@"
+          }
+        }
+      }
+    },
+    "Empieza el" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts on"
+          }
+        }
+      }
+    },
+    "En ayunas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fasting"
+          }
+        }
+      }
+    },
+    "Energía" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy"
+          }
+        }
+      }
+    },
+    "Entorno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Environment"
+          }
+        }
+      }
+    },
+    "Épica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Epic"
+          }
+        }
+      }
+    },
+    "Esfuerzo notable de 30+ min — entrenar, cocinar bien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notable 30+ min effort — work out, cook properly"
+          }
+        }
+      }
+    },
+    "Está al %lld%%. Hora de cuidarlo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's at %lld%%. Time to take care of it."
+          }
+        }
+      }
+    },
+    "Esta semana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week"
+          }
+        }
+      }
+    },
+    "Estado" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "estás bien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you're doing well"
+          }
+        }
+      }
+    },
+    "Estiramientos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stretching"
+          }
+        }
+      }
+    },
+    "Estoy sano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm healthy"
+          }
+        }
+      }
+    },
+    "Filtrar" : {
+
+    },
+    "Gesto de segundos — tomar una pastilla, lavarse las manos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Few-second gesture — take a pill, wash hands"
+          }
+        }
+      }
+    },
+    "Grande" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large"
+          }
+        }
+      }
+    },
+    "Gripe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flu"
+          }
+        }
+      }
+    },
+    "Guardar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "Gym" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gym"
+          }
+        }
+      }
+    },
+    "Hice la cama" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Made bed"
+          }
+        }
+      }
+    },
+    "Hidratación" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration"
+          }
+        }
+      }
+    },
+    "Higiene" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hygiene"
+          }
+        }
+      }
+    },
+    "Historial" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History"
+          }
+        }
+      }
+    },
+    "Hola." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello."
+          }
+        }
+      }
+    },
+    "Hora específica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Specific time"
+          }
+        }
+      }
+    },
+    "Hora exacta (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exact time (optional)"
+          }
+        }
+      }
+    },
+    "Icono" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon"
+          }
+        }
+      }
+    },
+    "Insights" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insights"
+          }
+        }
+      }
+    },
+    "Insomnio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insomnia"
+          }
+        }
+      }
+    },
+    "Lavé dientes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brushed teeth"
+          }
+        }
+      }
+    },
+    "Lavé platos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Washed dishes"
+          }
+        }
+      }
+    },
+    "Lesión / dolor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Injury / pain"
+          }
+        }
+      }
+    },
+    "Limpié casa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cleaned house"
+          }
+        }
+      }
+    },
+    "Lleva el tracking de tu día como en Los Sims.\nNecesidades, retos y agenda en un sitio." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track your day The-Sims-style.\nNeeds, challenges and agenda in one place."
+          }
+        }
+      }
+    },
+    "Logro semanal — postear, terminar un proyecto, salir con gente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly milestone — post, finish a project, see people"
+          }
+        }
+      }
+    },
+    "Mal del estómago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upset stomach"
+          }
+        }
+      }
+    },
+    "Mala noche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bad night"
+          }
+        }
+      }
+    },
+    "Marcar todo al 50%" : {
+
+    },
+    "Media mañana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mid-morning"
+          }
+        }
+      }
+    },
+    "Mediana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medium"
+          }
+        }
+      }
+    },
+    "Migraña" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Migraine"
+          }
+        }
+      }
+    },
+    "Mini" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mini"
+          }
+        }
+      }
+    },
+    "Mínimo entre avisos para la misma necesidad." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum between alerts for the same need."
+          }
+        }
+      }
+    },
+    "My Sims Life — Configuración" : {
+
+    },
+    "Necesidades" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs"
+          }
+        }
+      }
+    },
+    "necesitas cuidarte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "take care of yourself"
+          }
+        }
+      }
+    },
+    "Negativa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negative"
+          }
+        }
+      }
+    },
+    "ninguno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        }
+      }
+    },
+    "Nombre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "Notas (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes (optional)"
+          }
+        }
+      }
+    },
+    "Notificaciones" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Notificaciones activas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications active"
+          }
+        }
+      }
+    },
+    "Nueva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New"
+          }
+        }
+      }
+    },
+    "Nueva acción" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New action"
+          }
+        }
+      }
+    },
+    "Nueva aspiración" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New aspiration"
+          }
+        }
+      }
+    },
+    "Nueva tarea" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New task"
+          }
+        }
+      }
+    },
+    "Nutrición" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutrition"
+          }
+        }
+      }
+    },
+    "Ocio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leisure"
+          }
+        }
+      }
+    },
+    "ojo, andas bajo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "watch out, low"
+          }
+        }
+      }
+    },
+    "Ok" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ok"
+          }
+        }
+      }
+    },
+    "Ordené escritorio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidied desk"
+          }
+        }
+      }
+    },
+    "Pequeña" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small"
+          }
+        }
+      }
+    },
+    "Permiso denegado" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission denied"
+          }
+        }
+      }
+    },
+    "personalizada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "custom"
+          }
+        }
+      }
+    },
+    "Pis amarillo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yellow pee"
+          }
+        }
+      }
+    },
+    "Pis claro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear pee"
+          }
+        }
+      }
+    },
+    "Pis oscuro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark pee"
+          }
+        }
+      }
+    },
+    "Pleno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full"
+          }
+        }
+      }
+    },
+    "Pone todas las barras al 50%. No borra el historial." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets all bars to 50%. Doesn't delete history."
+          }
+        }
+      }
+    },
+    "Positiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Positive"
+          }
+        }
+      }
+    },
+    "Posología, marca, instrucciones..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosage, brand, instructions…"
+          }
+        }
+      }
+    },
+    "Probar notificación" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test notification"
+          }
+        }
+      }
+    },
+    "PRÓXIMAMENTE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UPCOMING"
+          }
+        }
+      }
+    },
+    "Qué vas a ver" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you'll see"
+          }
+        }
+      }
+    },
+    "RECIENTES" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RECENT"
+          }
+        }
+      }
+    },
+    "Recuperándome" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovering"
+          }
+        }
+      }
+    },
+    "Registrar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register"
+          }
+        }
+      }
+    },
+    "REGISTRAR NEGATIVO" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RECORD NEGATIVE"
+          }
+        }
+      }
+    },
+    "Repetir cada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat every"
+          }
+        }
+      }
+    },
+    "Resfriado" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cold"
+          }
+        }
+      }
+    },
+    "Saltó comida" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped meal"
+          }
+        }
+      }
+    },
+    "Salud" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health"
+          }
+        }
+      }
+    },
+    "Sem" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wk"
+          }
+        }
+      }
+    },
+    "Semanal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly"
+          }
+        }
+      }
+    },
+    "Sesión real de 15–30 min — meditar, leer un capítulo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Real 15–30 min session — meditate, read a chapter"
+          }
+        }
+      }
+    },
+    "Si una semana no está cubierta, se usa la cantidad por defecto." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weeks not covered fall back to the default amount."
+          }
+        }
+      }
+    },
+    "Sí, todo al 50%%" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, everything at 50%%"
+          }
+        }
+      }
+    },
+    "Siesta" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nap"
+          }
+        }
+      }
+    },
+    "Sin actividad registrada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No activity recorded"
+          }
+        }
+      }
+    },
+    "Sin avisos pendientes ahora mismo." : {
+
+    },
+    "Sin beber" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No drinks"
+          }
+        }
+      }
+    },
+    "Skincare" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skincare"
+          }
+        }
+      }
+    },
+    "Snack sano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Healthy snack"
+          }
+        }
+      }
+    },
+    "sobre, cápsula, ml..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sachet, capsule, ml…"
+          }
+        }
+      }
+    },
+    "Social" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Social"
+          }
+        }
+      }
+    },
+    "Tamaño" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Size"
+          }
+        }
+      }
+    },
+    "tarea" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "task"
+          }
+        }
+      }
+    },
+    "Té" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tea"
+          }
+        }
+      }
+    },
+    "Te avisamos cuando una barra cruza por debajo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We'll notify you when a bar drops below this."
+          }
+        }
+      }
+    },
+    "Te avisaremos cuando una necesidad esté baja." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We'll notify you when a need is low."
+          }
+        }
+      }
+    },
+    "te ves genial" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you look great"
+          }
+        }
+      }
+    },
+    "Tienes las notificaciones desactivadas para esta app en Ajustes del sistema. Actívalas allí para que funcionen." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications are disabled for this app in System Settings. Enable them there to make this work."
+          }
+        }
+      }
+    },
+    "Tipo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        }
+      }
+    },
+    "Toca una barra en el panel principal\npara registrar tu primera actividad" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a bar on the main panel\nto record your first activity"
+          }
+        }
+      }
+    },
+    "Todo bajo control" : {
+
+    },
+    "Tratamiento" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treatment"
+          }
+        }
+      }
+    },
+    "Tu nombre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name"
+          }
+        }
+      }
+    },
+    "Umbral" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Threshold"
+          }
+        }
+      }
+    },
+    "Una vez al día (ej: creatina)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once a day (e.g. creatine)"
+          }
+        }
+      }
+    },
+    "Una vez por semana (ej: postear reel)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once a week (e.g. post a reel)"
+          }
+        }
+      }
+    },
+    "Unidad (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unit (optional)"
+          }
+        }
+      }
+    },
+    "Variación por semanas (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly variation (optional)"
+          }
+        }
+      }
+    },
+    "vas tirando" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "getting by"
+          }
+        }
+      }
+    },
+    "Vejiga" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bladder"
+          }
+        }
+      }
+    },
+    "Ventilé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aired out"
+          }
+        }
+      }
+    },
+    "Vista previa" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview"
+          }
+        }
+      }
+    },
+    "Zumo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juice"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

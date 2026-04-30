@@ -2,18 +2,19 @@ import Foundation
 
 extension Date {
     /// Human-friendly label for a date in the future: "hoy", "mañana", "en N días",
-    /// or an absolute "d MMM" string for further dates.
+    /// or an absolute date string for further dates. Uses the user's current
+    /// locale via `String(localized:)`.
     func relativeFutureLabel(reference: Date = Date()) -> String {
         let cal = Calendar.current
         let days = cal.dateComponents([.day],
                                       from: cal.startOfDay(for: reference),
                                       to: cal.startOfDay(for: self)).day ?? 0
-        if days <= 0 { return "hoy" }
-        if days == 1 { return "mañana" }
-        if days <= 14 { return "en \(days) días" }
+        if days <= 0 { return String(localized: "hoy") }
+        if days == 1 { return String(localized: "mañana") }
+        if days <= 14 { return String(localized: "en \(days) días") }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "es_ES")
-        f.dateFormat = "d MMM"
+        f.locale = Locale.current
+        f.setLocalizedDateFormatFromTemplate("dMMM")
         return f.string(from: self)
     }
 
@@ -26,19 +27,19 @@ extension Date {
         let secs = Int(reference.timeIntervalSince(self))
         switch style {
         case .short:
-            if secs < 60 { return "ahora" }
+            if secs < 60 { return String(localized: "ahora") }
             let mins = secs / 60
-            if mins < 60 { return "\(mins)m" }
+            if mins < 60 { return String(localized: "\(mins)m") }
             let hrs = mins / 60
-            if hrs < 24 { return "\(hrs)h" }
-            return "\(hrs / 24)d"
+            if hrs < 24 { return String(localized: "\(hrs)h") }
+            return String(localized: "\(hrs / 24)d")
         case .long:
-            if secs < 60 { return "ahora mismo" }
+            if secs < 60 { return String(localized: "ahora mismo") }
             let mins = secs / 60
-            if mins < 60 { return "hace \(mins) min" }
+            if mins < 60 { return String(localized: "hace \(mins) min") }
             let hrs = mins / 60
-            if hrs < 24 { return "hace \(hrs) h" }
-            return "hace \(hrs / 24) d"
+            if hrs < 24 { return String(localized: "hace \(hrs) h") }
+            return String(localized: "hace \(hrs / 24) d")
         }
     }
 }

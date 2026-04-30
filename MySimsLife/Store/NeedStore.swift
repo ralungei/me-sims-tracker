@@ -28,10 +28,17 @@ final class NeedStore {
 
     /// Lightweight read-model for views (derived from ActivityLog).
     struct LastActionRecord: Equatable, Hashable {
+        /// Canonical (Spanish) name as stored in the log — kept stable across languages.
         let actionName: String
         let icon: String
         let boost: Double
         let at: Date
+
+        /// Display string in the user's current locale. Falls back to
+        /// `actionName` for custom user-typed actions not in the catalog.
+        var localizedName: String {
+            Bundle.main.localizedString(forKey: actionName, value: actionName, table: nil)
+        }
     }
 
     let calibration = CalibrationEngine()
@@ -44,7 +51,9 @@ final class NeedStore {
     init() {
         for need in NeedType.allCases {
             needs[need] = need.decaysAutomatically ? 0.5 : 1.0  // health starts full
-            lastUpdated[need] = Date()
+            // Leave `lastUpdated` nil intentionally so the first remote pull
+            // can win — bumping it to `now` here would mark our defaults as
+            // "newer than the server" and skip applyRemoteNeeds.
         }
         loadEnabledNeeds()
         loadNeedsState()
@@ -89,6 +98,11 @@ final class NeedStore {
         enabledNeeds = Set(raw.compactMap { NeedType(rawValue: $0) })
     }
 
+    /// True until the first remote pull completes after launch. Views can dim
+    /// or show a skeleton state while this is `false` so cached values don't
+    /// flicker into the synced ones.
+    private(set) var hasInitialSyncCompleted: Bool = false
+
     func configure(with context: ModelContext) {
         modelContext = context
         refreshAspirations()
@@ -97,7 +111,7 @@ final class NeedStore {
         startDecayTimer()
         recalibrate()
         Task { @MainActor in
-            await pullAndApply(context: context)
+            await pullAndApply(context: context, bypassLWW: true)
             RealtimeSync.shared.onEvent = { [weak self] _ in
                 guard let self, let ctx = self.modelContext else { return }
                 Task { @MainActor in await self.pullAndApply(context: ctx) }
@@ -107,28 +121,58 @@ final class NeedStore {
     }
 
     /// Single entry point used both at boot and after every realtime event.
-    /// Pulls the backend delta, applies SwiftData rows, then merges the
-    /// in-memory needs state and refreshes derived caches.
+    /// `bypassLWW` is for boot / foreground only — it forces the server's
+    /// anchor onto the device so all devices converge regardless of any
+    /// stale local `lastUpdated`. Realtime events keep LWW so a fresh local
+    /// action isn't clobbered by its own echo.
+    /// Marker exposed so views animate the transition out of the skeleton.
+    private func markInitialSyncComplete() {
+        guard !hasInitialSyncCompleted else { return }
+        withAnimation(.easeOut(duration: 0.35)) {
+            hasInitialSyncCompleted = true
+        }
+    }
+
     @MainActor
-    private func pullAndApply(context: ModelContext) async {
-        let result = await BackendSync.shared.pull(into: context)
-        applyRemoteNeeds(result.needsState)
+    private func pullAndApply(context: ModelContext, bypassLWW: Bool = false) async {
+        // bypassLWW also forces a full sync — otherwise the server's delta
+        // would omit any need that hasn't changed since `lastSync`, leaving
+        // the device on its locally-decayed value while the other device
+        // shows something different.
+        let result = await BackendSync.shared.pull(into: context, forceFullSync: bypassLWW)
+        // Recalibrate after the pull so both devices score decay against the
+        // same activity log → identical effective decay rate → identical bar.
+        recalibrate()
+        applyRemoteNeeds(result.needsState, bypassLWW: bypassLWW)
+        markInitialSyncComplete()
         refreshAspirations()
         refreshTasks()
         refreshRecentActionsCache()
     }
 
     @MainActor
-    private func applyRemoteNeeds(_ remotes: [BackendSync.RemoteNeedState]) {
+    private func applyRemoteNeeds(_ remotes: [BackendSync.RemoteNeedState], bypassLWW: Bool = false) {
         guard !remotes.isEmpty else { return }
+        let now = Date()
         var changed = false
         for remote in remotes {
             guard let need = NeedType(rawValue: remote.needType) else { continue }
             let remoteUpdated = Date(timeIntervalSince1970: TimeInterval(remote.lastUpdatedMs) / 1000)
-            // Only overwrite if the server's value is newer than what we have.
-            if let local = lastUpdated[need], local >= remoteUpdated { continue }
-            needs[need] = max(0, min(1, remote.value))
+            if !bypassLWW, let local = lastUpdated[need], local >= remoteUpdated { continue }
+            // remote.value is the anchor at remoteUpdated; apply the elapsed
+            // decay locally so all devices compute identical values from the
+            // same anchor + clock.
+            let elapsedHours = max(0, now.timeIntervalSince(remoteUpdated) / 3600.0)
+            let decay: Double
+            if need.decaysAutomatically && remote.enabled {
+                let rate = calibration.effectiveDecayRate(for: need)
+                decay = rate * elapsedHours / 100.0
+            } else {
+                decay = 0
+            }
+            needs[need] = max(0, min(1, remote.value - decay))
             lastUpdated[need] = remoteUpdated
+            lastDecayTick[need] = now   // restart local decay clock so the next tick doesn't double-count
             if remote.enabled { enabledNeeds.insert(need) }
             else              { enabledNeeds.remove(need) }
             changed = true
@@ -136,7 +180,7 @@ final class NeedStore {
         if changed {
             saveNeedsState()
             saveEnabledNeeds()
-            alertsCache = nil   // bust the cache, value tier may have flipped
+            alertsCache = nil   // value tier may have flipped
         }
     }
 
@@ -151,7 +195,7 @@ final class NeedStore {
             // Catch up on anything the backend changed while we were in the
             // background, then re-open the WS for live events.
             Task { @MainActor in
-                await pullAndApply(context: context)
+                await pullAndApply(context: context, bypassLWW: true)
                 RealtimeSync.shared.start(with: context)
             }
         }
@@ -240,6 +284,22 @@ final class NeedStore {
         needs[need] = max(0, min(1, value))
         lastUpdated[need] = Date()
         saveNeedsState()
+    }
+
+    /// "Estoy estable": parks every enabled need at 0.5 and pushes a fresh
+    /// anchor so all devices converge on the neutral baseline.
+    func resetAllToBaseline(_ value: Double = 0.5) {
+        let clamped = max(0, min(1, value))
+        let now = Date()
+        for need in enabledNeeds {
+            needs[need] = clamped
+            lastUpdated[need] = now
+            lastDecayTick[need] = now
+            let enabled = enabledNeeds.contains(need)
+            Task { await BackendSync.shared.pushNeedState(need, value: clamped, lastUpdated: now, enabled: enabled) }
+        }
+        saveNeedsState()
+        alertsCache = nil
     }
 
     // MARK: - Recent actions (cached; refreshed on log/undo)
@@ -365,78 +425,78 @@ final class NeedStore {
 
         let allAbove60 = NeedType.allCases.allSatisfy { v($0) >= 0.60 }
         if allAbove60 {
-            alerts.append(SimAlert(message: "¡Todo por encima del 60%! Gran momento",
+            alerts.append(SimAlert(message: String(localized: "¡Todo por encima del 60%! Gran momento"),
                                    icon: "star.fill", severity: .positive))
         }
 
         if hour >= 23 || hour < 5 {
-            alerts.append(SimAlert(message: "Es tarde — hora de dormir",
+            alerts.append(SimAlert(message: String(localized: "Es tarde — hora de dormir"),
                                    icon: "moon.zzz.fill", severity: .urgent))
         } else if hour >= 22 && v(.energy) < 0.20 {
-            alerts.append(SimAlert(message: "Tu energía está agotada — ve a descansar",
+            alerts.append(SimAlert(message: String(localized: "Tu energía está agotada — ve a descansar"),
                                    icon: "battery.0percent", severity: .warning))
         }
 
         if hour >= 7 && hour <= 9 && v(.nutrition) < 0.30 {
-            alerts.append(SimAlert(message: "Desayuna — tu cuerpo necesita combustible",
+            alerts.append(SimAlert(message: String(localized: "Desayuna — tu cuerpo necesita combustible"),
                                    icon: "cup.and.saucer.fill", severity: .nudge))
         }
         if hour >= 12 && hour <= 14 && v(.nutrition) < 0.25 {
-            alerts.append(SimAlert(message: "Hora de comer — no saltes el almuerzo",
+            alerts.append(SimAlert(message: String(localized: "Hora de comer — no saltes el almuerzo"),
                                    icon: "fork.knife", severity: .warning))
         }
         if hour >= 19 && hour <= 21 && v(.nutrition) < 0.30 {
-            alerts.append(SimAlert(message: "¿Has cenado? Tu nutrición está baja",
+            alerts.append(SimAlert(message: String(localized: "¿Has cenado? Tu nutrición está baja"),
                                    icon: "fork.knife", severity: .nudge))
         }
 
         if v(.hydration) < 0.15 {
-            alerts.append(SimAlert(message: "Bebe agua — llevas demasiado sin hidratarte",
+            alerts.append(SimAlert(message: String(localized: "Bebe agua — llevas demasiado sin hidratarte"),
                                    icon: "drop.fill", severity: .urgent))
         } else if v(.hydration) < 0.30 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: "Un vaso de agua te vendría bien",
+            alerts.append(SimAlert(message: String(localized: "Un vaso de agua te vendría bien"),
                                    icon: "drop.fill", severity: .nudge))
         }
 
         if v(.exercise) < 0.15 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: "Llevas mucho sin moverte — aunque sea un paseo",
+            alerts.append(SimAlert(message: String(localized: "Llevas mucho sin moverte — aunque sea un paseo"),
                                    icon: "figure.walk", severity: .warning))
         }
 
         if v(.social) < 0.15 {
-            alerts.append(SimAlert(message: "Habla con alguien — tu social está muy bajo",
+            alerts.append(SimAlert(message: String(localized: "Habla con alguien — tu social está muy bajo"),
                                    icon: "person.2.fill", severity: .warning))
         }
 
         if v(.environment) < 0.20 {
-            alerts.append(SimAlert(message: "Tu entorno necesita atención — ordena un poco",
+            alerts.append(SimAlert(message: String(localized: "Tu entorno necesita atención — ordena un poco"),
                                    icon: "sparkles", severity: .nudge))
         }
 
         if v(.leisure) < 0.15 && hour >= 18 {
-            alerts.append(SimAlert(message: "Date un respiro — haz algo que disfrutes",
+            alerts.append(SimAlert(message: String(localized: "Date un respiro — haz algo que disfrutes"),
                                    icon: "gamecontroller.fill", severity: .nudge))
         }
 
         if v(.hygiene) < 0.20 && hour >= 8 && hour <= 22 {
-            alerts.append(SimAlert(message: "¿Te duchaste hoy? Tu higiene está baja",
+            alerts.append(SimAlert(message: String(localized: "¿Te duchaste hoy? Tu higiene está baja"),
                                    icon: "shower.fill", severity: .nudge))
         }
 
         if hour >= 6 && hour <= 8 && v(.energy) < 0.15 {
-            alerts.append(SimAlert(message: "Buenos días — registra cómo dormiste",
+            alerts.append(SimAlert(message: String(localized: "Buenos días — registra cómo dormiste"),
                                    icon: "sunrise.fill", severity: .nudge))
         }
 
         let critCount = NeedType.allCases.filter { v($0) < 0.15 }.count
         if critCount >= 3 {
-            alerts.append(SimAlert(message: "\(critCount) barras en rojo — cuídate, prioriza lo básico",
+            alerts.append(SimAlert(message: String(localized: "\(critCount) barras en rojo — cuídate, prioriza lo básico"),
                                    icon: "exclamationmark.triangle.fill", severity: .urgent))
         }
 
         let isWeekend = weekday == 1 || weekday == 7
         if isWeekend && v(.social) < 0.40 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: "Es fin de semana — buen momento para socializar",
+            alerts.append(SimAlert(message: String(localized: "Es fin de semana — buen momento para socializar"),
                                    icon: "person.3.fill", severity: .nudge))
         }
 
@@ -688,6 +748,14 @@ final class NeedStore {
             lastDecayTick[need] = now
             if abs(newValue - current) > 0.00001 {
                 needs[need] = newValue
+                let prev = current
+                let next = newValue
+                let n = need
+                Task { @MainActor in
+                    NotificationManager.shared.notifyIfLow(
+                        need: n, currentValue: next, previousValue: prev
+                    )
+                }
                 changed = true
             }
         }
@@ -728,7 +796,11 @@ final class NeedStore {
             } else {
                 needs[needType] = savedValue   // manual-only: keep as saved
             }
-            lastUpdated[needType] = now
+            // Preserve the original anchor so LWW stays stable across devices.
+            // Bumping this to `now` would make every launch overwrite the server
+            // with the locally-decayed value — last-opened-device wins.
+            lastUpdated[needType] = Date(timeIntervalSince1970: ts)
+            lastDecayTick[needType] = now
         }
     }
 

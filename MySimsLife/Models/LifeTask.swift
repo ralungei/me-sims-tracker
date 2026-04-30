@@ -33,3 +33,5 @@ final class LifeTask {
         return Calendar.current.isDateInToday(due)
     }
 }
+
+extension LifeTask: Identifiable {}

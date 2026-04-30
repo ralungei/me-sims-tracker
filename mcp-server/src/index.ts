@@ -61,7 +61,14 @@ server.tool(
     duration_minutes: z.number().optional().describe("For dailyTimed"),
     total_days: z.number().optional().describe("For treatment"),
     started_at_iso: z.string().optional().describe("ISO date for treatment start. Can be in the future — the aspiration stays hidden until that date arrives. Defaults to today."),
-    notes: z.string().optional().describe("Free-form notes (dose schedule, brand name, instructions, etc.).")
+    notes: z.string().optional().describe("Free-form notes (brand name, instructions, etc.). Prefer the structured `unit`/`default_dose`/`schedule` fields for posology so the card shows it automatically."),
+    unit: z.string().optional().describe("Unit of intake shown on the card. Use Spanish singular: 'sobre', 'cápsula', 'comprimido', 'pastilla', 'gota', 'ml', 'g', 'scoop'. Omit if no unit applies."),
+    default_dose: z.number().optional().describe("Number of `unit`s per intake when no `schedule` step covers the current week. Defaults to 1."),
+    schedule: z.array(z.object({
+      from_week: z.number().int().min(1),
+      to_week: z.number().int().min(1),
+      count: z.number().int().min(1)
+    })).optional().describe("Variable doses by week of treatment. Example: [{from_week:1,to_week:2,count:1},{from_week:3,to_week:6,count:2}]. Only used for kind='treatment'.")
   },
   async (args) => {
     const body: Record<string, unknown> = {
@@ -74,6 +81,15 @@ server.tool(
     if (args.duration_minutes) body.duration_minutes = args.duration_minutes;
     if (args.total_days) body.total_days = args.total_days;
     if (args.notes) body.notes = args.notes;
+    if (args.unit) body.unit = args.unit;
+    if (args.default_dose !== undefined) body.default_dose = args.default_dose;
+    if (args.schedule && args.schedule.length > 0) {
+      body.schedule_raw = JSON.stringify(args.schedule.map(s => ({
+        fromWeek: s.from_week,
+        toWeek: s.to_week,
+        count: s.count
+      })));
+    }
     if (args.kind === "treatment") {
       body.started_at = args.started_at_iso
         ? Date.parse(args.started_at_iso)

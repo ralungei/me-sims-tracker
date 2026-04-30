@@ -24,7 +24,9 @@ struct ContentView: View {
             #if os(iOS)
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = UIColor(SimsTheme.panelBackground)
+            // Match the panel colour so there's no visible gap between the
+            // panel's bottom rounded edge and the tab bar.
+            appearance.backgroundColor = UIColor(SimsTheme.panelPeriwinkle)
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
             #endif
@@ -34,15 +36,15 @@ struct ContentView: View {
     private var mainTabs: some View {
         TabView(selection: $selectedTab) {
             DashboardView()
-                .tabItem { Label("Estado", systemImage: "heart.fill") }
+                .tabItem { Label("Estado", systemImage: "suit.diamond.fill") }
                 .tag(0)
 
             HistoryView()
                 .tabItem { Label("Historial", systemImage: "clock.fill") }
                 .tag(1)
 
-            InsightsView()
-                .tabItem { Label("Insights", systemImage: "chart.bar.fill") }
+            SettingsView()
+                .tabItem { Label("Ajustes", systemImage: "gearshape.fill") }
                 .tag(2)
         }
         .tint(SimsTheme.accentPrimary)

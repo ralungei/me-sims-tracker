@@ -14,14 +14,14 @@ struct TaskEditor: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                SimsTheme.mainBackground.ignoresSafeArea()
+                SimsTheme.background.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         section("Tarea") {
                             TextField("Ej: Llamar al dentista", text: $title)
                                 .textFieldStyle(.plain)
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+                                .simsFieldStyle()
                                 .foregroundStyle(SimsTheme.textPrimary)
                         }
 
@@ -32,13 +32,13 @@ struct TaskEditor: View {
                                     .foregroundStyle(SimsTheme.textPrimary)
                             }
                             .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+                            .simsFieldStyle()
 
                             if hasDueDate {
                                 DatePicker("Fecha y hora", selection: $dueDate)
                                     .datePickerStyle(.compact)
                                     .padding(12)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+                                    .simsFieldStyle()
                             }
                         }
 
@@ -47,7 +47,7 @@ struct TaskEditor: View {
                                 .lineLimit(3...6)
                                 .textFieldStyle(.plain)
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+                                .simsFieldStyle()
                                 .foregroundStyle(SimsTheme.textPrimary)
                         }
 
@@ -73,7 +73,9 @@ struct TaskEditor: View {
                     .padding(20)
                 }
             }
-            .navigationTitle(existing == nil ? "Nueva tarea" : "Editar tarea")
+            .navigationTitle(existing == nil
+                             ? Text("Nueva tarea")
+                             : Text("Editar tarea"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -91,12 +93,13 @@ struct TaskEditor: View {
         .onAppear { loadIfExisting() }
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(.caption2, design: .rounded, weight: .bold))
+            Text(title)
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
                 .tracking(1.2)
-                .foregroundStyle(SimsTheme.textDim)
+                .textCase(.uppercase)
+                .foregroundStyle(SimsTheme.textSecondary)
             content()
         }
     }

@@ -18,16 +18,16 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .health:      return "Salud"
-        case .energy:      return "Energía"
-        case .nutrition:   return "Nutrición"
-        case .hydration:   return "Hidratación"
-        case .bladder:     return "Vejiga"
-        case .exercise:    return "Ejercicio"
-        case .hygiene:     return "Higiene"
-        case .environment: return "Entorno"
-        case .social:      return "Social"
-        case .leisure:     return "Ocio"
+        case .health:      return String(localized: "Salud")
+        case .energy:      return String(localized: "Energía")
+        case .nutrition:   return String(localized: "Nutrición")
+        case .hydration:   return String(localized: "Hidratación")
+        case .bladder:     return String(localized: "Vejiga")
+        case .exercise:    return String(localized: "Ejercicio")
+        case .hygiene:     return String(localized: "Higiene")
+        case .environment: return String(localized: "Entorno")
+        case .social:      return String(localized: "Social")
+        case .leisure:     return String(localized: "Ocio")
         }
     }
 
@@ -244,6 +244,8 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
 // MARK: - Quick Action
 
 struct QuickAction: Identifiable, Equatable, Hashable {
+    /// Canonical (Spanish) key. Stays stable so it can be persisted, synced,
+    /// and aggregated regardless of the user's UI language.
     let name: String
     let icon: String
     let boost: Double
@@ -252,5 +254,11 @@ struct QuickAction: Identifiable, Equatable, Hashable {
     /// Stable identity so SwiftUI doesn't recreate the chip on every parent render.
     var id: String { "\(needType.rawValue):\(name)" }
     var isNegative: Bool { boost < 0 }
+
+    /// Display string in the user's locale. Custom actions typed by the user
+    /// fall through to `name` because they aren't in the catalog.
+    var localizedName: String {
+        Bundle.main.localizedString(forKey: name, value: name, table: nil)
+    }
 }
 

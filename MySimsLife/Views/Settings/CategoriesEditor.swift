@@ -15,7 +15,7 @@ struct CategoriesEditor: View {
         } else {
             NavigationStack {
                 ZStack {
-                    SimsTheme.mainBackground.ignoresSafeArea()
+                    SimsTheme.background.ignoresSafeArea()
                     scrollContent
                 }
                 .navigationTitle("Categorías")
@@ -51,19 +51,32 @@ struct CategoriesEditor: View {
         return HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(SimsTheme.needTileGradient(hue: need.hue))
+                    .fill(LinearGradient(
+                        colors: [SimsTheme.valueColor(for: 0.85).opacity(0.85),
+                                 SimsTheme.valueColor(for: 0.85).opacity(0.55)],
+                        startPoint: .top, endPoint: .bottom
+                    ))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(SimsTheme.frame, lineWidth: 1.2)
+                    )
                     .frame(width: 36, height: 36)
+                // Sims-style: navy outline behind white fill (same trick as NeedBarView.tile)
+                Image(systemName: need.icon)
+                    .font(.system(size: 16, weight: .black))
+                    .foregroundStyle(SimsTheme.frame)
                 Image(systemName: need.icon)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color(hue: need.hue/360, saturation: 0.45, brightness: 0.95))
+                    .foregroundStyle(Color.white)
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(need.displayName)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .tracking(0.4)
                     .foregroundStyle(SimsTheme.textPrimary)
                 Text(subtitle(for: need))
                     .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(SimsTheme.textDim)
+                    .foregroundStyle(SimsTheme.textSecondary)
             }
             Spacer()
             Toggle("", isOn: bind)
@@ -71,24 +84,22 @@ struct CategoriesEditor: View {
                 .tint(SimsTheme.accentPrimary)
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(isOn ? Color.white.opacity(0.06) : Color.white.opacity(0.02))
-        )
+        .simsFieldStyle(cornerRadius: 14)
+        .opacity(isOn ? 1.0 : 0.55)
     }
 
     private func subtitle(for need: NeedType) -> String {
         switch need {
-        case .health:      return "No baja sola, solo cuando lo registras"
-        case .energy:      return "Sueño, siestas, cansancio"
-        case .nutrition:   return "Comidas y snacks"
-        case .hydration:   return "Agua, té, café"
-        case .bladder:     return "Idas al baño, control intestinal"
-        case .exercise:    return "Movimiento del día"
-        case .hygiene:     return "Ducha, dientes, skincare"
-        case .environment: return "Orden y limpieza del espacio"
-        case .social:      return "Tiempo con gente"
-        case .leisure:     return "Hobbies, ocio, descanso mental"
+        case .health:      return String(localized: "No baja sola, solo cuando lo registras")
+        case .energy:      return String(localized: "Sueño, siestas, cansancio")
+        case .nutrition:   return String(localized: "Comidas y snacks")
+        case .hydration:   return String(localized: "Agua, té, café")
+        case .bladder:     return String(localized: "Idas al baño, control intestinal")
+        case .exercise:    return String(localized: "Movimiento del día")
+        case .hygiene:     return String(localized: "Ducha, dientes, skincare")
+        case .environment: return String(localized: "Orden y limpieza del espacio")
+        case .social:      return String(localized: "Tiempo con gente")
+        case .leisure:     return String(localized: "Hobbies, ocio, descanso mental")
         }
     }
 }

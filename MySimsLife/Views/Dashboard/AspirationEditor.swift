@@ -19,14 +19,18 @@ struct AspirationEditor: View {
     @State private var startDate: Date = Date()
     @State private var dosingMoment: DosingMoment? = nil
     @State private var reminderTime: Date? = nil
+    @State private var unit: String = ""
+    @State private var defaultDose: Int = 1
+    @State private var schedule: [DoseStep] = []
 
     private let suggestedEmojis = ["🧘","💊","🌱","🎬","📚","💪","🏃","🥗","💧","🛏","☀️","🧠","✍️","🎨","🎵","🙏","💧","🦷","🧴","📞"]
+    private let suggestedUnits = ["sobre", "cápsula", "comprimido", "pastilla", "gota", "ml", "g", "scoop"]
     private let huePresets: [Double] = [22, 38, 158, 195, 220, 258, 295, 335]
 
     var body: some View {
         NavigationStack {
             ZStack {
-                SimsTheme.mainBackground.ignoresSafeArea()
+                SimsTheme.background.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         previewCard
@@ -42,6 +46,13 @@ struct AspirationEditor: View {
                             section("Días totales") { totalDaysField }
                             section("Empieza el") { startDateField }
                         }
+                        section("Unidad (opcional)") { unitField }
+                        if !unit.isEmpty {
+                            section("Cantidad por toma") { defaultDoseField }
+                            if kind == .treatment {
+                                section("Variación por semanas (opcional)") { scheduleField }
+                            }
+                        }
                         section("Cuándo tomarla (opcional)") { dosingField }
                         section("Hora exacta (opcional)") { reminderField }
                         section("Notas (opcional)") { notesField }
@@ -53,7 +64,9 @@ struct AspirationEditor: View {
                     .padding(20)
                 }
             }
-            .navigationTitle(existing == nil ? "Nueva aspiración" : "Editar")
+            .navigationTitle(existing == nil
+                             ? Text("Nueva aspiración")
+                             : Text("Editar"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -81,7 +94,10 @@ struct AspirationEditor: View {
             hue: hue, xp: xp,
             durationMinutes: durationMinutes,
             totalDays: totalDays,
-            startedAt: kind == .treatment ? Date() : nil
+            startedAt: kind == .treatment ? Date() : nil,
+            unit: unit.isEmpty ? nil : unit,
+            defaultDose: defaultDose,
+            schedule: schedule
         )
         return HStack {
             Spacer()
@@ -89,21 +105,19 @@ struct AspirationEditor: View {
                 .allowsHitTesting(false)
             Spacer()
         }
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white.opacity(0.03))
-        )
+        .padding(.vertical, 12)
+        .simsFieldStyle(cornerRadius: 24)
     }
 
     // MARK: - Sections
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(.caption2, design: .rounded, weight: .bold))
+            Text(title)
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
                 .tracking(1.2)
-                .foregroundStyle(SimsTheme.textDim)
+                .textCase(.uppercase)
+                .foregroundStyle(SimsTheme.textSecondary)
             content()
         }
     }
@@ -112,7 +126,7 @@ struct AspirationEditor: View {
         TextField("Ej: Meditar 25 min", text: $name)
             .textFieldStyle(.plain)
             .padding(12)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+            .simsFieldStyle()
             .foregroundStyle(SimsTheme.textPrimary)
     }
 
@@ -123,7 +137,7 @@ struct AspirationEditor: View {
                 .font(.system(size: 28))
                 .frame(width: 70, height: 56)
                 .multilineTextAlignment(.center)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+                .simsFieldStyle()
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(suggestedEmojis, id: \.self) { e in
@@ -131,10 +145,7 @@ struct AspirationEditor: View {
                             Text(e)
                                 .font(.system(size: 22))
                                 .frame(width: 40, height: 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(emoji == e ? Color.white.opacity(0.12) : Color.white.opacity(0.04))
-                                )
+                                .simsFieldStyle(cornerRadius: 10, selected: emoji == e)
                         }
                         .buttonStyle(.plain)
                     }
@@ -150,7 +161,7 @@ struct AspirationEditor: View {
                     HStack {
                         Image(systemName: k.icon)
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(kind == k ? SimsTheme.accentWarm : SimsTheme.textSecondary)
+                            .foregroundStyle(SimsTheme.textPrimary)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(k.title)
@@ -158,23 +169,16 @@ struct AspirationEditor: View {
                                 .foregroundStyle(SimsTheme.textPrimary)
                             Text(k.hint)
                                 .font(.system(.caption2, design: .rounded))
-                                .foregroundStyle(SimsTheme.textDim)
+                                .foregroundStyle(SimsTheme.textSecondary)
                         }
                         Spacer()
                         if kind == k {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(SimsTheme.accentWarm)
+                                .foregroundStyle(SimsTheme.frame)
                         }
                     }
                     .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(kind == k ? Color.white.opacity(0.08) : Color.white.opacity(0.03))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(kind == k ? SimsTheme.accentWarm.opacity(0.5) : Color.clear, lineWidth: 1)
-                            )
-                    )
+                    .simsFieldStyle(selected: kind == k)
                 }
                 .buttonStyle(.plain)
             }
@@ -186,11 +190,11 @@ struct AspirationEditor: View {
             ForEach(huePresets, id: \.self) { h in
                 Button { hue = h } label: {
                     Circle()
-                        .fill(Color(hue: h/360, saturation: 0.55, brightness: 0.62))
+                        .fill(SimsTheme.hueSwatch(h))
                         .frame(width: 32, height: 32)
                         .overlay(
                             Circle()
-                                .stroke(Color.white, lineWidth: abs(hue - h) < 1 ? 2 : 0)
+                                .stroke(SimsTheme.frame, lineWidth: abs(hue - h) < 1 ? 2.5 : 1)
                         )
                 }
                 .buttonStyle(.plain)
@@ -208,29 +212,22 @@ struct AspirationEditor: View {
                                 .font(.system(size: 22))
                             Text(lvl.label)
                                 .font(.system(.caption2, design: .rounded, weight: .bold))
-                                .foregroundStyle(xp == lvl.value ? SimsTheme.textPrimary : SimsTheme.textSecondary)
+                                .foregroundStyle(SimsTheme.textPrimary)
                             Text("+\(lvl.value)")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundStyle(xp == lvl.value ? SimsTheme.accentWarm : SimsTheme.textDim)
+                                .foregroundStyle(SimsTheme.textSecondary)
                                 .monospacedDigit()
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(xp == lvl.value ? Color.white.opacity(0.10) : Color.white.opacity(0.03))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(xp == lvl.value ? SimsTheme.accentWarm.opacity(0.55) : Color.clear, lineWidth: 1)
-                                )
-                        )
+                        .simsFieldStyle(selected: xp == lvl.value)
                     }
                     .buttonStyle(.plain)
                 }
             }
             Text(XPLevel.from(xp).hint)
                 .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(SimsTheme.textDim)
+                .foregroundStyle(SimsTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -242,7 +239,7 @@ struct AspirationEditor: View {
                 .foregroundStyle(SimsTheme.textPrimary)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+        .simsFieldStyle()
     }
 
     private var totalDaysField: some View {
@@ -252,7 +249,7 @@ struct AspirationEditor: View {
                 .foregroundStyle(SimsTheme.textPrimary)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+        .simsFieldStyle()
     }
 
     private var startDateField: some View {
@@ -261,13 +258,124 @@ struct AspirationEditor: View {
             .labelsHidden()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+            .simsFieldStyle()
+    }
+
+    private var unitField: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("sobre, cápsula, ml...", text: $unit)
+                .textFieldStyle(.plain)
+                .padding(12)
+                .simsFieldStyle()
+                .foregroundStyle(SimsTheme.textPrimary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(suggestedUnits, id: \.self) { u in
+                        Button { unit = (unit == u ? "" : u) } label: {
+                            Text(u)
+                                .font(.system(.caption, design: .rounded, weight: .semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .foregroundStyle(SimsTheme.textPrimary)
+                                .simsChipStyle(selected: unit == u)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    private var defaultDoseField: some View {
+        Stepper(value: $defaultDose, in: 1...20) {
+            Text("\(defaultDose) \(defaultDose == 1 ? unit : Aspiration.pluralize(unit))")
+                .font(.system(.body, design: .rounded, weight: .semibold))
+                .foregroundStyle(SimsTheme.textPrimary)
+        }
+        .padding(12)
+        .simsFieldStyle()
+    }
+
+    private var scheduleField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(schedule.indices, id: \.self) { i in
+                scheduleRow(index: i)
+            }
+            Button {
+                let last = schedule.last
+                let nextFrom = (last?.toWeek ?? 0) + 1
+                schedule.append(DoseStep(fromWeek: nextFrom, toWeek: nextFrom + 1, count: defaultDose))
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Añadir tramo")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                }
+                .foregroundStyle(SimsTheme.accentPrimary)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            if !schedule.isEmpty {
+                Text("Si una semana no está cubierta, se usa la cantidad por defecto.")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(SimsTheme.textDim)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func scheduleRow(index: Int) -> some View {
+        let step = schedule[index]
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text("Sem")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(SimsTheme.textDim)
+                    Stepper(value: $schedule[index].fromWeek, in: 1...52) {
+                        Text("\(step.fromWeek)")
+                            .font(.system(.caption, design: .rounded, weight: .bold))
+                            .foregroundStyle(SimsTheme.textPrimary)
+                            .monospacedDigit()
+                    }
+                    .labelsHidden()
+                    Text("a")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(SimsTheme.textDim)
+                    // Custom binding here keeps the invariant `toWeek >= fromWeek`.
+                    Stepper(value: Binding(
+                        get: { schedule[index].toWeek },
+                        set: { schedule[index].toWeek = max(schedule[index].fromWeek, $0) }
+                    ), in: 1...52) {
+                        Text("\(step.toWeek)")
+                            .font(.system(.caption, design: .rounded, weight: .bold))
+                            .foregroundStyle(SimsTheme.textPrimary)
+                            .monospacedDigit()
+                    }
+                    .labelsHidden()
+                }
+                Stepper(value: $schedule[index].count, in: 1...20) {
+                    Text("\(step.count) \(step.count == 1 ? unit : Aspiration.pluralize(unit))")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                }
+            }
+            Button { schedule.remove(at: index) } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(SimsTheme.textDim)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .simsFieldStyle()
     }
 
     private var dosingField: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(label: "ninguno", icon: "minus", isSelected: dosingMoment == nil) {
+                chip(label: String(localized: "ninguno"), icon: "minus", isSelected: dosingMoment == nil) {
                     dosingMoment = nil
                 }
                 ForEach(DosingMoment.allCases, id: \.self) { m in
@@ -290,11 +398,8 @@ struct AspirationEditor: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .foregroundStyle(isSelected ? Color.black.opacity(0.85) : SimsTheme.textSecondary)
-            .background(
-                Capsule()
-                    .fill(isSelected ? SimsTheme.accentWarm : Color.white.opacity(0.06))
-            )
+            .foregroundStyle(SimsTheme.textPrimary)
+            .simsChipStyle(selected: isSelected)
         }
         .buttonStyle(.plain)
     }
@@ -312,7 +417,7 @@ struct AspirationEditor: View {
                 Spacer()
                 Button { reminderTime = nil } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(SimsTheme.textDim)
+                        .foregroundStyle(SimsTheme.textPrimary.opacity(0.6))
                 }
                 .buttonStyle(.plain)
             } else {
@@ -323,22 +428,22 @@ struct AspirationEditor: View {
                         Image(systemName: "clock")
                         Text("Añadir hora").font(.system(.subheadline, design: .rounded, weight: .semibold))
                     }
-                    .foregroundStyle(SimsTheme.textSecondary)
+                    .foregroundStyle(SimsTheme.textPrimary)
                 }
                 .buttonStyle(.plain)
                 Spacer()
             }
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+        .simsFieldStyle()
     }
 
     private var notesField: some View {
-        TextField("", text: $notes, prompt: Text("Posología, marca, instrucciones...").foregroundStyle(SimsTheme.textDim), axis: .vertical)
+        TextField("", text: $notes, prompt: Text("Posología, marca, instrucciones...").foregroundStyle(SimsTheme.textSecondary), axis: .vertical)
             .lineLimit(3...8)
             .textFieldStyle(.plain)
             .padding(12)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+            .simsFieldStyle()
             .foregroundStyle(SimsTheme.textPrimary)
     }
 
@@ -375,6 +480,9 @@ struct AspirationEditor: View {
         startDate = asp.startedAt ?? Date()
         dosingMoment = asp.dosingMoment
         reminderTime = asp.reminderTime
+        unit = asp.unit ?? ""
+        defaultDose = asp.defaultDose
+        schedule = asp.schedule
     }
 
     // MARK: - XP Level
@@ -406,21 +514,21 @@ struct AspirationEditor: View {
 
         var label: String {
             switch self {
-            case .mini:   return "Mini"
-            case .small:  return "Pequeña"
-            case .medium: return "Normal"
-            case .big:    return "Grande"
-            case .epic:   return "Épica"
+            case .mini:   return String(localized: "Mini")
+            case .small:  return String(localized: "Pequeña")
+            case .medium: return String(localized: "Normal")
+            case .big:    return String(localized: "Grande")
+            case .epic:   return String(localized: "Épica")
             }
         }
 
         var hint: String {
             switch self {
-            case .mini:   return "Gesto de segundos — tomar una pastilla, lavarse las manos"
-            case .small:  return "Algo rápido de 2–5 min — un vaso de agua, escribir tres líneas"
-            case .medium: return "Sesión real de 15–30 min — meditar, leer un capítulo"
-            case .big:    return "Esfuerzo notable de 30+ min — entrenar, cocinar bien"
-            case .epic:   return "Logro semanal — postear, terminar un proyecto, salir con gente"
+            case .mini:   return String(localized: "Gesto de segundos — tomar una pastilla, lavarse las manos")
+            case .small:  return String(localized: "Algo rápido de 2–5 min — un vaso de agua, escribir tres líneas")
+            case .medium: return String(localized: "Sesión real de 15–30 min — meditar, leer un capítulo")
+            case .big:    return String(localized: "Esfuerzo notable de 30+ min — entrenar, cocinar bien")
+            case .epic:   return String(localized: "Logro semanal — postear, terminar un proyecto, salir con gente")
             }
         }
 
@@ -434,6 +542,9 @@ struct AspirationEditor: View {
         let safeEmoji = emoji.isEmpty ? "✨" : emoji
         let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedNotes: String? = trimmedNotes.isEmpty ? nil : trimmedNotes
+        let trimmedUnit = unit.trimmingCharacters(in: .whitespaces)
+        let resolvedUnit: String? = trimmedUnit.isEmpty ? nil : trimmedUnit
+        let resolvedSchedule = (resolvedUnit == nil || kind != .treatment) ? [] : schedule
         if let asp = existing {
             asp.name = trimmedName
             asp.emoji = safeEmoji
@@ -451,6 +562,9 @@ struct AspirationEditor: View {
                 asp.totalDays = nil
                 asp.startedAt = nil
             }
+            asp.unit = resolvedUnit
+            asp.defaultDose = defaultDose
+            asp.schedule = resolvedSchedule
             store.updateAspiration(asp)
         } else {
             let asp = Aspiration(
@@ -464,7 +578,10 @@ struct AspirationEditor: View {
                 startedAt: kind == .treatment ? startDate : nil,
                 notes: resolvedNotes,
                 dosingMoment: dosingMoment,
-                reminderTime: reminderTime
+                reminderTime: reminderTime,
+                unit: resolvedUnit,
+                defaultDose: defaultDose,
+                schedule: resolvedSchedule
             )
             store.addAspiration(asp)
         }

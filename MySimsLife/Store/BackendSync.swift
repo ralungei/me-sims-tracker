@@ -91,11 +91,16 @@ actor BackendSync {
     /// Fetches everything modified since `lastSync` and applies it to the local SwiftData store.
     /// Returns the remote `needs_state` rows so the caller can merge them into `NeedStore.needs`
     /// (those values live in-memory + UserDefaults, not in SwiftData).
+    /// `forceFullSync` ignores `lastSync` and asks the server for everything.
+    /// Used at boot / foreground so the device gets the full needs_state set
+    /// (not just rows changed since last pull) — needed for cross-device
+    /// convergence when a need hasn't been touched in a while.
     @discardableResult
-    func pull(into context: ModelContext) async -> PullResult {
+    func pull(into context: ModelContext, forceFullSync: Bool = false) async -> PullResult {
         let empty = PullResult(needsState: [])
         do {
-            let data = try await request("/sync?since=\(lastSync)")
+            let since = forceFullSync ? 0 : lastSync
+            let data = try await request("/sync?since=\(since)")
             let decoded: SyncResponse
             do {
                 decoded = try Self.decoder.decode(SyncResponse.self, from: data)
@@ -178,23 +183,36 @@ actor BackendSync {
 
     @MainActor
     private func apply(_ dto: AspirationDTO, to model: Aspiration) {
-        model.name = dto.name
-        model.emoji = dto.emoji
-        model.kindRaw = dto.kind
-        model.hue = dto.hue
-        model.xp = dto.xp
-        model.durationMinutes = dto.duration_minutes
-        model.totalDays = dto.total_days
-        model.startedAt = dto.started_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
-        model.lastCompletedAt = dto.last_completed_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        // Each setter on a SwiftData @Model dirties the row and fires
+        // @Observable notifications, which forces SwiftUI to re-render every
+        // card. Realtime pulls run on every server event; without these
+        // change-detection guards the dashboard rebuilds the full list on
+        // every echo even when nothing actually changed.
+        let startedAt = dto.started_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        let lastCompletedAt = dto.last_completed_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        let reminderTime = dto.reminder_time.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        let defaultDose = dto.default_dose ?? 1
+        if model.name != dto.name { model.name = dto.name }
+        if model.emoji != dto.emoji { model.emoji = dto.emoji }
+        if model.kindRaw != dto.kind { model.kindRaw = dto.kind }
+        if model.hue != dto.hue { model.hue = dto.hue }
+        if model.xp != dto.xp { model.xp = dto.xp }
+        if model.durationMinutes != dto.duration_minutes { model.durationMinutes = dto.duration_minutes }
+        if model.totalDays != dto.total_days { model.totalDays = dto.total_days }
+        if model.startedAt != startedAt { model.startedAt = startedAt }
+        if model.lastCompletedAt != lastCompletedAt { model.lastCompletedAt = lastCompletedAt }
         if let raw = dto.completions_log,
            let dates = try? Self.decoder.decode([Int64].self, from: Data(raw.utf8)) {
-            model.completionsLog = dates.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+            let parsed = dates.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+            if model.completionsLog != parsed { model.completionsLog = parsed }
         }
-        model.notes = dto.notes
-        model.dosingMomentRaw = dto.dosing_moment
-        model.reminderTime = dto.reminder_time.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
-        model.sortOrder = dto.sort_order
+        if model.notes != dto.notes { model.notes = dto.notes }
+        if model.dosingMomentRaw != dto.dosing_moment { model.dosingMomentRaw = dto.dosing_moment }
+        if model.reminderTime != reminderTime { model.reminderTime = reminderTime }
+        if model.unit != dto.unit { model.unit = dto.unit }
+        if model.defaultDose != defaultDose { model.defaultDose = defaultDose }
+        if model.scheduleRaw != dto.schedule_raw { model.scheduleRaw = dto.schedule_raw }
+        if model.sortOrder != dto.sort_order { model.sortOrder = dto.sort_order }
     }
 
     @MainActor
@@ -222,12 +240,15 @@ actor BackendSync {
 
     @MainActor
     private func apply(_ dto: TaskDTO, to model: LifeTask) {
-        model.title = dto.title
-        model.notes = dto.notes
-        model.dueDate = dto.due_date.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
-        model.isDone = dto.is_done == 1
-        model.completedAt = dto.completed_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
-        model.sortOrder = dto.sort_order
+        let dueDate = dto.due_date.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        let completedAt = dto.completed_at.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        let isDone = dto.is_done == 1
+        if model.title != dto.title { model.title = dto.title }
+        if model.notes != dto.notes { model.notes = dto.notes }
+        if model.dueDate != dueDate { model.dueDate = dueDate }
+        if model.isDone != isDone { model.isDone = isDone }
+        if model.completedAt != completedAt { model.completedAt = completedAt }
+        if model.sortOrder != dto.sort_order { model.sortOrder = dto.sort_order }
     }
 
     @MainActor
@@ -300,6 +321,16 @@ actor BackendSync {
 
 // MARK: - DTOs
 
+/// Encodes Optionals as JSON `null` instead of omitting them. We need this
+/// for PATCH requests so that clearing a field (e.g. unchecking an aspiration
+/// → `last_completed_at = nil`) actually reaches the backend; the synthesized
+/// Codable conformance uses `encodeIfPresent` and silently drops nils.
+extension KeyedEncodingContainer {
+    mutating func encodeOrNull<T: Encodable>(_ value: T?, forKey key: Key) throws {
+        if let value { try encode(value, forKey: key) } else { try encodeNil(forKey: key) }
+    }
+}
+
 struct AspirationDTO: Codable {
     let id: String
     let name: String
@@ -315,12 +346,55 @@ struct AspirationDTO: Codable {
     let notes: String?
     let dosing_moment: String?
     let reminder_time: Int64?
+    let unit: String?
+    let default_dose: Int?
+    let schedule_raw: String?
     let sort_order: Int
     let updated_at: Int64?
     let deleted_at: Int64?
 
+    enum CodingKeys: String, CodingKey {
+        case id, name, emoji, kind, hue, xp
+        case duration_minutes, total_days, started_at, last_completed_at
+        case completions_log, notes, dosing_moment, reminder_time
+        case unit, default_dose, schedule_raw
+        case sort_order, updated_at, deleted_at
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(emoji, forKey: .emoji)
+        try c.encode(kind, forKey: .kind)
+        try c.encode(hue, forKey: .hue)
+        try c.encode(xp, forKey: .xp)
+        try c.encodeOrNull(duration_minutes, forKey: .duration_minutes)
+        try c.encodeOrNull(total_days, forKey: .total_days)
+        try c.encodeOrNull(started_at, forKey: .started_at)
+        try c.encodeOrNull(last_completed_at, forKey: .last_completed_at)
+        try c.encodeOrNull(completions_log, forKey: .completions_log)
+        try c.encodeOrNull(notes, forKey: .notes)
+        try c.encodeOrNull(dosing_moment, forKey: .dosing_moment)
+        try c.encodeOrNull(reminder_time, forKey: .reminder_time)
+        // Dose fields use encodeIfPresent (omitted when nil) so a stale local
+        // model — e.g. one that hasn't yet pulled the server's `unit` — can't
+        // clobber the backend by pushing nil. The trade-off: the user can't
+        // clear `unit` from the editor; clearing requires an explicit server-side
+        // edit. Acceptable since clearing is rare.
+        try c.encodeIfPresent(unit, forKey: .unit)
+        try c.encodeIfPresent(default_dose, forKey: .default_dose)
+        try c.encodeIfPresent(schedule_raw, forKey: .schedule_raw)
+        try c.encode(sort_order, forKey: .sort_order)
+        // updated_at / deleted_at are server-managed; skip on write.
+    }
+
     static func from(_ asp: Aspiration) -> AspirationDTO {
         let dates = asp.completionsLog.map { Int64($0.timeIntervalSince1970 * 1000) }
+        // Dose fields are scoped to whether `unit` is set; nil-them-out
+        // together so `encodeIfPresent` skips them and a stale local row
+        // (pre-pull) can't clobber the server's posology.
+        let hasUnit = asp.unit != nil
         return AspirationDTO(
             id: asp.id.canonical,
             name: asp.name,
@@ -336,6 +410,9 @@ struct AspirationDTO: Codable {
             notes: asp.notes,
             dosing_moment: asp.dosingMomentRaw,
             reminder_time: asp.reminderTime.map { Int64($0.timeIntervalSince1970 * 1000) },
+            unit: asp.unit,
+            default_dose: hasUnit ? asp.defaultDose : nil,
+            schedule_raw: hasUnit ? asp.scheduleRaw : nil,
             sort_order: asp.sortOrder,
             updated_at: nil,
             deleted_at: nil
@@ -353,6 +430,21 @@ struct TaskDTO: Codable {
     let sort_order: Int
     let updated_at: Int64?
     let deleted_at: Int64?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, notes, due_date, is_done, completed_at, sort_order, updated_at, deleted_at
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(title, forKey: .title)
+        try c.encodeOrNull(notes, forKey: .notes)
+        try c.encodeOrNull(due_date, forKey: .due_date)
+        try c.encode(is_done, forKey: .is_done)
+        try c.encodeOrNull(completed_at, forKey: .completed_at)
+        try c.encode(sort_order, forKey: .sort_order)
+    }
 
     static func from(_ task: LifeTask) -> TaskDTO {
         TaskDTO(
