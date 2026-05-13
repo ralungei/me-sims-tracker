@@ -51,6 +51,32 @@ struct NeedBarView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // VoiceOver: collapse the entire row into a single focusable element.
+        // Without this, VoiceOver reads each of the 12 pip rectangles and the
+        // ⚠ glyph as separate items. The contextMenu on recent-action pills
+        // is unreachable once we ignore children, so we expose the same
+        // "undo last action" affordances as custom rotor actions below.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(need.displayName))
+        .accessibilityValue(Text(barAccessibilityValue))
+        .accessibilityHint(Text("Toca dos veces para registrar una acción"))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityActions {
+            ForEach(Array(recentActions.prefix(3).enumerated()), id: \.offset) { idx, rec in
+                Button("Eliminar \(rec.localizedName)") { onRemoveAction(idx) }
+            }
+        }
+    }
+
+    /// Spoken value combining percentage, qualitative tier, and the most
+    /// recent action if any — "78 por ciento, bien. Última acción: Café
+    /// hace 1 h". That last bit replaces the visual chip row.
+    private var barAccessibilityValue: String {
+        var parts: [String] = [value.accessibilityNeedValue]
+        if let rec = recentActions.first {
+            parts.append(String(localized: "Última acción: \(rec.localizedName) \(rec.at.timeAgo(style: .long))"))
+        }
+        return parts.joined(separator: ". ")
     }
 
     @ViewBuilder

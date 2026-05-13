@@ -26,6 +26,7 @@
 		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
 		714096688C4A7CF61C6DEA0C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4224F0E544F1A45EA415CF89 /* AboutView.swift */; };
 		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
+		8572489A8FB738D1DA91917E /* Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A65C7D05674205E9F4C67BE /* Accessibility.swift */; };
 		8BB5895C9C89A4C15A10DCEA /* DoseScheduleEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4345818E44B8424BFD0778 /* DoseScheduleEditor.swift */; };
 		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
 		949101EABF2E4FBC5DAC1640 /* NotificationsDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727963FD62BC53F40E985542 /* NotificationsDetailView.swift */; };
@@ -56,6 +57,7 @@
 		16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsSheet.swift; sourceTree = "<group>"; };
 		19B7E317406B92C357536FFC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedBarView.swift; sourceTree = "<group>"; };
+		2A65C7D05674205E9F4C67BE /* Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Accessibility.swift; sourceTree = "<group>"; };
 		3D97F1CFA575B954764AF883 /* CloudPrefsMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudPrefsMirror.swift; sourceTree = "<group>"; };
 		3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		4224F0E544F1A45EA415CF89 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -204,6 +206,7 @@
 		D94CDEB6721A72ED9B62A2D2 /* Theme */ = {
 			isa = PBXGroup;
 			children = (
+				2A65C7D05674205E9F4C67BE /* Accessibility.swift */,
 				4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */,
 				5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */,
 			);
@@ -304,6 +307,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				714096688C4A7CF61C6DEA0C /* AboutView.swift in Sources */,
+				8572489A8FB738D1DA91917E /* Accessibility.swift in Sources */,
 				164F3D95ACE2E4B04E2BF1FC /* ActivityLog.swift in Sources */,
 				8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */,
 				36BAEC2B6F13898E5467DE08 /* Aspiration.swift in Sources */,

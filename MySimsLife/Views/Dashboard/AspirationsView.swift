@@ -188,6 +188,32 @@ struct AspirationCard: View {
                 withAnimation(.spring(response: 0.3)) { pulse = false }
             }
         }
+        // VoiceOver folds the emoji + name + XP/check + detail into one
+        // element. Without this, the user hears "rocket emoji", "+25",
+        // "Creatine 5g", "Daily" as 4 separate focusable items.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(aspiration.name))
+        .accessibilityValue(Text(aspirationAccessibilityValue))
+        .accessibilityHint(Text(done
+                                ? "Toca dos veces para deshacer"
+                                : "Toca dos veces para completar"))
+        .accessibilityAddTraits(done ? [.isButton, .isSelected] : .isButton)
+    }
+
+    /// Spoken state: progress + reward. Keeps the emoji out of speech (lectores
+    /// suelen describirlo literalmente como "símbolo de cohete") y resume el
+    /// estado real ("hecho hoy", "media mañana", "10 XP", etc.).
+    private var aspirationAccessibilityValue: String {
+        var parts: [String] = []
+        if done {
+            parts.append(String(localized: "completado hoy"))
+        } else {
+            parts.append(String(localized: "+\(aspiration.xp) XP"))
+        }
+        if let dosing = dosingLabel {
+            parts.append(dosing.text)
+        }
+        return parts.joined(separator: ", ")
     }
 
     /// Compact "moment · hour" line, e.g. "media mañana · 11:00".

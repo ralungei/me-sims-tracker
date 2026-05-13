@@ -174,6 +174,30 @@ struct TreatmentCard: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(treatment.name))
+        .accessibilityValue(Text(treatmentAccessibilityValue))
+        .accessibilityHint(Text(taken
+                                ? "Toca dos veces para deshacer la dosis"
+                                : "Toca dos veces para tomar la dosis"))
+        .accessibilityAddTraits(taken ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private var treatmentAccessibilityValue: String {
+        var parts: [String] = []
+        parts.append(taken
+                     ? String(localized: "tomado hoy")
+                     : String(localized: "pendiente"))
+        if let day = treatment.currentDay(), let total = treatment.totalDays {
+            parts.append(String(localized: "día \(day) de \(total)"))
+        }
+        if let dose = treatment.currentDoseLabel() {
+            parts.append(dose)
+        }
+        if let dosing = dosingLine {
+            parts.append(dosing.text)
+        }
+        return parts.joined(separator: ", ")
     }
 
     @ViewBuilder

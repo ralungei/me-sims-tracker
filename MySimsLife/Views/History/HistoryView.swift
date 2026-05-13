@@ -172,6 +172,11 @@ struct HistoryView: View {
                 }
             }
             .padding(.vertical, 4)
+            // Each row reads as one element rather than icon + name + need
+            // + percentage + time being four separate focusable items.
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("\(Bundle.main.localizedString(forKey: activity.actionName, value: activity.actionName, table: nil)), \(needType.displayName)"))
+            .accessibilityValue(Text("\(isNeg ? "" : "+")\(Int(activity.boostAmount)) por ciento, \(activity.timestamp.formatted(date: .omitted, time: .shortened))"))
         }
     }
 

@@ -124,10 +124,12 @@ struct QuickActionsOverlay: View {
                     )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Deshacer \(rec.localizedName)"))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .simsFieldStyle()
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Header
@@ -311,6 +313,15 @@ struct ActionCard: View {
             )
         }
         .buttonStyle(BounceButtonStyle())
+        // Fold the icon, name, and boost stack into one focusable item so
+        // VoiceOver speaks "Coffee, plus 18 percent" instead of three pieces.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(action.localizedName))
+        .accessibilityValue(Text(negative
+                                 ? "menos \(Int(abs(action.boost))) por ciento"
+                                 : "más \(Int(action.boost)) por ciento"))
+        .accessibilityHint(Text("Toca dos veces para registrar"))
+        .accessibilityAddTraits(.isButton)
     }
 }
 

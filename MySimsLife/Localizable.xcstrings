@@ -161,6 +161,76 @@
         }
       }
     },
+    "%lld de %lld completadas hoy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld done today"
+          }
+        }
+      }
+    },
+    "%lld de %lld tareas completadas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld tasks done"
+          }
+        }
+      }
+    },
+    "%lld de %lld tomados hoy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld taken today"
+          }
+        }
+      }
+    },
+    "%lld por ciento, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld percent, %@"
+          }
+        }
+      }
+    },
+    "%lld puntos, en el centro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points, at the centre"
+          }
+        }
+      }
+    },
+    "%lld puntos, por debajo del centro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points, below the centre"
+          }
+        }
+      }
+    },
+    "%lld puntos, por encima del centro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points, above the centre"
+          }
+        }
+      }
+    },
     "%lld/%lld hechas": {
       "extractionState": "manual",
       "localizations": {
@@ -189,6 +259,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "+%@"
+          }
+        }
+      }
+    },
+    "+%lld XP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld XP"
           }
         }
       }
@@ -945,6 +1025,16 @@
         }
       }
     },
+    "Deshacer %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo %@"
+          }
+        }
+      }
+    },
     "Desorden": {
       "localizations": {
         "en": {
@@ -1232,6 +1322,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete \"%@\""
+          }
+        }
+      }
+    },
+    "Eliminar %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %@"
           }
         }
       }
@@ -2665,6 +2765,76 @@
         }
       }
     },
+    "Toca dos veces para completar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to complete"
+          }
+        }
+      }
+    },
+    "Toca dos veces para deshacer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to undo"
+          }
+        }
+      }
+    },
+    "Toca dos veces para deshacer la dosis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to undo dose"
+          }
+        }
+      }
+    },
+    "Toca dos veces para marcar como pendiente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to mark pending"
+          }
+        }
+      }
+    },
+    "Toca dos veces para registrar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to log"
+          }
+        }
+      }
+    },
+    "Toca dos veces para registrar una acción": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to log an activity"
+          }
+        }
+      }
+    },
+    "Toca dos veces para tomar la dosis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to take dose"
+          }
+        }
+      }
+    },
     "Toca una barra en el panel principal\npara registrar tu primera actividad": {
       "localizations": {
         "en": {
@@ -2960,6 +3130,66 @@
         }
       }
     },
+    "bajo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "low"
+          }
+        }
+      }
+    },
+    "bien": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "good"
+          }
+        }
+      }
+    },
+    "completada": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "done"
+          }
+        }
+      }
+    },
+    "completado hoy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "completed today"
+          }
+        }
+      }
+    },
+    "crítico": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "critical"
+          }
+        }
+      }
+    },
+    "día %lld de %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "day %lld of %lld"
+          }
+        }
+      }
+    },
     "empieza %@": {
       "localizations": {
         "en": {
@@ -3001,6 +3231,16 @@
         }
       }
     },
+    "lleno": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "full"
+          }
+        }
+      }
+    },
     "mañana": {
       "extractionState": "manual",
       "localizations": {
@@ -3008,6 +3248,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "tomorrow"
+          }
+        }
+      }
+    },
+    "menos %lld por ciento": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "minus %lld percent"
+          }
+        }
+      }
+    },
+    "más %lld por ciento": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "plus %lld percent"
           }
         }
       }
@@ -3042,6 +3302,16 @@
         }
       }
     },
+    "pendiente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pending"
+          }
+        }
+      }
+    },
     "personalizada": {
       "extractionState": "stale",
       "localizations": {
@@ -3049,6 +3319,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "custom"
+          }
+        }
+      }
+    },
+    "regular": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "okay"
           }
         }
       }
@@ -3080,6 +3360,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "you look great"
+          }
+        }
+      }
+    },
+    "tomado hoy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "taken today"
           }
         }
       }
@@ -3184,6 +3474,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Epic"
+          }
+        }
+      }
+    },
+    "Última acción: %@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last action: %@ %@"
           }
         }
       }

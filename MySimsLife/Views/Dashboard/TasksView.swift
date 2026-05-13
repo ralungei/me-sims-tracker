@@ -196,6 +196,28 @@ struct TaskCard: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(task.title))
+        .accessibilityValue(Text(taskAccessibilityValue))
+        .accessibilityHint(Text(task.isDone
+                                ? "Toca dos veces para marcar como pendiente"
+                                : "Toca dos veces para completar"))
+        .accessibilityAddTraits(task.isDone ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private var taskAccessibilityValue: String {
+        var parts: [String] = []
+        if task.isDone {
+            parts.append(String(localized: "completada"))
+        } else if task.isOverdue {
+            parts.append(String(localized: "atrasada"))
+        } else {
+            parts.append(String(localized: "pendiente"))
+        }
+        if let due = task.dueDate {
+            parts.append(due.formatted(date: .omitted, time: .shortened))
+        }
+        return parts.joined(separator: ", ")
     }
 }
 

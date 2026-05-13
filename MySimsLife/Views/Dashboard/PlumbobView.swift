@@ -14,6 +14,12 @@ struct PlumbobView: View {
     var body: some View {
         Plumbob3DScene(color: color)
             .frame(width: orbSize, height: orbSize * 1.15)
+            // VITAL plumbob. Without a label VoiceOver just says "image" —
+            // give it a name + the current mood description so blind users
+            // also get the at-a-glance vibe the colour communicates visually.
+            .accessibilityElement()
+            .accessibilityLabel(Text("VITAL"))
+            .accessibilityValue(Text(mood.accessibilityNeedValue))
     }
 }
 

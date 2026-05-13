@@ -226,6 +226,7 @@ struct DashboardView: View {
                                      ? SimsTheme.boostPositive
                                      : SimsTheme.frame)
                     .monospacedDigit()
+                    .accessibilityLabel(Text("\(donesToday) de \(total) completadas hoy"))
             }
         case .agenda:
             let done = store.tasks.filter { $0.isDone }.count
@@ -237,6 +238,7 @@ struct DashboardView: View {
                                      ? SimsTheme.boostPositive
                                      : SimsTheme.frame)
                     .monospacedDigit()
+                    .accessibilityLabel(Text("\(done) de \(total) tareas completadas"))
             }
         case .botiquin:
             let active = treatments.filter { $0.isActive }
@@ -249,6 +251,7 @@ struct DashboardView: View {
                                      ? SimsTheme.boostPositive
                                      : SimsTheme.frame)
                     .monospacedDigit()
+                    .accessibilityLabel(Text("\(taken) de \(total) tomados hoy"))
             }
         }
     }
@@ -664,6 +667,21 @@ struct DashboardView: View {
         )
         .fixedSize()
         .animation(.easeInOut(duration: 0.3), value: signedAmount)
+        // VITAL bar: the 12 pips and the centre tick are decoration. Fold the
+        // whole row into a single element with a meaningful spoken value.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("VITAL"))
+        .accessibilityValue(Text(vitalAccessibilityValue(score: v, signed: signedAmount)))
+    }
+
+    /// Builds the spoken description for VITAL — e.g. "60 puntos, ligeramente
+    /// por encima del centro" — without leaking colour-only info.
+    private func vitalAccessibilityValue(score: Int, signed: Double) -> String {
+        if abs(signed) < 0.005 { return String(localized: "\(score) puntos, en el centro") }
+        if signed > 0 {
+            return String(localized: "\(score) puntos, por encima del centro")
+        }
+        return String(localized: "\(score) puntos, por debajo del centro")
     }
 
     // MARK: - Needs Panel (2-col grid on regular, single column on compact)
@@ -902,6 +920,10 @@ private struct TimeAwareGreeting: View {
                     )
             }
         }
+        // VoiceOver: read the full weekday name + date instead of the seven
+        // single-letter pips one by one. The colour pip is decoration.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(now.formatted(date: .complete, time: .omitted)))
     }
 
     private var greeting: String {
