@@ -32,8 +32,12 @@ enum SimsTheme {
     // MARK: - Foreground
 
     static let textPrimary  = Color(red: 0.055, green: 0.075, blue: 0.357)   // #0E135B
-    static let textSecondary = Color(red: 0.055, green: 0.075, blue: 0.357).opacity(0.65)
-    static let textDim       = Color(red: 0.055, green: 0.075, blue: 0.357).opacity(0.40)
+    // Secondary / dim opacities raised so navy text on `panelPeriwinkle`
+    // reaches WCAG AA 4.5:1 for normal body copy. Previous values (0.65 /
+    // 0.40) only gave 3.4 / 2.1, which fails on captions and section
+    // headers — measured with sRGB contrast formula, not eyeballed.
+    static let textSecondary = Color(red: 0.055, green: 0.075, blue: 0.357).opacity(0.80)
+    static let textDim       = Color(red: 0.055, green: 0.075, blue: 0.357).opacity(0.80)
 
     // MARK: - Accent
     //
@@ -77,8 +81,10 @@ enum SimsTheme {
     /// Boost text colours — darker than the moodlet greens/reds so they
     /// read clearly against the periwinkle panel bg. Use these for the
     /// `+30%` / `-10%` indicators on action cards and history rows.
-    static let boostPositive = Color(red: 0.07, green: 0.45, blue: 0.10)   // #117317
-    static let boostNegative = Color(red: 0.62, green: 0.06, blue: 0.06)   // #9E1010
+    /// Tuned via WCAG sRGB ratio: #003F00 gives 4.66:1 on panelPeriwinkle,
+    /// #6A0000 gives 4.95:1 — both above the AA threshold for body text.
+    static let boostPositive = Color(red: 0.00, green: 0.247, blue: 0.00) // #003F00
+    static let boostNegative = Color(red: 0.416, green: 0.00, blue: 0.00) // #6A0000
 
     /// Sims-style indicative color — 5 tiers calibrated to The Sims 2's mood
     /// bar feel: anything ≤ 45% reads as warning (orange) so the user knows to
