@@ -1,8 +1,8 @@
-# me-sims-tracker
+# Livebars
 
-Personal life tracker that treats your day like a Sims save file. SwiftUI iOS/iPadOS app with 10 need bars that decay over time, custom aspirations (recurring challenges), one-off agenda tasks, and a global VITAL score.
+A private life tracker for iOS, inspired by The Sims.
 
-Backed by a Cloudflare Worker so you (or Claude, via an MCP server) can read and write your data from anywhere.
+Track your needs, aspirations, treatments, and daily tasks with friendly bars that fill when you log what you do. Everything stays on your device and in your private iCloud account — no server, no analytics, no ads.
 
 |  Onboarding  |  Dashboard  |
 | --- | --- |
@@ -10,115 +10,67 @@ Backed by a Cloudflare Worker so you (or Claude, via an MCP server) can read and
 
 ## What's inside
 
-**iOS app** (`MySimsLife/`)
-- 10 needs: Health, Energy, Nutrition, Hydration, Bladder, Exercise, Hygiene, Environment, Social, Leisure. All toggleable per user.
-- Faceted procedural plumbob built with SceneKit, color-shifts with the global mood.
-- VITAL score 0–100 shown as a bidirectional bar (red ← center → green) on the header.
-- Aspirations: daily/weekly/treatment-based personal challenges with XP per completion.
-- Agenda: one-off tasks with optional due time, draggable to reorder.
-- Quick-action chips that rotate based on what's low and what you haven't logged today.
-- Dark-only, dusty-pastel palette. Indicative bar colors (sage / honey / orange / crimson) by value, not by need identity.
-
-**Backend** (`backend/`)
-- Hono on Cloudflare Workers + D1 (SQLite). Free tier covers personal use forever.
-- REST CRUD for `aspirations`, `tasks`, `activity_log`, `needs_state` with soft-delete.
-- `GET /sync?since=<ms>` for incremental pull.
-- `X-API-Key` auth.
-
-**MCP server** (`mcp-server/`)
-- Node + `@modelcontextprotocol/sdk`.
-- Exposes the backend as tools to Claude: `add_aspiration`, `complete_task`, `log_action`, `recent_activity`, `get_overview`, etc.
-- Lets you say things like *"add a 'read 30 min' aspiration"* or *"I just drank water"* and have it land in the iPad on next sync.
+- **11 needs**: Physical health, Mental health, Energy, Nutrition, Hydration, Bladder, Exercise, Hygiene, Environment, Social, Leisure. Toggleable per user.
+- **Faceted procedural plumbob** (SceneKit), colour-shifts with the global mood.
+- **VITAL score** 0–100 shown as a bidirectional bar (red ← centre → green) on the header.
+- **Aspirations**: daily / weekly / one-shot personal challenges with XP per completion.
+- **Agenda**: one-off tasks with optional due time, draggable to reorder.
+- **Medicine cabinet**: treatments and supplements with reminders and dose tracking.
+- **Quick-action chips** that rotate based on what's low and what you haven't logged today.
+- **Sims-2 periwinkle palette**, indicative bar colours (sage → honey → orange → crimson) by value, not by need identity.
+- **Accessible**: VoiceOver labels on every custom view, Dynamic Type, Reduce Motion, WCAG AA contrast, percentage labels on bars for colour-blind users.
 
 ## Stack
 
 - SwiftUI + SwiftData (iOS 17+ / macOS 14+)
+- **CloudKit** (`cloudKitDatabase: .automatic`) for cross-device sync — no backend, no servers
+- iCloud Key-Value Store for prefs (username, notification toggles)
 - SceneKit for the 3D plumbob
 - XcodeGen (`project.yml`)
-- Cloudflare Workers + D1
-- Hono · TypeScript · Wrangler
-- Model Context Protocol SDK
+
+## Sync model
+
+Source of truth = **CloudKit**. Each device writes to its local SwiftData store; CloudKit pushes/pulls automatically.
+
+- **Local-first**: every action mutates SwiftData first, then CloudKit syncs in the background.
+- **Realtime cross-device**: `NSPersistentStoreRemoteChange` notifications wake the store when another device makes a change, debounced by 0.5 s.
+- **Bar values**: stored as `NeedAnchor` rows (value + anchoredAt). Each device computes the decayed display value locally from the anchor — so all devices converge to the same value regardless of when they last opened the app.
+- **Prefs**: `CloudPrefsMirror` mirrors `userName`, notification settings, and threshold/cooldown to `NSUbiquitousKeyValueStore`.
 
 ## Local setup
-
-The repo contains three projects: the iOS app, the backend, and the MCP server. They are independent.
-
-### iOS app
 
 ```bash
 xcodegen generate
 open MySimsLife.xcodeproj
 ```
 
-Then in Xcode select your iPad as destination and Cmd+R. Personal Apple ID works (cert expires every 7 days; reopen Xcode and Run again to re-sign).
+Then in Xcode select your iPhone / iPad as the destination and ⌘R. Requires an Apple Developer Program account ($99/yr) because CloudKit needs a real iCloud container.
 
-Before the first build, copy the credentials template and fill in your backend key:
+## Calibration
 
-```bash
-cp MySimsLife/Store/BackendCredentials.swift.example MySimsLife/Store/BackendCredentials.swift
-# Edit the file and set your baseURL + apiKey
-```
-
-`BackendCredentials.swift` is gitignored.
-
-### Backend
-
-See [`backend/README.md`](backend/README.md) for the full Cloudflare setup. TL;DR:
+The app lives or dies by how fast bars decay, how much each action boosts, and what VITAL counts as "healthy". Tweaking those values requires running the calibration harness:
 
 ```bash
-cd backend
-npm install
-npx wrangler d1 create me-sims-tracker     # paste the id into wrangler.toml
-npm run db:migrate:remote
-echo "$(openssl rand -hex 32)" | npx wrangler secret put API_KEY
-npm run deploy
+swift Tools/CalibrationCheck.swift
 ```
 
-You'll get a URL like `https://me-sims-tracker.<your-user>.workers.dev`. Plug that URL + the API key into `BackendCredentials.swift` (app) and the MCP server env (`SIMS_API_KEY`).
-
-### MCP server (Claude integration)
-
-```bash
-cd mcp-server
-npm install
-npm run build
-
-claude mcp add me-sims-tracker --scope user \
-  --env "SIMS_API_KEY=<your-api-key>" \
-  -- node "$(pwd)/dist/index.js"
-```
-
-Restart Claude Code. The tools become available in any session.
-
-## Sync model
-
-- **Local-first**: every action mutates SwiftData first, then fires a push to the backend in the background.
-- **Pull-on-launch**: `BackendSync.pull(into:)` runs once when the app boots, fetching everything modified since `lastSync` (stored in `UserDefaults`).
-- **Conflict resolution**: last-write-wins by `updated_at`. Soft-deletes survive concurrent edits.
-- **No CloudKit, no Apple Developer Program required**: your own backend means it works on a free Apple ID.
+34 checks pass on the default tuning. Full spec → [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
 
 ## Project layout
 
 ```
-backend/                 # Cloudflare Worker (Hono + D1)
-  migrations/0001_initial.sql
-  src/index.ts
-  wrangler.toml
-
-mcp-server/              # Node MCP server for Claude
-  src/index.ts
-
 MySimsLife/              # SwiftUI app
   App/
-  Models/                # NeedType, Aspiration, LifeTask, ActivityLog
-  Store/                 # NeedStore, BackendSync, CalibrationEngine
-  Theme/                 # SimsTheme, Date+TimeAgo
+  Models/                # NeedType, NeedAnchor, Aspiration, LifeTask, Treatment, ActivityLog
+  Store/                 # NeedStore, CloudPrefsMirror, MockData, NotificationManager
+  Theme/                 # SimsTheme, Accessibility, Date+TimeAgo
   Views/
     Dashboard/           # DashboardView, NeedBarView, PlumbobView (SceneKit), …
     Onboarding/
-    Settings/            # CategoriesEditor
-    History/  Insights/
+    Settings/            # SettingsView + drill-down detail screens
+    History/
 
-docs/                    # README screenshots
+docs/                    # README screenshots + CALIBRATION.md
+Tools/                   # screenshots.sh, CalibrationCheck.swift
 project.yml              # XcodeGen config
 ```
