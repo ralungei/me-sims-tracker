@@ -27,7 +27,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.35), value: userName.isEmpty)
+        .simsAnimation(.easeInOut(duration: 0.35), value: userName.isEmpty)
         .onAppear {
             store.configure(with: modelContext)
             #if os(iOS)

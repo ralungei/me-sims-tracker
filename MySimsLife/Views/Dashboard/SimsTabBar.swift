@@ -138,7 +138,7 @@ struct SimsTabBar: View {
         .frame(width: l.size.width,
                height: l.size.height,
                alignment: .topLeading)
-        .animation(.spring(response: 0.4, dampingFraction: 0.78), value: selection)
+        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78), value: selection)
     }
 
     private var activeIndex: Int { tabs.firstIndex(of: selection) ?? 0 }

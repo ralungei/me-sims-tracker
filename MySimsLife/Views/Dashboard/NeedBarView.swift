@@ -190,7 +190,7 @@ struct NeedBarView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(frame)
         )
-        .animation(.easeInOut(duration: 0.25), value: filled)
+        .simsAnimation(.easeInOut(duration: 0.25), value: filled)
     }
 }
 

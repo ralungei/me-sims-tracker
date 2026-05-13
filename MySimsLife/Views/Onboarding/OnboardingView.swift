@@ -177,7 +177,7 @@ struct OnboardingView: View {
                 Capsule()
                     .fill(s == step ? SimsTheme.accentPrimary : SimsTheme.textDim.opacity(0.5))
                     .frame(width: s == step ? 22 : 6, height: 6)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: step)
+                    .simsAnimation(.spring(response: 0.4, dampingFraction: 0.8), value: step)
             }
         }
     }

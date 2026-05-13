@@ -167,8 +167,8 @@ struct DashboardView: View {
         }
         .id(selectedTab)
         .transition(.opacity.combined(with: .move(edge: .leading)))
-        .animation(.spring(response: 0.4, dampingFraction: 0.78),
-                   value: selectedTab)
+        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78),
+                       value: selectedTab)
     }
 
     /// Small circular "+" affordance, right-aligned in the title row. Only
@@ -302,7 +302,7 @@ struct DashboardView: View {
             .padding(.horizontal, isCompact ? 16 : 32)
         }
         .frame(height: tabHeight)
-        .animation(.spring(response: 0.4, dampingFraction: 0.78), value: selectedTab)
+        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78), value: selectedTab)
     }
 
     /// Pill that parks every enabled need at 50 %. Lives on the right edge
@@ -562,7 +562,7 @@ struct DashboardView: View {
         .frame(width: max(chipsMaxX, chip1.x + shiftX + plumbobSize),
                height: plumbobSize + chipsMaxY - chip1.y + dropY,
                alignment: .topLeading)
-        .animation(.spring(response: 0.4, dampingFraction: 0.78), value: visibleAlerts.count)
+        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78), value: visibleAlerts.count)
     }
 
     /// iPad/Mac layout: VITAL pip bar on the left, greeting absolutely
@@ -671,7 +671,7 @@ struct DashboardView: View {
                 .fill(SimsTheme.frame)
         )
         .fixedSize()
-        .animation(.easeInOut(duration: 0.3), value: signedAmount)
+        .simsAnimation(.easeInOut(duration: 0.3), value: signedAmount)
         // VITAL bar: the 12 pips and the centre tick are decoration. Fold the
         // whole row into a single element with a meaningful spoken value.
         .accessibilityElement(children: .ignore)

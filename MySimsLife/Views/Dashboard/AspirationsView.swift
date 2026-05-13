@@ -111,6 +111,7 @@ struct AspirationCard: View {
     let onTap: () -> Void
 
     @State private var pulse: Bool = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var hue: Double { aspiration.hue }
     private var done: Bool { aspiration.isDoneNow() }
@@ -183,6 +184,10 @@ struct AspirationCard: View {
         }
         .buttonStyle(.plain)
         .onChange(of: aspiration.lastCompletedAt) { _, _ in
+            // Celebratory pulse when the user marks the aspiration done.
+            // Reduce Motion turns it off — bouncing scale is exactly the
+            // kind of motion the system setting wants to suppress.
+            guard !reduceMotion else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) { pulse = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 withAnimation(.spring(response: 0.3)) { pulse = false }
