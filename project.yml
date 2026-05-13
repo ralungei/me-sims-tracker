@@ -35,7 +35,12 @@ targets:
         com.apple.developer.icloud-services:
           - CloudKit
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
-        aps-environment: development
+        # `production` so the distribution archive can be signed by App
+        # Store. `development` requires a dev cert which doesn't exist
+        # in Xcode Cloud / archive context, so we use `production` for
+        # all configs — the APNs production environment is what live
+        # CloudKit silent pushes use anyway.
+        aps-environment: production
     info:
       path: MySimsLife/Info.plist
       properties:
