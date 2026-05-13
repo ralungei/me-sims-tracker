@@ -31,17 +31,25 @@ struct NeedBarView: View {
             HStack(spacing: compact ? 12 : 14) {
                 tile
                 VStack(alignment: .leading, spacing: 5) {
-                    HStack(alignment: .firstTextBaseline) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(need.displayName)
                             .font(nameFont)
                             .tracking(0.6)
                             .foregroundStyle(SimsTheme.textPrimary)
                         Spacer()
+                        // Explicit percentage so the value reads without
+                        // relying on the colour tier — required for the
+                        // Differentiate Without Color Alone label. ⚠ stays
+                        // for critical states as an extra non-colour cue.
                         if critical {
                             Text("⚠")
                                 .font(.system(.caption, weight: .bold))
                                 .foregroundStyle(SimsTheme.valueColor(for: value))
                         }
+                        Text("\(pct)%")
+                            .font(.system(.caption, design: .rounded, weight: .heavy))
+                            .foregroundStyle(SimsTheme.textSecondary)
+                            .monospacedDigit()
                     }
                     pips
                     lastActionLabel
