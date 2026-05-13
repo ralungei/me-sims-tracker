@@ -14,6 +14,10 @@ struct AspirationEditor: View {
     @State private var hue: Double = 220
     @State private var xp: Int = 10
     @State private var durationMinutes: Int = 25
+    // Legacy fields kept so existing `.treatment` aspirations preserve their
+    // totalDays / startedAt / unit / dose / schedule when re-saved. The editor
+    // no longer offers UI to *create* a treatment aspiration (use the Botiquín
+    // tab's TreatmentEditor instead).
     @State private var totalDays: Int = 30
     @State private var notes: String = ""
     @State private var startDate: Date = Date()
@@ -23,62 +27,37 @@ struct AspirationEditor: View {
     @State private var defaultDose: Int = 1
     @State private var schedule: [DoseStep] = []
 
-    private let suggestedEmojis = ["🧘","💊","🌱","🎬","📚","💪","🏃","🥗","💧","🛏","☀️","🧠","✍️","🎨","🎵","🙏","💧","🦷","🧴","📞"]
-    private let suggestedUnits = ["sobre", "cápsula", "comprimido", "pastilla", "gota", "ml", "g", "scoop"]
+    private let suggestedEmojis = ["🧘","🌱","🎬","📚","💪","🏃","🥗","💧","🛏","☀️","🧠","✍️","🎨","🎵","🙏","🦷","🧴","📞"]
     private let huePresets: [Double] = [22, 38, 158, 195, 220, 258, 295, 335]
 
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                SimsTheme.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        previewCard
-                        section("Nombre") { nameField }
-                        section("Emoji") { emojiField }
-                        section("Tipo") { kindField }
-                        section("Color") { hueField }
-                        section("¿Qué tan grande es?") { xpField }
-                        if kind == .dailyTimed {
-                            section("Duración") { durationField }
-                        }
-                        if kind == .treatment {
-                            section("Días totales") { totalDaysField }
-                            section("Empieza el") { startDateField }
-                        }
-                        section("Unidad (opcional)") { unitField }
-                        if !unit.isEmpty {
-                            section("Cantidad por toma") { defaultDoseField }
-                            if kind == .treatment {
-                                section("Variación por semanas (opcional)") { scheduleField }
-                            }
-                        }
-                        section("Cuándo tomarla (opcional)") { dosingField }
-                        section("Hora exacta (opcional)") { reminderField }
-                        section("Notas (opcional)") { notesField }
-                        if existing != nil {
-                            deleteButton
-                                .padding(.top, 12)
-                        }
-                    }
-                    .padding(20)
-                }
+        SimsEditorScaffold(
+            title: existing == nil ? "Nueva aspiración" : "Editar",
+            isValid: isValid,
+            onSave: save
+        ) {
+            previewCard
+            SimsSection("Nombre") { nameField }
+            SimsSection("Emoji") { emojiField }
+            SimsSection("Tipo") { kindField }
+            SimsSection("Color") { hueField }
+            SimsSection("¿Qué tan grande es?") { xpField }
+            if kind == .dailyTimed {
+                SimsSection("Duración") { durationField }
             }
-            .navigationTitle(existing == nil
-                             ? Text("Nueva aspiración")
-                             : Text("Editar"))
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+            SimsSection("Cuándo (opcional)") { dosingField }
+            SimsSection("Hora exacta (opcional)") { reminderField }
+            SimsSection("Notas (opcional)") { notesField }
+            if existing != nil {
+                SimsDeleteButton(label: "Eliminar aspiración") {
+                    if let existing { store.deleteAspiration(existing) }
+                    dismiss()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") { save() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .bold()
-                }
+                .padding(.top, 12)
             }
         }
         .onAppear { loadIfExisting() }
@@ -109,21 +88,13 @@ struct AspirationEditor: View {
         .simsFieldStyle(cornerRadius: 24)
     }
 
-    // MARK: - Sections
-
-    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(.caption2, design: .rounded, weight: .heavy))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(SimsTheme.textSecondary)
-            content()
-        }
-    }
+    // MARK: - Fields
 
     private var nameField: some View {
-        TextField("Ej: Meditar 25 min", text: $name)
+        TextField("",
+                  text: $name,
+                  prompt: Text("Ej: Meditar 25 min")
+                            .foregroundStyle(SimsTheme.textSecondary))
             .textFieldStyle(.plain)
             .padding(12)
             .simsFieldStyle()
@@ -132,7 +103,9 @@ struct AspirationEditor: View {
 
     private var emojiField: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("✨", text: $emoji)
+            TextField("",
+                      text: $emoji,
+                      prompt: Text("✨").foregroundStyle(SimsTheme.textSecondary))
                 .textFieldStyle(.plain)
                 .font(.system(size: 28))
                 .frame(width: 70, height: 56)
@@ -150,13 +123,16 @@ struct AspirationEditor: View {
                         .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 20)
             }
+            .scrollClipDisabled()
+            .padding(.horizontal, -20)
         }
     }
 
     private var kindField: some View {
         VStack(spacing: 8) {
-            ForEach(AspirationKind.allCases, id: \.self) { k in
+            ForEach(AspirationKind.pickable, id: \.self) { k in
                 Button { kind = k } label: {
                     HStack {
                         Image(systemName: k.icon)
@@ -242,144 +218,18 @@ struct AspirationEditor: View {
         .simsFieldStyle()
     }
 
-    private var totalDaysField: some View {
-        Stepper(value: $totalDays, in: 3...365, step: 1) {
-            Text("\(totalDays) días")
-                .font(.system(.body, design: .rounded, weight: .semibold))
-                .foregroundStyle(SimsTheme.textPrimary)
-        }
-        .padding(12)
-        .simsFieldStyle()
-    }
-
-    private var startDateField: some View {
-        DatePicker("", selection: $startDate, displayedComponents: .date)
-            .datePickerStyle(.compact)
-            .labelsHidden()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .simsFieldStyle()
-    }
-
-    private var unitField: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            TextField("sobre, cápsula, ml...", text: $unit)
-                .textFieldStyle(.plain)
-                .padding(12)
-                .simsFieldStyle()
-                .foregroundStyle(SimsTheme.textPrimary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(suggestedUnits, id: \.self) { u in
-                        Button { unit = (unit == u ? "" : u) } label: {
-                            Text(u)
-                                .font(.system(.caption, design: .rounded, weight: .semibold))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .foregroundStyle(SimsTheme.textPrimary)
-                                .simsChipStyle(selected: unit == u)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
-    private var defaultDoseField: some View {
-        Stepper(value: $defaultDose, in: 1...20) {
-            Text("\(defaultDose) \(defaultDose == 1 ? unit : Aspiration.pluralize(unit))")
-                .font(.system(.body, design: .rounded, weight: .semibold))
-                .foregroundStyle(SimsTheme.textPrimary)
-        }
-        .padding(12)
-        .simsFieldStyle()
-    }
-
-    private var scheduleField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(schedule.indices, id: \.self) { i in
-                scheduleRow(index: i)
-            }
-            Button {
-                let last = schedule.last
-                let nextFrom = (last?.toWeek ?? 0) + 1
-                schedule.append(DoseStep(fromWeek: nextFrom, toWeek: nextFrom + 1, count: defaultDose))
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Añadir tramo")
-                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                }
-                .foregroundStyle(SimsTheme.accentPrimary)
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            if !schedule.isEmpty {
-                Text("Si una semana no está cubierta, se usa la cantidad por defecto.")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(SimsTheme.textDim)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func scheduleRow(index: Int) -> some View {
-        let step = schedule[index]
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Text("Sem")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(SimsTheme.textDim)
-                    Stepper(value: $schedule[index].fromWeek, in: 1...52) {
-                        Text("\(step.fromWeek)")
-                            .font(.system(.caption, design: .rounded, weight: .bold))
-                            .foregroundStyle(SimsTheme.textPrimary)
-                            .monospacedDigit()
-                    }
-                    .labelsHidden()
-                    Text("a")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(SimsTheme.textDim)
-                    // Custom binding here keeps the invariant `toWeek >= fromWeek`.
-                    Stepper(value: Binding(
-                        get: { schedule[index].toWeek },
-                        set: { schedule[index].toWeek = max(schedule[index].fromWeek, $0) }
-                    ), in: 1...52) {
-                        Text("\(step.toWeek)")
-                            .font(.system(.caption, design: .rounded, weight: .bold))
-                            .foregroundStyle(SimsTheme.textPrimary)
-                            .monospacedDigit()
-                    }
-                    .labelsHidden()
-                }
-                Stepper(value: $schedule[index].count, in: 1...20) {
-                    Text("\(step.count) \(step.count == 1 ? unit : Aspiration.pluralize(unit))")
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(SimsTheme.textPrimary)
-                }
-            }
-            Button { schedule.remove(at: index) } label: {
-                Image(systemName: "minus.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(SimsTheme.textDim)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(10)
-        .simsFieldStyle()
-    }
-
     private var dosingField: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(label: String(localized: "ninguno"), icon: "minus", isSelected: dosingMoment == nil) {
+                SimsSelectableChip(label: String(localized: "ninguno"),
+                                   icon: "minus",
+                                   isSelected: dosingMoment == nil) {
                     dosingMoment = nil
                 }
                 ForEach(DosingMoment.allCases, id: \.self) { m in
-                    chip(label: m.label, icon: m.icon, isSelected: dosingMoment == m) {
+                    SimsSelectableChip(label: m.label,
+                                       icon: m.icon,
+                                       isSelected: dosingMoment == m) {
                         dosingMoment = m
                         if reminderTime == nil {
                             reminderTime = Calendar.current.date(bySettingHour: m.defaultHour, minute: 0, second: 0, of: Date())
@@ -387,21 +237,10 @@ struct AspirationEditor: View {
                     }
                 }
             }
+            .padding(.horizontal, 20)
         }
-    }
-
-    private func chip(label: String, icon: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon).font(.system(size: 10, weight: .bold))
-                Text(label).font(.system(.caption, design: .rounded, weight: .semibold))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .foregroundStyle(SimsTheme.textPrimary)
-            .simsChipStyle(selected: isSelected)
-        }
-        .buttonStyle(.plain)
+        .scrollClipDisabled()
+        .padding(.horizontal, -20)
     }
 
     private var reminderField: some View {
@@ -439,30 +278,12 @@ struct AspirationEditor: View {
     }
 
     private var notesField: some View {
-        TextField("", text: $notes, prompt: Text("Posología, marca, instrucciones...").foregroundStyle(SimsTheme.textSecondary), axis: .vertical)
+        TextField("", text: $notes, prompt: Text("Por qué te importa, recordatorios...").foregroundStyle(SimsTheme.textSecondary), axis: .vertical)
             .lineLimit(3...8)
             .textFieldStyle(.plain)
             .padding(12)
             .simsFieldStyle()
             .foregroundStyle(SimsTheme.textPrimary)
-    }
-
-    private var deleteButton: some View {
-        Button(role: .destructive) {
-            if let existing { store.deleteAspiration(existing) }
-            dismiss()
-        } label: {
-            HStack {
-                Image(systemName: "trash")
-                Text("Eliminar aspiración")
-            }
-            .font(.system(.body, design: .rounded, weight: .semibold))
-            .frame(maxWidth: .infinity)
-            .padding(14)
-            .foregroundStyle(SimsTheme.negativeTint)
-            .background(RoundedRectangle(cornerRadius: 12).fill(SimsTheme.negativeTint.opacity(0.10)))
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers
@@ -555,13 +376,8 @@ struct AspirationEditor: View {
             asp.dosingMoment = dosingMoment
             asp.reminderTime = reminderTime
             asp.durationMinutes = kind == .dailyTimed ? durationMinutes : nil
-            if kind == .treatment {
-                asp.totalDays = totalDays
-                asp.startedAt = startDate
-            } else {
-                asp.totalDays = nil
-                asp.startedAt = nil
-            }
+            asp.totalDays = kind == .treatment ? totalDays : nil
+            asp.startedAt = kind == .treatment ? startDate : nil
             asp.unit = resolvedUnit
             asp.defaultDose = defaultDose
             asp.schedule = resolvedSchedule

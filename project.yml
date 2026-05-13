@@ -27,28 +27,46 @@ targets:
       - path: MySimsLife
         excludes:
           - "**/.DS_Store"
+    entitlements:
+      path: MySimsLife/MySimsLife.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.mysims.life
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        aps-environment: development
+    info:
+      path: MySimsLife/Info.plist
+      properties:
+        CFBundleDisplayName: "Livebars"
+        CFBundleName: "Livebars"
+        LSApplicationCategoryType: "public.app-category.lifestyle"
+        # Declares we use only Apple's standard encryption (CloudKit,
+        # iCloud KVS, HTTPS). No proprietary crypto → no export docs
+        # required by App Store review.
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UILaunchScreen: {}
+        UIBackgroundModes:
+          - remote-notification
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+          - UIInterfaceOrientationPortraitUpsideDown
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+          - UIInterfaceOrientationPortraitUpsideDown
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mysims.life
-        INFOPLIST_GENERATION_MODE: GeneratedByXcode
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "Me"
-        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.lifestyle"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-          - UIInterfaceOrientationPortraitUpsideDown
-        "INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad":
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-          - UIInterfaceOrientationPortraitUpsideDown
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG

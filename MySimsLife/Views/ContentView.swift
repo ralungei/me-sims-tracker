@@ -5,7 +5,16 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(NeedStore.self) private var store
     @AppStorage("userName") private var userName: String = ""
-    @State private var selectedTab = 0
+    /// Defaults to Status (0). Screenshot script overrides via `-RootTab status|history|settings`.
+    @State private var selectedTab: Int = {
+        let args = ProcessInfo.processInfo.arguments
+        guard let idx = args.firstIndex(of: "-RootTab"), idx + 1 < args.count else { return 0 }
+        switch args[idx + 1].lowercased() {
+        case "history":  return 1
+        case "settings": return 2
+        default:         return 0
+        }
+    }()
 
     var body: some View {
         Group {
@@ -54,5 +63,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(NeedStore())
-        .modelContainer(for: [ActivityLog.self, Aspiration.self, LifeTask.self], inMemory: true)
+        .modelContainer(for: [ActivityLog.self, Aspiration.self, LifeTask.self, Treatment.self], inMemory: true)
 }

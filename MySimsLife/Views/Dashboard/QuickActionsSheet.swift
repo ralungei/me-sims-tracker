@@ -1,14 +1,17 @@
 import SwiftUI
 
-// MARK: - Custom Overlay (replaces system sheet — works identically on iPhone & iPad)
+// MARK: - Quick Actions Sheet — system bottom sheet (covers the tab bar)
 
+/// Presented via `.sheet(item:)` from DashboardView. Using a system sheet
+/// (rather than a custom in-line ZStack overlay) means it covers the system
+/// tab bar, gets free drag-to-dismiss, native animations, and detents.
 struct QuickActionsOverlay: View {
     let need: NeedType
     let onDismiss: () -> Void
 
     @Environment(NeedStore.self) private var store
     @Environment(\.horizontalSizeClass) private var sizeClass
-    @State private var showContent = false
+    @Environment(\.dismiss) private var systemDismiss
     @State private var showCustom = false
 
     private var isCompact: Bool { sizeClass == .compact }
@@ -18,119 +21,70 @@ struct QuickActionsOverlay: View {
 
     private var columns: [GridItem] { isCompact ? columns2 : columns3 }
 
-    /// Cap the sheet at ~75% of the screen height so it never grows past
-    /// the greeting/header area. Inner ScrollView handles the overflow.
-    #if os(iOS)
-    private var maxSheetHeight: CGFloat {
-        UIScreen.main.bounds.height * 0.75
-    }
-    #else
-    private var maxSheetHeight: CGFloat { 720 }
-    #endif
-
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Backdrop
-            Color.black.opacity(showContent ? 0.55 : 0)
-                .ignoresSafeArea()
-                .onTapGesture { dismiss() }
-
-            // Content card
-            if showContent {
-                cardContent
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+        ZStack {
+            SimsTheme.backgroundGradient.ignoresSafeArea()
+            cardContent
         }
-        .onAppear {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                showContent = true
-            }
-        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 
     // MARK: - Card
 
     private var cardContent: some View {
         VStack(spacing: 0) {
-            // Drag handle (fixed at top)
-            Capsule()
-                .fill(SimsTheme.frame.opacity(0.4))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
-
-            // Header (fixed at top)
+            // Header (fixed at top — system sheet provides its own grabber).
             needHeader
                 .padding(.horizontal, 20)
+                .padding(.top, 20)
                 .padding(.bottom, 16)
 
-            // Body — scrollable when many actions (e.g. Salud has lots of
-            // negative options). Capped to ~70% of the screen height so the
-            // sheet stops at a reasonable point and the user can scroll
-            // the remaining content into view.
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 0) {
-                    // Recent actions — with delete button to undo mistakes
-                    let recents = store.recentActions(for: need)
-                    if !recents.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            sectionLabel("RECIENTES")
-                            VStack(spacing: 6) {
-                                ForEach(Array(recents.enumerated()), id: \.offset) { index, rec in
-                                    recentRow(rec, index: index)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 14)
-                    }
-
-                    // Positive actions
-                    VStack(alignment: .leading, spacing: 8) {
-                        sectionLabel("ACCIONES")
-                        LazyVGrid(columns: columns, spacing: 10) {
-                            ForEach(need.positiveActions) { action in
-                                ActionCard(action: action, negative: false) {
-                                    performAction(action)
-                                }
-                            }
-                            addCustomCard
-                        }
-                    }
-                    .padding(.horizontal, 20)
-
-                    // Negative actions
-                    if !need.negativeActions.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            sectionLabel("REGISTRAR NEGATIVO")
-                            LazyVGrid(columns: columns, spacing: 10) {
-                                ForEach(need.negativeActions) { action in
-                                    ActionCard(action: action, negative: true) {
-                                        performAction(action)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 14)
-                    }
-
-                    Spacer().frame(height: 24)
-                }
+                bodyContent
             }
         }
-        .frame(maxWidth: isCompact ? .infinity : 560)
-        .frame(maxHeight: maxSheetHeight, alignment: .top)
-        .background(
-            UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-                .fill(SimsTheme.backgroundGradient)
-                .overlay(
-                    UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-                        .stroke(SimsTheme.frame, lineWidth: 1.5)
-                )
-                .shadow(color: .black.opacity(0.4), radius: 20, y: -4)
-        )
-        .ignoresSafeArea(.container, edges: .bottom)
+        .frame(maxWidth: isCompact ? .infinity : 560, alignment: .top)
+    }
+
+    /// Inner body content (recents + positive actions + negative actions).
+    /// Reused by both branches of the `ViewThatFits` above.
+    private var bodyContent: some View {
+        VStack(spacing: 0) {
+            let recents = store.recentActions(for: need)
+            if !recents.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    sectionLabel("RECIENTES")
+                    VStack(spacing: 6) {
+                        ForEach(Array(recents.enumerated()), id: \.offset) { index, rec in
+                            recentRow(rec, index: index)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 14)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                sectionLabel("ACCIONES")
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(need.positiveActions) { action in
+                        ActionCard(action: action, negative: false) {
+                            performAction(action)
+                        }
+                    }
+                    ForEach(need.negativeActions) { action in
+                        ActionCard(action: action, negative: true) {
+                            performAction(action)
+                        }
+                    }
+                    addCustomCard
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer().frame(height: 24)
+        }
     }
 
     // MARK: - Recent row (with delete)
@@ -151,8 +105,8 @@ struct QuickActionsOverlay: View {
             }
             Spacer()
             Text("\(rec.boost > 0 ? "+" : "")\(Int(rec.boost))%")
-                .font(.system(.caption, design: .rounded, weight: .bold))
-                .foregroundStyle(rec.boost > 0 ? SimsTheme.accentGreen : SimsTheme.negativeTint)
+                .font(.system(.caption, design: .rounded, weight: .heavy))
+                .foregroundStyle(rec.boost > 0 ? SimsTheme.boostPositive : SimsTheme.boostNegative)
                 .monospacedDigit()
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -161,12 +115,12 @@ struct QuickActionsOverlay: View {
             } label: {
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(SimsTheme.negativeTint)
+                    .foregroundStyle(SimsTheme.frame)
                     .frame(width: 30, height: 30)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.55))
-                            .overlay(Circle().stroke(SimsTheme.negativeTint.opacity(0.4), lineWidth: 1))
+                            .overlay(Circle().stroke(SimsTheme.frame.opacity(0.4), lineWidth: 1))
                     )
             }
             .buttonStyle(.plain)
@@ -224,7 +178,12 @@ struct QuickActionsOverlay: View {
 
                     Text("\(Int(val * 100))%")
                         .font(SimsTheme.valueFont)
-                        .foregroundStyle(SimsTheme.barColor(for: val))
+                        // Use the legible boost reds/greens (calibrated for
+                        // periwinkle bg) instead of the bright moodlet
+                        // palette which washes out at low values.
+                        .foregroundStyle(val < 0.45
+                                         ? SimsTheme.boostNegative
+                                         : (val >= 0.6 ? SimsTheme.boostPositive : SimsTheme.frame))
                 }
             }
 
@@ -272,24 +231,23 @@ struct QuickActionsOverlay: View {
         Button { showCustom = true } label: {
             VStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 22, weight: .heavy))
                     .foregroundStyle(SimsTheme.textPrimary)
                     .frame(height: 26)
 
-                Text("Añadir")
+                Text("Añadir personalizada")
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundStyle(SimsTheme.textPrimary)
-
-                Text("personalizada")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 6)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(SimsTheme.panelPeriwinkle.opacity(0.6))
+                    .fill(SimsTheme.panelPeriwinkle.opacity(0.55))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(SimsTheme.frame,
@@ -307,12 +265,9 @@ struct QuickActionsOverlay: View {
     }
 
     private func dismiss() {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-            showContent = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            onDismiss()
-        }
+        // System sheet handles the dismissal animation.
+        systemDismiss()
+        onDismiss()
     }
 }
 
@@ -324,12 +279,11 @@ struct ActionCard: View {
     let onTap: () -> Void
 
     var body: some View {
-        let negBG = SimsTheme.negativeTint.opacity(0.18)
         Button(action: onTap) {
             VStack(spacing: 8) {
                 Image(systemName: action.icon)
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(negative ? SimsTheme.negativeTint : SimsTheme.textPrimary)
+                    .foregroundStyle(SimsTheme.textPrimary)
                     .frame(height: 26)
 
                 Text(action.localizedName)
@@ -339,15 +293,17 @@ struct ActionCard: View {
                     .minimumScaleFactor(0.8)
 
                 Text(negative ? "\(Int(action.boost))%" : "+\(Int(action.boost))%")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundStyle(negative ? SimsTheme.negativeTint : SimsTheme.accentGreen)
+                    .font(.system(.caption2, design: .rounded, weight: .heavy))
+                    .foregroundStyle(negative
+                                     ? SimsTheme.boostNegative
+                                     : SimsTheme.boostPositive)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 6)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(negative ? negBG : SimsTheme.panelPeriwinkle)
+                    .fill(SimsTheme.panelPeriwinkle)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(SimsTheme.frame, lineWidth: 1.2)

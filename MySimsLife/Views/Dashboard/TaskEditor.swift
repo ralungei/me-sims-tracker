@@ -10,98 +10,103 @@ struct TaskEditor: View {
     @State private var notes: String = ""
     @State private var hasDueDate: Bool = false
     @State private var dueDate: Date = Date()
+    @State private var hasSpecificTime: Bool = false
+    @State private var dueTime: Date = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date()
+    @State private var notify: Bool = false
+
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                SimsTheme.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        section("Tarea") {
-                            TextField("Ej: Llamar al dentista", text: $title)
-                                .textFieldStyle(.plain)
-                                .padding(12)
-                                .simsFieldStyle()
-                                .foregroundStyle(SimsTheme.textPrimary)
-                        }
-
-                        section("Cuándo") {
-                            Toggle(isOn: $hasDueDate.animation()) {
-                                Text("Hora específica")
-                                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                                    .foregroundStyle(SimsTheme.textPrimary)
-                            }
-                            .padding(12)
-                            .simsFieldStyle()
-
-                            if hasDueDate {
-                                DatePicker("Fecha y hora", selection: $dueDate)
-                                    .datePickerStyle(.compact)
-                                    .padding(12)
-                                    .simsFieldStyle()
-                            }
-                        }
-
-                        section("Notas") {
-                            TextField("Opcional", text: $notes, axis: .vertical)
-                                .lineLimit(3...6)
-                                .textFieldStyle(.plain)
-                                .padding(12)
-                                .simsFieldStyle()
-                                .foregroundStyle(SimsTheme.textPrimary)
-                        }
-
-                        if existing != nil {
-                            Button(role: .destructive) {
-                                if let existing { store.deleteTask(existing) }
-                                dismiss()
-                            } label: {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("Eliminar tarea")
-                                }
-                                .font(.system(.body, design: .rounded, weight: .semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(14)
-                                .foregroundStyle(SimsTheme.negativeTint)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(SimsTheme.negativeTint.opacity(0.10)))
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.top, 12)
-                        }
-                    }
-                    .padding(20)
-                }
+        SimsEditorScaffold(
+            title: existing == nil ? "Nueva tarea" : "Editar tarea",
+            isValid: isValid,
+            onSave: save
+        ) {
+            SimsSection("Tarea") { titleField }
+            SimsSection("Cuándo") { whenFields }
+            if hasDueDate {
+                SimsSection("Notificación") { notifyField }
             }
-            .navigationTitle(existing == nil
-                             ? Text("Nueva tarea")
-                             : Text("Editar tarea"))
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+            SimsSection("Notas") { notesField }
+            if existing != nil {
+                SimsDeleteButton(label: "Eliminar tarea") {
+                    if let existing { store.deleteTask(existing) }
+                    dismiss()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") { save() }
-                        .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .bold()
-                }
+                .padding(.top, 12)
             }
         }
         .onAppear { loadIfExisting() }
     }
 
-    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(.caption2, design: .rounded, weight: .heavy))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(SimsTheme.textSecondary)
-            content()
+    private var titleField: some View {
+        TextField("",
+                  text: $title,
+                  prompt: Text("Ej: Llamar al dentista")
+                            .foregroundStyle(SimsTheme.textSecondary))
+            .textFieldStyle(.plain)
+            .padding(12)
+            .simsFieldStyle()
+            .foregroundStyle(SimsTheme.textPrimary)
+    }
+
+    private var whenFields: some View {
+        VStack(spacing: 8) {
+            Toggle(isOn: $hasDueDate.animation()) {
+                Text("Fecha específica")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(SimsTheme.textPrimary)
+            }
+            .padding(12)
+            .simsFieldStyle()
+
+            if hasDueDate {
+                DatePicker("Fecha", selection: $dueDate, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .padding(12)
+                    .simsFieldStyle()
+
+                Toggle(isOn: $hasSpecificTime.animation()) {
+                    Text("Hora específica")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                }
+                .padding(12)
+                .simsFieldStyle()
+
+                if hasSpecificTime {
+                    DatePicker("Hora", selection: $dueTime, displayedComponents: .hourAndMinute)
+                        .datePickerStyle(.compact)
+                        .padding(12)
+                        .simsFieldStyle()
+                }
+            }
         }
+    }
+
+    private var notifyField: some View {
+        Toggle(isOn: $notify) {
+            Text("Recordármelo")
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .foregroundStyle(SimsTheme.textPrimary)
+        }
+        .padding(12)
+        .simsFieldStyle()
+    }
+
+    private var notesField: some View {
+        TextField("",
+                  text: $notes,
+                  prompt: Text("Opcional")
+                            .foregroundStyle(SimsTheme.textSecondary),
+                  axis: .vertical)
+            .lineLimit(3...6)
+            .textFieldStyle(.plain)
+            .padding(12)
+            .simsFieldStyle()
+            .foregroundStyle(SimsTheme.textPrimary)
     }
 
     private func loadIfExisting() {
@@ -111,24 +116,52 @@ struct TaskEditor: View {
         if let due = task.dueDate {
             hasDueDate = true
             dueDate = due
+            hasSpecificTime = task.hasSpecificTime
+            dueTime = due
         }
+        notify = task.notify
+    }
+
+    /// Combine `dueDate` (date) + `dueTime` (time) into a single Date if the
+    /// user opted for both; otherwise the date alone (start-of-day).
+    private func resolvedDueDate() -> Date? {
+        guard hasDueDate else { return nil }
+        let cal = Calendar.current
+        let dateComps = cal.dateComponents([.year, .month, .day], from: dueDate)
+        if hasSpecificTime {
+            let timeComps = cal.dateComponents([.hour, .minute], from: dueTime)
+            var combined = DateComponents()
+            combined.year = dateComps.year
+            combined.month = dateComps.month
+            combined.day = dateComps.day
+            combined.hour = timeComps.hour
+            combined.minute = timeComps.minute
+            return cal.date(from: combined) ?? dueDate
+        }
+        return cal.startOfDay(for: dueDate)
     }
 
     private func save() {
         let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
         let trimmedNotes = notes.trimmingCharacters(in: .whitespaces)
         let resolvedNotes: String? = trimmedNotes.isEmpty ? nil : trimmedNotes
-        let resolvedDue: Date? = hasDueDate ? dueDate : nil
+        let resolvedDue = resolvedDueDate()
+        let shouldNotify = notify && resolvedDue != nil && hasSpecificTime
 
-        if let task = existing {
-            task.title = trimmedTitle
-            task.notes = resolvedNotes
-            task.dueDate = resolvedDue
-            store.updateTask(task)
+        if let existing {
+            existing.title = trimmedTitle
+            existing.notes = resolvedNotes
+            existing.dueDate = resolvedDue
+            existing.notify = shouldNotify
+            store.updateTask(existing)
         } else {
-            let task = LifeTask(title: trimmedTitle, dueDate: resolvedDue, notes: resolvedNotes)
+            let task = LifeTask(title: trimmedTitle,
+                                dueDate: resolvedDue,
+                                notes: resolvedNotes,
+                                notify: shouldNotify)
             store.addTask(task)
         }
+
         dismiss()
     }
 }

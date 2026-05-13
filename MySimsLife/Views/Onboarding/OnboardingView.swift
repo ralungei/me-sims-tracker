@@ -99,11 +99,12 @@ struct OnboardingView: View {
         HStack(alignment: .top, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(SimsTheme.accentPrimary.opacity(0.14))
+                    .fill(SimsTheme.panelPeriwinkle)
                     .frame(width: 34, height: 34)
+                    .overlay(Circle().stroke(SimsTheme.frame, lineWidth: 1.2))
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(SimsTheme.accentPrimary)
+                    .foregroundStyle(SimsTheme.frame)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -127,11 +128,12 @@ struct OnboardingView: View {
                 .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundStyle(SimsTheme.textPrimary)
                 .multilineTextAlignment(.center)
-            Text("Activa solo las que te interesen. Puedes cambiarlo después en Categorías.")
+            Text("Elige un plan o ajusta categoría a categoría. Puedes cambiarlo cuando quieras.")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(SimsTheme.textDim)
                 .multilineTextAlignment(.center)
-                .padding(.bottom, 8)
+                .padding(.bottom, 4)
+
             CategoriesEditor(embedded: true)
                 .frame(maxHeight: 320)
         }
@@ -150,22 +152,15 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            TextField("", text: $name, prompt: Text("Tu nombre").foregroundStyle(SimsTheme.textDim))
+            TextField("", text: $name,
+                      prompt: Text("Tu nombre").foregroundStyle(SimsTheme.textSecondary))
                 .textFieldStyle(.plain)
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .multilineTextAlignment(.center)
                 .padding(.vertical, 14)
                 .padding(.horizontal, 18)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(nameFocused ? SimsTheme.accentPrimary.opacity(0.5) : Color.white.opacity(0.05),
-                                        lineWidth: 1)
-                        )
-                )
                 .foregroundStyle(SimsTheme.textPrimary)
+                .simsFieldStyle(cornerRadius: 14, selected: nameFocused)
                 .focused($nameFocused)
                 .submitLabel(.done)
                 .onSubmit { commit() }
@@ -204,8 +199,12 @@ struct OnboardingView: View {
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(SimsTheme.accentPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(SimsTheme.frame, lineWidth: 1.2)
+                    )
             )
-            .foregroundStyle(Color.black.opacity(0.85))
+            .foregroundStyle(Color.white)
         }
         .buttonStyle(.plain)
         .disabled(disabled)

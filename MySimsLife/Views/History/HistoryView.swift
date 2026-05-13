@@ -163,8 +163,8 @@ struct HistoryView: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(isNeg ? "\(Int(activity.boostAmount))%" : "+\(Int(activity.boostAmount))%")
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(isNeg ? SimsTheme.negativeTint : SimsTheme.accentGreen)
+                        .font(.system(.caption, design: .rounded, weight: .heavy))
+                        .foregroundStyle(isNeg ? SimsTheme.boostNegative : SimsTheme.boostPositive)
                         .monospacedDigit()
                     Text(activity.timestamp, style: .time)
                         .font(.system(.caption2, design: .rounded))

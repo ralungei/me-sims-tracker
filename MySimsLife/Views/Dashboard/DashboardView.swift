@@ -1,22 +1,39 @@
 import SwiftUI
+import SwiftData
 
 struct DashboardView: View {
     @Environment(NeedStore.self) private var store
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("userName") private var userName: String = ""
+
+    @Query(sort: \Treatment.createdAt, order: .reverse)
+    private var treatments: [Treatment]
 
     @State private var selectedNeed: NeedType?
     @State private var editingAspiration: Aspiration?
     @State private var showNewAspiration: Bool = false
     @State private var editingTask: LifeTask?
     @State private var showNewTask: Bool = false
+    @State private var editingTreatment: Treatment?
+    @State private var showNewTreatment: Bool = false
     @State private var showAlerts: Bool = false
     /// Per-session dismissed alerts. Re-show on next launch / next hour
     /// rollover (the store regenerates the alert list on those triggers).
     @State private var dismissedAlertMessages: Set<String> = []
     @State private var showCategoriesEditor: Bool = false
     @State private var showResetConfirm: Bool = false
-    @State private var selectedTab: DashboardTab = .needs
+    @State private var selectedTab: DashboardTab = {
+        // Screenshot harness — `Tools/screenshots.sh` launches the app with
+        // `-StartTab <raw>` to start each capture on a specific tab.
+        let args = ProcessInfo.processInfo.arguments
+        if let idx = args.firstIndex(of: "-StartTab"),
+           idx + 1 < args.count,
+           let tab = DashboardTab(rawValue: args[idx + 1]) {
+            return tab
+        }
+        return .needs
+    }()
 
     private var isCompact: Bool { sizeClass == .compact }
 
@@ -52,14 +69,12 @@ struct DashboardView: View {
                 .compositingGroup()
             }
 
-            if let need = selectedNeed {
-                QuickActionsOverlay(
-                    need: need,
-                    onDismiss: { withAnimation(.spring(response: 0.3)) { selectedNeed = nil } }
-                )
-                .transition(.identity)
-            }
-
+        }
+        // System bottom sheet — covers the system tab bar, slides up from
+        // the bottom edge, drag-to-dismiss, supports detents.
+        .sheet(item: $selectedNeed) { need in
+            QuickActionsOverlay(need: need, onDismiss: { selectedNeed = nil })
+                .environment(store)
         }
         // Edit existing — `.sheet(item:)` guarantees the asp is set BEFORE the
         // sheet evaluates its content (avoids the `.sheet(isPresented:)` race
@@ -79,6 +94,12 @@ struct DashboardView: View {
         .sheet(isPresented: $showNewTask) {
             TaskEditor(existing: nil)
                 .environment(store)
+        }
+        .sheet(item: $editingTreatment) { t in
+            TreatmentEditor(existing: t)
+        }
+        .sheet(isPresented: $showNewTreatment) {
+            TreatmentEditor(existing: nil)
         }
         .sheet(isPresented: $showCategoriesEditor) {
             CategoriesEditor()
@@ -137,11 +158,54 @@ struct DashboardView: View {
                 .foregroundStyle(SimsTheme.textPrimary)
             tabTitleCounter
             Spacer()
+            tabTitleAddButton
         }
         .id(selectedTab)
         .transition(.opacity.combined(with: .move(edge: .leading)))
         .animation(.spring(response: 0.4, dampingFraction: 0.78),
                    value: selectedTab)
+    }
+
+    /// Small circular "+" affordance, right-aligned in the title row. Only
+    /// appears once the tab has at least one item — when empty, the big
+    /// dashed "Nueva X" card in the row IS the CTA, so a header button would
+    /// be redundant. Mirrors the iOS Reminders / Notes pattern.
+    @ViewBuilder
+    private var tabTitleAddButton: some View {
+        switch selectedTab {
+        case .needs:
+            EmptyView()
+        case .aspirations:
+            if !store.aspirations.isEmpty {
+                addButton("Nueva aspiración") { showNewAspiration = true }
+            }
+        case .agenda:
+            if !store.tasks.isEmpty {
+                addButton("Nueva tarea") { showNewTask = true }
+            }
+        case .botiquin:
+            let hasAny = treatments.contains(where: \.isActive)
+            if hasAny {
+                addButton("Nuevo tratamiento") { showNewTreatment = true }
+            }
+        }
+    }
+
+    private func addButton(_ accessibility: LocalizedStringKey,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(SimsTheme.frame)
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.55))
+                        .overlay(Circle().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(accessibility))
     }
 
     /// Per-tab counter chip (e.g. "1/4 hoy", "3/5 hechas") rendered next to the
@@ -159,8 +223,8 @@ struct DashboardView: View {
                 Text("\(donesToday)/\(total) hoy")
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
                     .foregroundStyle(donesToday == total
-                                     ? SimsTheme.accentGreen
-                                     : SimsTheme.accentPrimary)
+                                     ? SimsTheme.boostPositive
+                                     : SimsTheme.frame)
                     .monospacedDigit()
             }
         case .agenda:
@@ -170,8 +234,20 @@ struct DashboardView: View {
                 Text("\(done)/\(total) hechas")
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
                     .foregroundStyle(done == total
-                                     ? SimsTheme.accentGreen
-                                     : SimsTheme.accentPrimary)
+                                     ? SimsTheme.boostPositive
+                                     : SimsTheme.frame)
+                    .monospacedDigit()
+            }
+        case .botiquin:
+            let active = treatments.filter { $0.isActive }
+            let taken = active.filter { $0.isTakenToday() }.count
+            let total = active.count
+            if total > 0 {
+                Text("\(taken)/\(total) hoy")
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                    .foregroundStyle(taken == total
+                                     ? SimsTheme.boostPositive
+                                     : SimsTheme.frame)
                     .monospacedDigit()
             }
         }
@@ -201,7 +277,8 @@ struct DashboardView: View {
                 .frame(height: 1.5)
 
             // Tabs row, leading-aligned. Bodies cover the line in their x
-            // range; line is naked in the Spacer area to the right.
+            // range; line is naked in the Spacer area to the right — that
+            // gap is where the trailing "Marcar a neutro" pill sits.
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(DashboardTab.allCases) { tab in
                     sims2Tab(tab,
@@ -210,12 +287,41 @@ struct DashboardView: View {
                              height: tabHeight,
                              radius: tabRadius)
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
+                resetToNeutralButton
+                    .padding(.bottom, 6)
             }
-            .padding(.leading, isCompact ? 16 : 32)
+            .padding(.horizontal, isCompact ? 16 : 32)
         }
         .frame(height: tabHeight)
         .animation(.spring(response: 0.4, dampingFraction: 0.78), value: selectedTab)
+    }
+
+    /// Pill that parks every enabled need at 50 %. Lives on the right edge
+    /// of the tabs row so the action label is fully readable (used to be a
+    /// gauge icon in the plumbob arc cluster, where it wasn't discoverable).
+    private var resetToNeutralButton: some View {
+        Button {
+            showResetConfirm = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "gauge.with.dots.needle.50percent")
+                    .font(.system(size: 11, weight: .heavy))
+                Text("A neutro")
+                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .tracking(0.2)
+            }
+            .foregroundStyle(SimsTheme.frame)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.55))
+                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Marcar todo a neutro"))
     }
 
     private func sims2Tab(_ tab: DashboardTab,
@@ -319,15 +425,15 @@ struct DashboardView: View {
         let action: () -> Void
     }
 
-    /// Global controls — always visible regardless of tab.
-    private var arcActions: [ArcAction] {
+    /// Global controls — always visible regardless of tab. The slots are
+    /// fixed in space (`nil` = skip) so removing a button doesn't shift
+    /// the remaining ones along the arc. Slot 0 (bottom, closest to the
+    /// plumbob) is intentionally empty since the "neutro" reset moved to
+    /// the tabs bar.
+    private var arcActions: [ArcAction?] {
         let alertCount = visibleAlerts.count
         return [
-            // chip 0: closest to plumbob (bottom of arc)
-            ArcAction(systemName: "gauge.with.dots.needle.50percent",
-                      accessibility: "Marcar todo al 50%",
-                      badge: false,
-                      action: { showResetConfirm = true }),
+            nil, // slot 0 — left empty
             ArcAction(systemName: "slider.horizontal.3",
                       accessibility: "Configurar necesidades",
                       badge: false,
@@ -386,6 +492,8 @@ struct DashboardView: View {
             aspirationsSection
         case .agenda:
             tasksSection
+        case .botiquin:
+            treatmentsSection
         }
     }
 
@@ -402,8 +510,8 @@ struct DashboardView: View {
     private var plumbobWithActions: some View {
         let mood = store.overallMood
         let plumbobSize: CGFloat = isCompact ? 56 : 78
-        let chipSize: CGFloat = isCompact ? 33 : 39
-        let radius: CGFloat = isCompact ? 50 : 56
+        let chipSize: CGFloat = isCompact ? 37 : 43
+        let radius: CGFloat = isCompact ? 52 : 58
         let stepDeg: Double = 48
         let startDeg: Double = 95
         let dropY: CGFloat = 8
@@ -428,11 +536,15 @@ struct DashboardView: View {
         let chipsMaxY = normalized.map(\.y).max()! + chipSize
 
         return ZStack(alignment: .topLeading) {
-            // Action chips
+            // Action chips — skip nil slots so the geometry (the centres
+            // computed for all indices) stays the same as when the arc was
+            // full. Removing a button doesn't reflow the remaining ones.
             ForEach(slots.indices, id: \.self) { i in
-                sideActionButton(slots[i], size: chipSize)
-                    .offset(x: normalized[i].x,
-                            y: normalized[i].y + plumbobSize - chip1.y + dropY)
+                if let action = slots[i] {
+                    sideActionButton(action, size: chipSize)
+                        .offset(x: normalized[i].x,
+                                y: normalized[i].y + plumbobSize - chip1.y + dropY)
+                }
             }
             // Plumbob — chip1 centre lines up with its bottom-LEFT corner.
             PlumbobView(mood: mood, compact: isCompact, size: plumbobSize)
@@ -566,7 +678,6 @@ struct DashboardView: View {
         let columns: [GridItem] = isCompact
             ? [GridItem(.flexible(), spacing: 10)]
             : [GridItem(.flexible(), spacing: 28), GridItem(.flexible(), spacing: 28)]
-        let loading = !store.hasInitialSyncCompleted
         return LazyVGrid(columns: columns, alignment: .leading, spacing: SimsTheme.barSpacing(compact: isCompact)) {
             ForEach(store.sortedEnabledNeeds) { need in
                 NeedBarView(
@@ -585,18 +696,6 @@ struct DashboardView: View {
                         }
                     }
                 )
-            }
-        }
-        // Skeleton state until the first remote pull lands. The bars are
-        // already mounted (so layout doesn't jump) but dimmed and untouchable.
-        .opacity(loading ? 0.35 : 1.0)
-        .saturation(loading ? 0 : 1)
-        .allowsHitTesting(!loading)
-        .overlay(alignment: .center) {
-            if loading {
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(SimsTheme.accentPrimary)
             }
         }
     }
@@ -635,6 +734,7 @@ struct DashboardView: View {
     private var tasksSection: some View {
         TasksRow(
             tasks: store.visibleTasks,
+            upcoming: store.upcomingTasks,
             horizontalInset: isCompact ? 16 : 32,
             onToggle: { task in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
@@ -655,6 +755,39 @@ struct DashboardView: View {
             onMove: { dragged, target in
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                     store.moveTask(withID: dragged, toBefore: target)
+                }
+            }
+        )
+    }
+
+    // MARK: - Treatments (Botiquín)
+
+    private var treatmentsSection: some View {
+        let active = treatments.filter { $0.isActive && !$0.isScheduledForFuture() }
+        let upcoming = treatments.filter { $0.isActive && $0.isScheduledForFuture() }
+            .sorted { ($0.startedAt ?? Date.distantFuture) < ($1.startedAt ?? Date.distantFuture) }
+        return TreatmentsRow(
+            treatments: active,
+            upcoming: upcoming,
+            outerEscape: isCompact ? 16 : 32,
+            cardInset: isCompact ? 16 : 32,
+            onTap: { t in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    if t.isTakenToday() {
+                        t.lastTakenAt = nil
+                    } else {
+                        t.lastTakenAt = Date()
+                    }
+                    try? modelContext.save()
+                }
+            },
+            onAdd: { showNewTreatment = true },
+            onEdit: { t in editingTreatment = t },
+            onDelete: { t in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    NotificationManager.shared.cancelTaskReminder(taskID: t.id)
+                    modelContext.delete(t)
+                    try? modelContext.save()
                 }
             }
         )
@@ -739,17 +872,35 @@ private struct TimeAwareGreeting: View {
         }
     }
 
+    /// Sims-style weekday strip with today's letter highlighted (filled
+    /// navy circle, white letter). Letters are pulled from
+    /// `veryShortStandaloneWeekdaySymbols` so they localize automatically:
+    /// es → "L M X J V S D", en → "M T W T F S S".
     private var dateLine: some View {
-        HStack(spacing: 8) {
-            Text(now, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
-                .font(.system(size: isCompact ? 14 : 15, weight: .medium, design: .rounded))
-                .foregroundStyle(SimsTheme.textSecondary)
-                .textCase(.lowercase)
-            Circle().fill(SimsTheme.textDim).frame(width: 3, height: 3)
-            Text(now, format: .dateTime.hour().minute())
-                .font(.system(size: isCompact ? 14 : 15, weight: .semibold, design: .rounded))
-                .foregroundStyle(SimsTheme.textSecondary)
-                .monospacedDigit()
+        // Calendar gives Sunday-first symbols ["D","L","M","X","J","V","S"]
+        // (es) or ["S","M","T","W","T","F","S"] (en). Shift to Monday-first
+        // so it matches Spain's week start and our highlight math below.
+        let sundayFirst = Calendar.current.veryShortStandaloneWeekdaySymbols
+        let letters = Array(sundayFirst.dropFirst()) + [sundayFirst[0]]
+        // Calendar gives weekday with Sunday = 1 ... Saturday = 7. Shift to
+        // ISO (Monday = 0 ... Sunday = 6) so it matches the letter array.
+        let raw = Calendar.current.component(.weekday, from: now)
+        let todayIndex = (raw + 5) % 7
+        let cellSize: CGFloat = isCompact ? 20 : 22
+        return HStack(spacing: isCompact ? 3 : 4) {
+            ForEach(letters.indices, id: \.self) { i in
+                let isToday = i == todayIndex
+                Text(letters[i])
+                    .font(.system(size: isCompact ? 11 : 12,
+                                  weight: .heavy,
+                                  design: .rounded))
+                    .foregroundStyle(isToday ? Color.white : SimsTheme.textSecondary)
+                    .frame(width: cellSize, height: cellSize)
+                    .background(
+                        Circle()
+                            .fill(isToday ? SimsTheme.frame : Color.clear)
+                    )
+            }
         }
     }
 

@@ -1,154 +1,202 @@
 import SwiftUI
 import UserNotifications
 
+/// Main Ajustes screen. Health/Settings.app pattern: a short list of
+/// drill-down rows with at-a-glance summary values, instead of one long
+/// page with every option inlined. Each detail screen lives in its own
+/// view file.
 struct SettingsView: View {
-    @AppStorage(NotificationsPrefs.enabledKey)   private var enabled: Bool = false
-    @AppStorage(NotificationsPrefs.thresholdKey) private var threshold: Double = 0.30
-    @AppStorage(NotificationsPrefs.cooldownKey)  private var cooldownHours: Double = 6
+    @Environment(NeedStore.self) private var store
 
-    @State private var permissionStatus: UNAuthorizationStatus = .notDetermined
+    @AppStorage("userName")                              private var userName: String = ""
+    @AppStorage(NotificationsPrefs.masterEnabledKey)     private var masterEnabled: Bool = false
+    @AppStorage(NotificationsPrefs.needsLowEnabledKey)   private var needsLowEnabled: Bool = true
+    @AppStorage(NotificationsPrefs.tasksEnabledKey)      private var tasksEnabled: Bool = true
+    @AppStorage(NotificationsPrefs.treatmentsEnabledKey) private var treatmentsEnabled: Bool = true
+
+    @State private var showingProfileEditor: Bool = false
+    @State private var showingResetConfirm: Bool = false
+    @State private var isResetting: Bool = false
 
     var body: some View {
-        ZStack {
-            SimsTheme.backgroundGradient.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    Text("Ajustes")
-                        .font(.system(size: 32, weight: .heavy, design: .rounded))
-                        .tracking(-0.5)
-                        .foregroundStyle(SimsTheme.textPrimary)
+        NavigationStack {
+            ZStack {
+                SimsTheme.backgroundGradient.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        Text("Ajustes")
+                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .tracking(-0.5)
+                            .foregroundStyle(SimsTheme.textPrimary)
 
-                    notificationsSection
-
-                    if permissionStatus == .denied {
-                        permissionDeniedHint
+                        profileCard
+                        configRows
+                        dangerZoneSection
+                    }
+                    .padding(20)
+                }
+            }
+            .sheet(isPresented: $showingProfileEditor) {
+                ProfileEditor()
+            }
+            .alert("¿Empezar de cero?",
+                   isPresented: $showingResetConfirm) {
+                Button("Cancelar", role: .cancel) {}
+                Button("Sí, borrar todo", role: .destructive) {
+                    Task {
+                        isResetting = true
+                        await store.resetEverything()
+                        isResetting = false
                     }
                 }
-                .padding(20)
+            } message: {
+                Text("Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tu nombre y prefs. Esta acción no se puede deshacer.")
             }
         }
-        .task { await refreshPermission() }
     }
 
-    // MARK: - Sections
+    // MARK: - Profile card
 
-    private var notificationsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionTitle("Notificaciones")
-
-            Toggle(isOn: $enabled) {
+    private var profileCard: some View {
+        Button {
+            showingProfileEditor = true
+        } label: {
+            HStack(spacing: 14) {
+                avatarCircle
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Avisar cuando una necesidad esté baja")
-                        .font(.system(.body, design: .rounded, weight: .semibold))
-                        .foregroundStyle(SimsTheme.textPrimary)
-                    Text("Banner local (no usa servidor).")
+                    Text(userName.isEmpty ? "Sin nombre" : userName)
+                        .font(.system(.title3, design: .rounded, weight: .heavy))
+                        .foregroundStyle(userName.isEmpty
+                                         ? SimsTheme.textDim
+                                         : SimsTheme.textPrimary)
+                    Text("Cambiar nombre")
                         .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(SimsTheme.textDim)
+                        .foregroundStyle(SimsTheme.textSecondary)
                 }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(SimsTheme.textDim)
             }
-            .tint(SimsTheme.accentPrimary)
-            .onChange(of: enabled) { _, on in
-                guard on else { return }
-                Task {
-                    let granted = await NotificationManager.shared.requestPermission()
-                    if !granted { enabled = false }
-                    await refreshPermission()
-                }
-            }
-
-            if enabled {
-                thresholdRow
-                cooldownRow
-
-                Button {
-                    NotificationManager.shared.sendTest()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "bell.badge")
-                        Text("Probar notificación")
-                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                    }
-                    .foregroundStyle(SimsTheme.accentPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule().fill(SimsTheme.accentPrimary.opacity(0.12))
-                    )
-                }
-                .buttonStyle(.plain)
-            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .simsPanelStyle()
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: SimsTheme.cornerRadius)
-                .fill(SimsTheme.panelPeriwinkle)
-                .overlay(
-                    RoundedRectangle(cornerRadius: SimsTheme.cornerRadius)
-                        .stroke(SimsTheme.frame, lineWidth: 1.5)
-                )
-        )
+        .buttonStyle(.plain)
     }
 
-    private var thresholdRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Umbral")
-                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                Spacer()
-                Text("\(Int((threshold * 100).rounded()))%")
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.frame)
-                    .monospacedDigit()
+    private var avatarCircle: some View {
+        let initial = userName.trimmingCharacters(in: .whitespaces).first.map(String.init)?.uppercased()
+        return ZStack {
+            Circle()
+                .fill(SimsTheme.frame)
+                .frame(width: 54, height: 54)
+            if let initial {
+                Text(initial)
+                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.white)
+            } else {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.white)
             }
-            Slider(value: $threshold, in: 0.10...0.50, step: 0.05)
-                .tint(SimsTheme.frame)
-            Text("Te avisamos cuando una barra cruza por debajo.")
+        }
+    }
+
+    // MARK: - Drill-down rows
+
+    private var configRows: some View {
+        VStack(spacing: 0) {
+            NavigationLink {
+                NotificationsDetailView()
+            } label: {
+                drillRow(icon: "bell.fill",
+                         title: "Notificaciones",
+                         summary: notificationsSummary)
+            }
+            .buttonStyle(.plain)
+
+            Divider().background(SimsTheme.frame.opacity(0.25))
+
+            NavigationLink {
+                AboutView()
+            } label: {
+                drillRow(icon: "info.circle.fill",
+                         title: "Acerca de",
+                         summary: appVersion)
+            }
+            .buttonStyle(.plain)
+        }
+        .simsPanelStyle()
+    }
+
+    /// One row of the iOS-style drill-down list. Icon on the left, title
+    /// in the middle, summary value + chevron on the right.
+    private func drillRow(icon: String,
+                          title: LocalizedStringKey,
+                          summary: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(SimsTheme.frame)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.45))
+                        .overlay(Circle().stroke(SimsTheme.frame.opacity(0.35), lineWidth: 1))
+                )
+
+            Text(title)
+                .font(.system(.body, design: .rounded, weight: .semibold))
+                .foregroundStyle(SimsTheme.textPrimary)
+
+            Spacer()
+
+            Text(summary)
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(SimsTheme.textSecondary)
+                .lineLimit(1)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(SimsTheme.textDim)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - Summaries (at-a-glance values shown on the right of each row)
+
+    private var notificationsSummary: String {
+        guard masterEnabled else {
+            return String(localized: "Desactivadas")
+        }
+        let active = [needsLowEnabled, tasksEnabled, treatmentsEnabled].filter { $0 }.count
+        return String(localized: "\(active)/3 activas")
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
+    // MARK: - Danger zone (stays inline at bottom — destructive, no drill)
+
+    private var dangerZoneSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Zona peligrosa")
+            SimsDeleteButton(label: isResetting ? "Borrando…" : "Empezar de cero") {
+                showingResetConfirm = true
+            }
+            .disabled(isResetting)
+            .opacity(isResetting ? 0.6 : 1)
+            Text("Borra aspiraciones, tareas, botiquín y todo el historial. Mantiene tu nombre y prefs.")
                 .font(.system(.caption2, design: .rounded))
                 .foregroundStyle(SimsTheme.textSecondary)
         }
-    }
-
-    private var cooldownRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Repetir cada")
-                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                Text("Mínimo entre avisos para la misma necesidad.")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-            }
-            Spacer()
-            Stepper(value: $cooldownHours, in: 1...24, step: 1) {
-                Text("\(Int(cooldownHours)) h")
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.frame)
-                    .monospacedDigit()
-                    .frame(minWidth: 36, alignment: .trailing)
-            }
-        }
-    }
-
-    private var permissionDeniedHint: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(SimsTheme.negativeTint)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Permiso denegado")
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                Text("Tienes las notificaciones desactivadas para esta app en Ajustes del sistema. Actívalas allí para que funcionen.")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(SimsTheme.textDim)
-            }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(SimsTheme.negativeTint.opacity(0.08))
-        )
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .simsPanelStyle()
     }
 
     private func sectionTitle(_ text: LocalizedStringKey) -> some View {
@@ -158,13 +206,9 @@ struct SettingsView: View {
             .textCase(.uppercase)
             .foregroundStyle(SimsTheme.textDim)
     }
-
-    @MainActor
-    private func refreshPermission() async {
-        permissionStatus = await NotificationManager.shared.currentAuthorizationStatus()
-    }
 }
 
 #Preview {
     SettingsView()
+        .environment(NeedStore())
 }

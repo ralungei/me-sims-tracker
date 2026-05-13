@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Dashboard tabs
 
 enum DashboardTab: String, CaseIterable, Identifiable {
-    case needs, aspirations, agenda
+    case needs, aspirations, botiquin, agenda
 
     var id: String { rawValue }
 
@@ -12,6 +12,7 @@ enum DashboardTab: String, CaseIterable, Identifiable {
         case .needs:        return String(localized: "Necesidades")
         case .aspirations:  return String(localized: "Aspiraciones")
         case .agenda:       return String(localized: "Agenda")
+        case .botiquin:     return String(localized: "Botiquín")
         }
     }
 
@@ -20,6 +21,7 @@ enum DashboardTab: String, CaseIterable, Identifiable {
         case .needs:        return "brain.filled.head.profile"
         case .aspirations:  return "flag.pattern.checkered"
         case .agenda:       return "checklist"
+        case .botiquin:     return "pills.fill"
         }
     }
 }

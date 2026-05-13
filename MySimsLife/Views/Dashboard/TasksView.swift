@@ -4,6 +4,10 @@ import SwiftUI
 
 struct TasksRow: View {
     let tasks: [LifeTask]
+    /// Tasks scheduled for a future calendar day. Shown as small capsules
+    /// in a "PRÓXIMAMENTE" row so future tasks don't clutter today's view —
+    /// tapping a capsule opens the editor (re-date, mark today, etc.).
+    var upcoming: [LifeTask] = []
     var horizontalInset: CGFloat = 32
     var onToggle: (LifeTask) -> Void
     var onAdd: () -> Void = {}
@@ -13,25 +17,17 @@ struct TasksRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Counter ("X/Y hechas") rendered up in the dashboard's tab
-            // title row instead of here.
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    AddTaskCard(onTap: onAdd)
+                    // Empty-state CTA card. The header's "+" takes over once
+                    // the user has at least one task (active or upcoming).
+                    if tasks.isEmpty && upcoming.isEmpty {
+                        AddTaskCard(onTap: onAdd)
+                    }
                     ForEach(tasks) { task in
                         TaskCard(task: task) { onToggle(task) }
-                            .contextMenu {
-                                Button { onEdit(task) } label: {
-                                    Label("Editar", systemImage: "pencil")
-                                }
-                                Button(role: .destructive) { onDelete(task) } label: {
-                                    Label("Eliminar", systemImage: "trash")
-                                }
-                            } preview: {
-                                TaskCard(task: task) {}
-                                    .allowsHitTesting(false)
-                            }
+                            .simsCardMenu(onEdit: { onEdit(task) },
+                                          onDelete: { onDelete(task) })
                             .draggable(task.id.uuidString) {
                                 TaskCard(task: task) {}
                                     .opacity(0.85)
@@ -49,7 +45,58 @@ struct TasksRow: View {
             }
             .scrollClipDisabled()
             .padding(.horizontal, -horizontalInset)
+
+            if !upcoming.isEmpty {
+                upcomingRow
+            }
         }
+    }
+
+    private var upcomingRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("PRÓXIMAMENTE")
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
+                .tracking(1.2)
+                .foregroundStyle(SimsTheme.textSecondary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(upcoming) { task in
+                        Button {
+                            onEdit(task)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(SimsTheme.frame)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(task.title)
+                                        .font(.system(.caption, design: .rounded, weight: .bold))
+                                        .foregroundStyle(SimsTheme.textPrimary)
+                                        .lineLimit(1)
+                                    if let due = task.dueDate {
+                                        Text(due.relativeFutureLabel())
+                                            .font(.system(size: 9, weight: .medium, design: .rounded))
+                                            .foregroundStyle(SimsTheme.textDim)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.45))
+                                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, horizontalInset)
+            }
+            .scrollClipDisabled()
+            .padding(.horizontal, -horizontalInset)
+        }
+        .padding(.top, 4)
     }
 }
 
@@ -59,32 +106,9 @@ struct AddTaskCard: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 5) {
-                ZStack {
-                    Circle()
-                        .stroke(SimsTheme.textDim, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(SimsTheme.textSecondary)
-                }
-                Text("Nueva")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textSecondary)
-                Text("tarea")
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(SimsTheme.textDim)
-            }
-            .padding(10)
-            .frame(width: 96, height: 86)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(SimsTheme.textDim.opacity(0.6),
-                            style: StrokeStyle(lineWidth: 1.2, dash: [4, 4]))
-            )
-        }
-        .buttonStyle(.plain)
+        SimsCreateCard(label: "Nueva\ntarea",
+                       width: 144, height: 148,
+                       onTap: onTap)
     }
 }
 
@@ -94,47 +118,59 @@ struct TaskCard: View {
     let task: LifeTask
     let onToggle: () -> Void
 
-    private var statusColor: Color {
-        if task.isDone { return SimsTheme.valueColor(for: 1.0) }     // sage green
-        if task.isOverdue { return SimsTheme.negativeTint }
-        return SimsTheme.accentPrimary
-    }
-
-    private var bgGradient: LinearGradient {
-        LinearGradient(
-            colors: task.isDone
-                ? [statusColor.opacity(0.30), statusColor.opacity(0.18)]
-                : [Color.white.opacity(0.07), Color.white.opacity(0.03)],
-            startPoint: .top, endPoint: .bottom
-        )
+    /// Same dimensions and visual language as AspirationCard so the two
+    /// rows feel like a unified system.
+    private var cardBG: AnyShapeStyle {
+        if task.isDone {
+            return AnyShapeStyle(LinearGradient(
+                colors: [SimsTheme.simsGreenYellow,
+                         SimsTheme.simsGreen],
+                startPoint: .top, endPoint: .bottom
+            ))
+        }
+        return AnyShapeStyle(Color.white.opacity(0.45))
     }
 
     var body: some View {
         Button(action: onToggle) {
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
+                    // Checkbox circle (matches the position/size of the
+                    // emoji slot in AspirationCard).
                     ZStack {
                         Circle()
-                            .strokeBorder(statusColor.opacity(0.6), lineWidth: 1.4)
-                            .frame(width: 18, height: 18)
+                            .strokeBorder(SimsTheme.frame, lineWidth: 1.5)
+                            .frame(width: 24, height: 24)
                         if task.isDone {
-                            Circle().fill(statusColor.opacity(0.85)).frame(width: 18, height: 18)
+                            Circle()
+                                .fill(SimsTheme.frame.opacity(0.18))
+                                .frame(width: 22, height: 22)
                             Image(systemName: "checkmark")
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundStyle(.white)
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundStyle(SimsTheme.frame)
                         }
                     }
-                    Spacer()
+                    Spacer(minLength: 0)
                     if let due = task.dueDate {
                         Text(due, format: .dateTime.hour().minute())
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(statusColor)
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                            .foregroundStyle(task.isOverdue && !task.isDone
+                                             ? SimsTheme.boostNegative
+                                             : SimsTheme.textPrimary)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.55))
+                                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.4), lineWidth: 0.8))
+                            )
                             .monospacedDigit()
                     }
                 }
 
                 Text(task.title)
-                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                    .tracking(0.3)
                     .foregroundStyle(task.isDone ? SimsTheme.textSecondary : SimsTheme.textPrimary)
                     .strikethrough(task.isDone, color: SimsTheme.textSecondary)
                     .lineLimit(2)
@@ -142,18 +178,20 @@ struct TaskCard: View {
 
                 if task.isOverdue && !task.isDone {
                     Text("atrasada")
-                        .font(.system(size: 9, weight: .semibold, design: .rounded))
-                        .foregroundStyle(SimsTheme.negativeTint)
+                        .font(.system(.caption2, design: .rounded, weight: .heavy))
+                        .foregroundStyle(SimsTheme.boostNegative)
                 }
+
+                Spacer(minLength: 0)
             }
-            .padding(10)
-            .frame(width: 132, height: 86, alignment: .topLeading)
+            .padding(12)
+            .frame(width: 144, height: 148, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(bgGradient)
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(cardBG)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(task.isDone ? statusColor.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(SimsTheme.frame, lineWidth: 1.5)
                     )
             )
         }

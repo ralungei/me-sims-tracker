@@ -21,22 +21,18 @@ struct AspirationsRow: View {
         VStack(alignment: .leading, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    AddAspirationCard(onTap: onAdd)
+                    // Big dashed CTA only when the list is empty — once the
+                    // user has at least one aspiration the "+" lives in the
+                    // tab title's right side (see DashboardView.tabTitleAddButton).
+                    if aspirations.isEmpty && upcoming.isEmpty {
+                        AddAspirationCard(onTap: onAdd)
+                    }
                     ForEach(aspirations) { asp in
                         AspirationCard(aspiration: asp) {
                             onTap(asp)
                         }
-                        .contextMenu {
-                            Button { onEdit(asp) } label: {
-                                Label("Editar", systemImage: "pencil")
-                            }
-                            Button(role: .destructive) { onDelete(asp) } label: {
-                                Label("Eliminar", systemImage: "trash")
-                            }
-                        } preview: {
-                            AspirationCard(aspiration: asp) {}
-                                .allowsHitTesting(false)
-                        }
+                        .simsCardMenu(onEdit: { onEdit(asp) },
+                                      onDelete: { onDelete(asp) })
                     }
                 }
                 .padding(.horizontal, cardInset)
@@ -53,9 +49,9 @@ struct AspirationsRow: View {
     private var upcomingRow: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("PRÓXIMAMENTE")
-                .font(.system(.caption2, design: .rounded, weight: .bold))
-                .tracking(1.4)
-                .foregroundStyle(SimsTheme.textDim)
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
+                .tracking(1.2)
+                .foregroundStyle(SimsTheme.textSecondary)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(upcoming) { asp in
@@ -102,37 +98,9 @@ struct AddAspirationCard: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 5) {
-                ZStack {
-                    Circle()
-                        .stroke(SimsTheme.frame.opacity(0.6),
-                                style: StrokeStyle(lineWidth: 1.4, dash: [3, 3]))
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(SimsTheme.textPrimary)
-                }
-                Text("Nueva")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                Text("aspiración")
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-            }
-            .padding(10)
-            .frame(width: 96, height: 100)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(SimsTheme.panelPeriwinkle.opacity(0.55))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(SimsTheme.frame,
-                                    style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-                    )
-            )
-        }
-        .buttonStyle(.plain)
+        SimsCreateCard(label: "Nueva\naspiración",
+                       width: 144, height: 148,
+                       onTap: onTap)
     }
 }
 
@@ -148,34 +116,41 @@ struct AspirationCard: View {
     private var done: Bool { aspiration.isDoneNow() }
     private var hueColor:  Color { SimsTheme.hueBody(hue) }
     private var color:     Color { done ? SimsTheme.frame : hueColor }
-    /// Periwinkle when active, soft Sims green when completed.
-    private var cardBG: Color {
-        done ? SimsTheme.simsGreen.opacity(0.65) : SimsTheme.panelPeriwinkle
+    /// Whitened periwinkle (active) or a Sims-plumbob green gradient (done).
+    private var cardBG: AnyShapeStyle {
+        if done {
+            return AnyShapeStyle(LinearGradient(
+                colors: [SimsTheme.simsGreenYellow,   // bright yellow-green at top
+                         SimsTheme.simsGreen],        // saturated green at bottom
+                startPoint: .top, endPoint: .bottom
+            ))
+        }
+        return AnyShapeStyle(Color.white.opacity(0.45))
     }
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
                     Text(aspiration.emoji)
-                        .font(.system(size: 20))
-                    Spacer()
+                        .font(.system(size: 24))
+                    Spacer(minLength: 0)
                     if done {
                         ZStack {
                             Circle()
                                 .fill(SimsTheme.frame.opacity(0.18))
-                                .frame(width: 20, height: 20)
+                                .frame(width: 22, height: 22)
                                 .overlay(Circle().stroke(SimsTheme.frame, lineWidth: 1))
                             Image(systemName: "checkmark")
-                                .font(.system(size: 10, weight: .black))
+                                .font(.system(size: 11, weight: .black))
                                 .foregroundStyle(SimsTheme.frame)
                         }
                     } else {
                         Text("+\(aspiration.xp)")
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
                             .foregroundStyle(SimsTheme.textPrimary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
                             .background(
                                 Capsule()
                                     .fill(Color.white.opacity(0.55))
@@ -185,20 +160,22 @@ struct AspirationCard: View {
                 }
 
                 Text(aspiration.name)
-                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
                     .tracking(0.3)
                     .foregroundStyle(SimsTheme.textPrimary)
                     .lineLimit(1)
 
                 detail
+
+                Spacer(minLength: 0)
             }
-            .padding(10)
-            .frame(width: 132, height: 100, alignment: .topLeading)
+            .padding(12)
+            .frame(width: 144, height: 148, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(cardBG)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: 18)
                             .stroke(SimsTheme.frame, lineWidth: 1.5)
                     )
             )
@@ -307,6 +284,8 @@ struct AspirationCard: View {
             label(String(localized: "\(mins) min · diario"), systemImage: "timer")
         case .weekly:
             label(String(localized: "Esta semana"), systemImage: "calendar")
+        case .oneTime:
+            label(String(localized: "Puntual"), systemImage: "checkmark.seal.fill")
         case .treatment:
             EmptyView()
         }

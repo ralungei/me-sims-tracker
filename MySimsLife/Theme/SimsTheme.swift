@@ -74,6 +74,12 @@ enum SimsTheme {
     /// "Platino" — reserved for completion / aspiración cumplida.
     static let simsPlatinum    = Color.white
 
+    /// Boost text colours — darker than the moodlet greens/reds so they
+    /// read clearly against the periwinkle panel bg. Use these for the
+    /// `+30%` / `-10%` indicators on action cards and history rows.
+    static let boostPositive = Color(red: 0.07, green: 0.45, blue: 0.10)   // #117317
+    static let boostNegative = Color(red: 0.62, green: 0.06, blue: 0.06)   // #9E1010
+
     /// Sims-style indicative color — 5 tiers calibrated to The Sims 2's mood
     /// bar feel: anything ≤ 45% reads as warning (orange) so the user knows to
     /// act, not just "still yellow, fine".
@@ -215,6 +221,263 @@ extension View {
                         .stroke(SimsTheme.frame, lineWidth: selected ? 1.5 : 1.0)
                 )
         )
+    }
+
+    /// Large periwinkle panel with navy frame — used for grouped sections in
+    /// Ajustes / sheets ("Tú", "Notificaciones", etc.). Heavier line weight
+    /// (1.5pt) than `simsFieldStyle` (1.2pt) so big surfaces still read.
+    func simsPanelStyle(cornerRadius: CGFloat = SimsTheme.cornerRadius) -> some View {
+        background(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(SimsTheme.panelPeriwinkle)
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(SimsTheme.frame, lineWidth: 1.5)
+                )
+        )
+    }
+
+    /// Adds a small ellipsis menu in the bottom-right corner of the card with
+    /// "Editar" / "Eliminar" actions. The visible button replaces the
+    /// invisible long-press affordance so users who don't know about context
+    /// menus still discover edit/delete. Long-press (`.contextMenu`) on the
+    /// card itself stays as a redundant power-user shortcut.
+    ///
+    /// Stacks the menu as a sibling of the receiver in a ZStack so it gets
+    /// its own hit area and doesn't trigger the underlying card's tap.
+    func simsCardMenu(onEdit: @escaping () -> Void,
+                      onDelete: @escaping () -> Void) -> some View {
+        modifier(SimsCardMenuModifier(onEdit: onEdit, onDelete: onDelete))
+    }
+}
+
+private struct SimsCardMenuModifier: ViewModifier {
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    func body(content: Content) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            content
+                // Long-press shortcut for users who prefer it. Same actions
+                // as the visible ellipsis Menu — one declaration, two
+                // surfaces.
+                .contextMenu {
+                    Button { onEdit() } label: {
+                        Label("Editar", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) { onDelete() } label: {
+                        Label("Eliminar", systemImage: "trash")
+                    }
+                }
+            Menu {
+                Button { onEdit() } label: {
+                    Label("Editar", systemImage: "pencil")
+                }
+                Button(role: .destructive) { onDelete() } label: {
+                    Label("Eliminar", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(SimsTheme.frame)
+                    .frame(width: 24, height: 24)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.7))
+                            .overlay(Circle().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
+                    )
+            }
+            .buttonStyle(.plain)
+            .padding(6)
+        }
+    }
+}
+
+// MARK: - Editor scaffold (NavigationStack + bg + ScrollView + toolbar)
+
+/// Wraps the `NavigationStack { ZStack { gradient + ScrollView } }` shell that
+/// every editor sheet (Aspiration / Task / Treatment / CustomAction / Profile)
+/// was repeating. Editors only describe their fields — title, validity, save.
+///
+/// Pass `saveLabel: "Registrar"` for `CustomActionSheet`; the default
+/// `"Guardar"` covers the rest.
+struct SimsEditorScaffold<Content: View>: View {
+    let title: LocalizedStringKey
+    let saveLabel: LocalizedStringKey
+    let isValid: Bool
+    let onSave: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    @Environment(\.dismiss) private var dismiss
+
+    init(title: LocalizedStringKey,
+         saveLabel: LocalizedStringKey = "Guardar",
+         isValid: Bool,
+         onSave: @escaping () -> Void,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.saveLabel = saveLabel
+        self.isValid = isValid
+        self.onSave = onSave
+        self.content = content
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                SimsTheme.backgroundGradient.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        content()
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle(title)
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(SimsTheme.panelPeriwinkle, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(saveLabel) { onSave() }
+                        .disabled(!isValid)
+                        .bold()
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Section header + content
+
+/// Caption-2 uppercase title above a content block. The standard "field
+/// section" used inside every editor.
+struct SimsSection<Content: View>: View {
+    let title: LocalizedStringKey
+    @ViewBuilder let content: () -> Content
+
+    init(_ title: LocalizedStringKey, @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.content = content
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(SimsTheme.textSecondary)
+            content()
+        }
+    }
+}
+
+// MARK: - Destructive button used at the bottom of editors
+
+/// Full-width "Eliminar X" button — `boostNegative` solid bg + navy frame +
+/// white text. Pass the action; the view doesn't manage dismiss/state itself.
+struct SimsDeleteButton: View {
+    let label: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        Button(role: .destructive, action: action) {
+            HStack {
+                Image(systemName: "trash")
+                Text(label)
+            }
+            .font(.system(.body, design: .rounded, weight: .bold))
+            .frame(maxWidth: .infinity)
+            .padding(14)
+            .foregroundStyle(Color.white)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(SimsTheme.boostNegative)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(SimsTheme.frame, lineWidth: 1.2)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Selectable icon-and-label chip
+
+/// Compact chip with leading SF Symbol + label. Selection tinted via
+/// `simsChipStyle`. Used by editors with single-select scrollable choosers
+/// (dosing moments, etc.).
+struct SimsSelectableChip: View {
+    let label: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 10, weight: .bold))
+                Text(label).font(.system(.caption, design: .rounded, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .foregroundStyle(SimsTheme.textPrimary)
+            .simsChipStyle(selected: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Reusable "create" card (Nueva aspiración / Nueva tarea / Añadir personalizada)
+
+/// Dashed-border card for "create new" affordances. Single label so there's
+/// no awkward gap between "Nueva" and "aspiración". Reused across the three
+/// add-flows so they look identical (size and style).
+struct SimsCreateCard: View {
+    let label: LocalizedStringKey
+    var width: CGFloat = 96
+    var height: CGFloat = 100
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .stroke(SimsTheme.frame.opacity(0.55),
+                                style: StrokeStyle(lineWidth: 1.4, dash: [3, 3]))
+                        .frame(width: 28, height: 28)
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                }
+                Text(label)
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+            }
+            .padding(10)
+            .frame(width: width, height: height)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(SimsTheme.panelPeriwinkle.opacity(0.55))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(SimsTheme.frame,
+                                    style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

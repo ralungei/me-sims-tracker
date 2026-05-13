@@ -66,17 +66,27 @@ struct DoseStep: Codable, Equatable, Hashable {
 }
 
 enum AspirationKind: String, Codable, CaseIterable {
-    case dailySimple    // Tap once per day. Ej: creatina 5g
-    case dailyTimed     // Daily + duration. Ej: Gateway Tapes 25min
-    case treatment      // Finite course, day N/M. Ej: Prebióticos día 12/30
-    case weekly         // Once per week. Ej: Reel IG
+    case dailySimple    // Tap once per day. Ej: estirar
+    case dailyTimed     // Daily + duration. Ej: leer 20 min
+    case weekly         // Once per week. Ej: llamar a familia
+    case oneTime        // One-shot goal. Ej: ir al dentista
+    /// Deprecated. Kept for backward compat with existing data only — new
+    /// treatments live in the `Treatment` model / Botiquín tab. The
+    /// AspirationEditor no longer offers this as an option.
+    case treatment
+
+    /// Cases shown in the editor's kind picker (excludes deprecated ones).
+    static var pickable: [AspirationKind] {
+        [.dailySimple, .dailyTimed, .weekly, .oneTime]
+    }
 
     var label: String {
         switch self {
         case .dailySimple: return String(localized: "Diario")
         case .dailyTimed:  return String(localized: "Diario · sesión")
-        case .treatment:   return String(localized: "Tratamiento")
         case .weekly:      return String(localized: "Semanal")
+        case .oneTime:     return String(localized: "Puntual")
+        case .treatment:   return String(localized: "Tratamiento")
         }
     }
 
@@ -84,8 +94,9 @@ enum AspirationKind: String, Codable, CaseIterable {
         switch self {
         case .dailySimple: return "sun.max.fill"
         case .dailyTimed:  return "timer"
-        case .treatment:   return "leaf.fill"
         case .weekly:      return "calendar"
+        case .oneTime:     return "checkmark.seal.fill"
+        case .treatment:   return "leaf.fill"
         }
     }
 
@@ -93,17 +104,19 @@ enum AspirationKind: String, Codable, CaseIterable {
         switch self {
         case .dailySimple: return String(localized: "Diario")
         case .dailyTimed:  return String(localized: "Diario con sesión")
-        case .treatment:   return String(localized: "Tratamiento")
         case .weekly:      return String(localized: "Semanal")
+        case .oneTime:     return String(localized: "Puntual")
+        case .treatment:   return String(localized: "Tratamiento")
         }
     }
 
     var hint: String {
         switch self {
-        case .dailySimple: return String(localized: "Una vez al día (ej: creatina)")
-        case .dailyTimed:  return String(localized: "Diario con duración (ej: meditar 25 min)")
+        case .dailySimple: return String(localized: "Una vez al día (ej: estirar)")
+        case .dailyTimed:  return String(localized: "Diario con duración (ej: leer 20 min)")
+        case .weekly:      return String(localized: "Una vez por semana (ej: llamar a familia)")
+        case .oneTime:     return String(localized: "Algo puntual (ej: ir al dentista)")
         case .treatment:   return String(localized: "Curso finito con progreso (ej: prebióticos 30 días)")
-        case .weekly:      return String(localized: "Una vez por semana (ej: postear reel)")
         }
     }
 }
@@ -227,11 +240,12 @@ final class Aspiration {
         set { dosingMomentRaw = newValue?.rawValue }
     }
 
-    /// True if `startedAt` is on a calendar day after `reference`. Treatments
-    /// scheduled for *today* count as active so the user sees the card from
-    /// the very first day, regardless of the time of day stored in `startedAt`.
+    /// True if `startedAt` is on a calendar day after `reference`. Aspirations
+    /// scheduled for *today* count as active from the very first day,
+    /// regardless of the time of day stored in `startedAt`. Used to surface
+    /// future aspirations in a "Próximamente" section.
     func isScheduledForFuture(reference: Date = Date()) -> Bool {
-        guard kind == .treatment, let started = startedAt else { return false }
+        guard let started = startedAt else { return false }
         let cal = Calendar.current
         return cal.startOfDay(for: started) > cal.startOfDay(for: reference)
     }
@@ -251,6 +265,9 @@ final class Aspiration {
             return cal.isDate(last, inSameDayAs: reference)
         case .weekly:
             return cal.isDate(last, equalTo: reference, toGranularity: .weekOfYear)
+        case .oneTime:
+            // One-shot: once completed, stays completed forever.
+            return true
         }
     }
 

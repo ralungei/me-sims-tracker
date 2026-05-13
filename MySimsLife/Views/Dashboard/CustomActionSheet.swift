@@ -49,54 +49,30 @@ struct CustomActionSheet: View {
         "tv.fill", "camera.fill", "paintpalette.fill"
     ]
 
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                SimsTheme.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        section("Nombre") { nameField }
-                        section("Tipo")   { kindField }
-                        section("Tamaño") { sizeField }
-                        section("Icono")  { iconField }
-                        previewRow
-                    }
-                    .padding(20)
-                }
-            }
-            .navigationTitle("Nueva acción")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Registrar") { commit() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .bold()
-                }
-            }
-        }
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    // MARK: - Sections
-
-    private func section<Content: View>(_ title: LocalizedStringKey,
-                                        @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(.caption2, design: .rounded, weight: .heavy))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(SimsTheme.textSecondary)
-            content()
+    var body: some View {
+        SimsEditorScaffold(
+            title: "Nueva acción",
+            saveLabel: "Registrar",
+            isValid: isValid,
+            onSave: commit
+        ) {
+            SimsSection("Nombre") { nameField }
+            SimsSection("Tipo")   { kindField }
+            SimsSection("Tamaño") { sizeField }
+            SimsSection("Icono")  { iconField }
+            previewRow
         }
     }
 
     private var nameField: some View {
-        TextField("Ej: yoga, cena con Pablo, helado…", text: $name)
+        TextField("",
+                  text: $name,
+                  prompt: Text("Ej: yoga, cena con Pablo, helado…")
+                            .foregroundStyle(SimsTheme.textSecondary))
             .textFieldStyle(.plain)
             .padding(12)
             .simsFieldStyle()
@@ -106,11 +82,11 @@ struct CustomActionSheet: View {
     private var kindField: some View {
         HStack(spacing: 8) {
             kindChip(label: "Positiva", systemImage: "plus.circle.fill",
-                     selected: isPositive, tint: SimsTheme.accentGreen) {
+                     selected: isPositive, tint: SimsTheme.boostPositive) {
                 isPositive = true
             }
             kindChip(label: "Negativa", systemImage: "minus.circle.fill",
-                     selected: !isPositive, tint: SimsTheme.negativeTint) {
+                     selected: !isPositive, tint: SimsTheme.boostNegative) {
                 isPositive = false
             }
         }

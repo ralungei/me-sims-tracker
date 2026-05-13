@@ -3,14 +3,43 @@ import UserNotifications
 
 /// User-configurable notification preferences. Persisted in UserDefaults so
 /// they survive launches without needing the SwiftData layer.
+///
+/// The model is one master switch (handles permission) and three sub-toggles,
+/// one per category. A reminder of any kind only fires when both the master
+/// and its category are on.
 enum NotificationsPrefs {
-    static let enabledKey       = "notif.enabled"
-    static let thresholdKey     = "notif.threshold"
-    static let cooldownKey      = "notif.cooldownHours"
+    /// Master toggle. When OFF, nothing fires regardless of sub-toggles.
+    static let masterEnabledKey     = "notif.enabled"
+    static let needsLowEnabledKey   = "notif.needsLow.enabled"
+    static let tasksEnabledKey      = "notif.tasks.enabled"
+    static let treatmentsEnabledKey = "notif.treatments.enabled"
 
-    static var enabled: Bool {
-        get { UserDefaults.standard.bool(forKey: enabledKey) }
-        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    static let thresholdKey         = "notif.threshold"
+    static let cooldownKey          = "notif.cooldownHours"
+
+    /// Master switch — also controls the permission prompt. The key name
+    /// (`notif.enabled`) is retained from older builds for backwards compat.
+    static var masterEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: masterEnabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: masterEnabledKey) }
+    }
+
+    /// Sub-toggles. Default to `true` so opting in via the master switch
+    /// turns every category on without forcing the user to flip three more.
+    /// `register(defaults:)` runs at app launch (`registerDefaults()` below).
+    static var needsLowEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: needsLowEnabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: needsLowEnabledKey) }
+    }
+
+    static var tasksEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: tasksEnabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: tasksEnabledKey) }
+    }
+
+    static var treatmentsEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: treatmentsEnabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: treatmentsEnabledKey) }
     }
 
     /// Fraction (0…1). Below this, a notification fires once per need (with
@@ -32,11 +61,27 @@ enum NotificationsPrefs {
         }
         set { UserDefaults.standard.set(newValue, forKey: cooldownKey) }
     }
+
+    /// Call once at app launch so the sub-toggles read `true` until the user
+    /// explicitly flips them off. `@AppStorage(...)` in views also passes a
+    /// `default: true`, so this is belt-and-braces against direct
+    /// `UserDefaults.bool(forKey:)` callers (the static accessors above).
+    static func registerDefaults() {
+        UserDefaults.standard.register(defaults: [
+            needsLowEnabledKey:   true,
+            tasksEnabledKey:      true,
+            treatmentsEnabledKey: true
+        ])
+    }
 }
 
-/// Local notifications (no APNs / no backend). Fires a banner when a need
-/// crosses below `NotificationsPrefs.threshold`, with a per-need cooldown to
-/// avoid spamming while the bar stays low.
+/// Local notifications (no APNs / no backend). Three categories:
+/// - **needs low** — fires when a bar crosses below `threshold`.
+/// - **tasks** — one-shot reminders for agenda items.
+/// - **treatments** — one-shot reminders for items in the botiquín.
+///
+/// Each category has its own sub-toggle in `NotificationsPrefs`. The master
+/// toggle gates everything and is what triggers the system permission prompt.
 @MainActor
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
@@ -49,6 +94,12 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private let center = UNUserNotificationCenter.current()
+
+    private static let taskPrefix      = "task."
+    private static let treatmentPrefix = "treatment."
+
+    private static func taskID(_ uuid: UUID) -> String { "\(taskPrefix)\(uuid.uuidString)" }
+    private static func treatmentID(_ uuid: UUID) -> String { "\(treatmentPrefix)\(uuid.uuidString)" }
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
@@ -68,13 +119,14 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         await center.notificationSettings().authorizationStatus
     }
 
-    // MARK: - Threshold-cross detection
+    // MARK: - Threshold-cross detection (needs low)
 
     /// Call this whenever a need's value changes. If the new value crossed
     /// below the threshold *for the first time since the cooldown ended*,
     /// schedules an immediate notification.
     func notifyIfLow(need: NeedType, currentValue: Double, previousValue: Double) {
-        guard NotificationsPrefs.enabled else { return }
+        guard NotificationsPrefs.masterEnabled,
+              NotificationsPrefs.needsLowEnabled else { return }
         let t = NotificationsPrefs.threshold
         // Fire on the downward crossing only — staying low without crossing
         // doesn't re-trigger; once the bar climbs back above and falls again
@@ -85,10 +137,93 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         scheduleImmediate(need: need, value: currentValue)
     }
 
+    // MARK: - Task reminders
+
+    /// Schedule a one-shot local notification for a task at the given date.
+    /// If a previous reminder was scheduled for the same task ID, it's
+    /// replaced. Pass a date in the past and nothing is scheduled.
+    /// No-op if the master or tasks sub-toggle is off.
+    func scheduleTaskReminder(taskID: UUID, title: String, at date: Date) {
+        cancelTaskReminder(taskID: taskID)
+        guard NotificationsPrefs.masterEnabled,
+              NotificationsPrefs.tasksEnabled else { return }
+        guard date > Date() else { return }
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Tarea pendiente")
+        content.body  = title
+        content.sound = .default
+        let comps = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        let req = UNNotificationRequest(
+            identifier: Self.taskID(taskID),
+            content: content,
+            trigger: trigger
+        )
+        center.add(req, withCompletionHandler: nil)
+    }
+
+    func cancelTaskReminder(taskID: UUID) {
+        center.removePendingNotificationRequests(
+            withIdentifiers: [Self.taskID(taskID)]
+        )
+    }
+
+    // MARK: - Treatment reminders
+
+    /// Schedule a one-shot reminder for a treatment dose. Same semantics as
+    /// `scheduleTaskReminder` but lives in its own identifier namespace so it
+    /// can be cancelled independently when the user toggles the botiquín
+    /// sub-category off.
+    func scheduleTreatmentReminder(treatmentID: UUID, title: String, at date: Date) {
+        cancelTreatmentReminder(treatmentID: treatmentID)
+        guard NotificationsPrefs.masterEnabled,
+              NotificationsPrefs.treatmentsEnabled else { return }
+        guard date > Date() else { return }
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Botiquín")
+        content.body  = title
+        content.sound = .default
+        let comps = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        let req = UNNotificationRequest(
+            identifier: Self.treatmentID(treatmentID),
+            content: content,
+            trigger: trigger
+        )
+        center.add(req, withCompletionHandler: nil)
+    }
+
+    func cancelTreatmentReminder(treatmentID: UUID) {
+        center.removePendingNotificationRequests(
+            withIdentifiers: [Self.treatmentID(treatmentID)]
+        )
+    }
+
+    // MARK: - Bulk cancellation (when a sub-category is turned off)
+
+    func cancelAllPending(withPrefix prefix: String) async {
+        let pending = await center.pendingNotificationRequests()
+        let ids = pending.map(\.identifier).filter { $0.hasPrefix(prefix) }
+        guard !ids.isEmpty else { return }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    func cancelAllTaskReminders() async {
+        await cancelAllPending(withPrefix: Self.taskPrefix)
+    }
+
+    func cancelAllTreatmentReminders() async {
+        await cancelAllPending(withPrefix: Self.treatmentPrefix)
+    }
+
+    // MARK: - Test
+
     func sendTest() {
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Notificaciones activas")
-        content.body  = String(localized: "Te avisaremos cuando una necesidad esté baja.")
+        content.body  = String(localized: "Esto es una prueba.")
         content.sound = .default
         let req = UNNotificationRequest(
             identifier: "notif.test.\(UUID().uuidString)",

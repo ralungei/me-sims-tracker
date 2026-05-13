@@ -17,7 +17,9 @@ final class NeedStore {
     /// Internal: when the decay loop last subtracted from each need.
     /// Local-only, never synced.
     private var lastDecayTick: [NeedType: Date] = [:]
-    var enabledNeeds: Set<NeedType> = Set(NeedType.allCases)
+    /// Default for fresh installs. Real values come from `ensureAnchors()`
+    /// which reads each `NeedAnchor.enabled` flag from SwiftData/CloudKit.
+    var enabledNeeds: Set<NeedType> = NeedPlan.essential.needs
     var aspirations: [Aspiration] = []
     var tasks: [LifeTask] = []
     private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
@@ -45,18 +47,17 @@ final class NeedStore {
 
     private var modelContext: ModelContext?
     private var decayTimer: Timer?
+    private var remoteChangeObserver: NSObjectProtocol?
 
     // MARK: - Lifecycle
 
     init() {
         for need in NeedType.allCases {
             needs[need] = need.decaysAutomatically ? 0.5 : 1.0  // health starts full
-            // Leave `lastUpdated` nil intentionally so the first remote pull
-            // can win — bumping it to `now` here would mark our defaults as
-            // "newer than the server" and skip applyRemoteNeeds.
         }
-        loadEnabledNeeds()
-        loadNeedsState()
+        // Real values land in `ensureAnchors()` once `configure(with:)` runs
+        // — these defaults just stop the dashboard from rendering empty in
+        // the brief window before the first context fetch.
     }
 
     var sortedEnabledNeeds: [NeedType] {
@@ -66,149 +67,83 @@ final class NeedStore {
     func setEnabled(_ enabled: Bool, for need: NeedType) {
         if enabled { enabledNeeds.insert(need) }
         else       { enabledNeeds.remove(need) }
-        saveEnabledNeeds()
+        upsertAnchor(for: need, enabled: enabled, bumpTimestamp: false)
+        lastUpdated[need] = Date()
+    }
+
+    /// Applies a preset plan from the onboarding's category step.
+    func applyPlan(_ plan: NeedPlan) {
+        let target = plan.needs
+        guard target != enabledNeeds else { return }
         let now = Date()
-        lastUpdated[need] = now
-        let value = needs[need] ?? 0
-        Task { await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: now, enabled: enabled) }
-    }
-
-    // MARK: - Sync helpers
-
-    private func firePush(_ asp: Aspiration) {
-        Task { await BackendSync.shared.pushAspiration(asp) }
-    }
-
-    private func firePush(_ task: LifeTask) {
-        Task { await BackendSync.shared.pushTask(task) }
-    }
-
-    private func saveEnabledNeeds() {
-        let raw = enabledNeeds.map { $0.rawValue }
-        if let data = try? JSONEncoder().encode(raw) {
-            UserDefaults.standard.set(data, forKey: UDKey.enabledNeeds)
+        let changed = NeedType.allCases.filter { target.contains($0) != enabledNeeds.contains($0) }
+        guard !changed.isEmpty else { return }
+        enabledNeeds = target
+        for need in changed {
+            lastUpdated[need] = now
+            upsertAnchor(for: need, enabled: target.contains(need), bumpTimestamp: false)
         }
     }
-
-    private func loadEnabledNeeds() {
-        guard let data = UserDefaults.standard.data(forKey: UDKey.enabledNeeds),
-              let raw = try? JSONDecoder().decode([String].self, from: data),
-              !raw.isEmpty
-        else { return }
-        enabledNeeds = Set(raw.compactMap { NeedType(rawValue: $0) })
-    }
-
-    /// True until the first remote pull completes after launch. Views can dim
-    /// or show a skeleton state while this is `false` so cached values don't
-    /// flicker into the synced ones.
-    private(set) var hasInitialSyncCompleted: Bool = false
 
     func configure(with context: ModelContext) {
         modelContext = context
+        // Screenshot harness — only runs when `-MockData YES` was passed
+        // at launch (Tools/screenshots.sh). No-op in normal use.
+        MockData.inject(into: context)
+        ensureAnchors()
         refreshAspirations()
         refreshTasks()
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
-        Task { @MainActor in
-            await pullAndApply(context: context, bypassLWW: true)
-            RealtimeSync.shared.onEvent = { [weak self] _ in
-                guard let self, let ctx = self.modelContext else { return }
-                Task { @MainActor in await self.pullAndApply(context: ctx) }
-            }
-            RealtimeSync.shared.start(with: context)
+        startRemoteChangeListener()
+    }
+
+    /// Listens for SwiftData/CloudKit-driven remote changes (another device
+    /// pushed a write). Re-reads anchors + aspirations + tasks so the UI
+    /// reflects the change without waiting for the next foreground.
+    /// Coalesced with a 0.5 s debounce since CloudKit can fire bursts.
+    private func startRemoteChangeListener() {
+        guard remoteChangeObserver == nil else { return }
+        remoteChangeObserver = NotificationCenter.default.addObserver(
+            forName: .NSPersistentStoreRemoteChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.scheduleRemoteChangeReload()
         }
     }
 
-    /// Single entry point used both at boot and after every realtime event.
-    /// `bypassLWW` is for boot / foreground only — it forces the server's
-    /// anchor onto the device so all devices converge regardless of any
-    /// stale local `lastUpdated`. Realtime events keep LWW so a fresh local
-    /// action isn't clobbered by its own echo.
-    /// Marker exposed so views animate the transition out of the skeleton.
-    private func markInitialSyncComplete() {
-        guard !hasInitialSyncCompleted else { return }
-        withAnimation(.easeOut(duration: 0.35)) {
-            hasInitialSyncCompleted = true
-        }
-    }
+    private var remoteReloadDebounce: DispatchWorkItem?
 
-    @MainActor
-    private func pullAndApply(context: ModelContext, bypassLWW: Bool = false) async {
-        // bypassLWW also forces a full sync — otherwise the server's delta
-        // would omit any need that hasn't changed since `lastSync`, leaving
-        // the device on its locally-decayed value while the other device
-        // shows something different.
-        let result = await BackendSync.shared.pull(into: context, forceFullSync: bypassLWW)
-        // Recalibrate after the pull so both devices score decay against the
-        // same activity log → identical effective decay rate → identical bar.
-        recalibrate()
-        applyRemoteNeeds(result.needsState, bypassLWW: bypassLWW)
-        markInitialSyncComplete()
-        refreshAspirations()
-        refreshTasks()
-        refreshRecentActionsCache()
-    }
-
-    @MainActor
-    private func applyRemoteNeeds(_ remotes: [BackendSync.RemoteNeedState], bypassLWW: Bool = false) {
-        guard !remotes.isEmpty else { return }
-        let now = Date()
-        var changed = false
-        for remote in remotes {
-            guard let need = NeedType(rawValue: remote.needType) else { continue }
-            let remoteUpdated = Date(timeIntervalSince1970: TimeInterval(remote.lastUpdatedMs) / 1000)
-            if !bypassLWW, let local = lastUpdated[need], local >= remoteUpdated { continue }
-            // remote.value is the anchor at remoteUpdated; apply the elapsed
-            // decay locally so all devices compute identical values from the
-            // same anchor + clock.
-            let elapsedHours = max(0, now.timeIntervalSince(remoteUpdated) / 3600.0)
-            let decay: Double
-            if need.decaysAutomatically && remote.enabled {
-                let rate = calibration.effectiveDecayRate(for: need)
-                decay = rate * elapsedHours / 100.0
-            } else {
-                decay = 0
-            }
-            needs[need] = max(0, min(1, remote.value - decay))
-            lastUpdated[need] = remoteUpdated
-            lastDecayTick[need] = now   // restart local decay clock so the next tick doesn't double-count
-            if remote.enabled { enabledNeeds.insert(need) }
-            else              { enabledNeeds.remove(need) }
-            changed = true
+    private func scheduleRemoteChangeReload() {
+        remoteReloadDebounce?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.ensureAnchors()
+            self.refreshAspirations()
+            self.refreshTasks()
+            self.refreshRecentActionsCache()
         }
-        if changed {
-            saveNeedsState()
-            saveEnabledNeeds()
-            alertsCache = nil   // value tier may have flipped
-        }
+        remoteReloadDebounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
     func onBecomeActive() {
-        loadNeedsState()
+        ensureAnchors()
         refreshAspirations()
         refreshTasks()
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
-        if let context = modelContext {
-            // Catch up on anything the backend changed while we were in the
-            // background, then re-open the WS for live events.
-            Task { @MainActor in
-                await pullAndApply(context: context, bypassLWW: true)
-                RealtimeSync.shared.start(with: context)
-            }
-        }
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         #endif
     }
 
     func onEnterBackground() {
-        saveNeedsState()
         decayTimer?.invalidate()
         decayTimer = nil
-        Task { @MainActor in RealtimeSync.shared.stop() }
     }
 
     // MARK: - Actions
@@ -216,11 +151,12 @@ final class NeedStore {
     func logAction(_ action: QuickAction, for need: NeedType) {
         let current = needs[need] ?? 0
         let delta = action.boost / 100.0
-        needs[need] = max(0.0, min(1.0, current + delta))
+        let newValue = max(0.0, min(1.0, current + delta))
+        needs[need] = newValue
         let now = Date()
         lastUpdated[need] = now
+        lastDecayTick[need] = now
 
-        var pushedLog: ActivityLog?
         if let context = modelContext {
             let log = ActivityLog(
                 needType: need,
@@ -231,22 +167,15 @@ final class NeedStore {
             context.insert(log)
             try? context.save()
             refreshRecentActionsCache(for: need)
-            pushedLog = log
 
             let count = (try? context.fetchCount(FetchDescriptor<ActivityLog>())) ?? 0
             if count % 10 == 0 { recalibrate() }
         }
 
-        saveNeedsState()
+        // Persist the new bar value as the synced anchor → CloudKit pushes
+        // to the user's other devices.
+        upsertAnchor(for: need, value: newValue, bumpTimestamp: true)
         triggerHaptic(negative: action.isNegative)
-
-        let value = needs[need] ?? 0
-        let needLastUpdated = lastUpdated[need] ?? now
-        let enabled = enabledNeeds.contains(need)
-        Task {
-            if let log = pushedLog { await BackendSync.shared.pushActivityLog(log) }
-            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: needLastUpdated, enabled: enabled)
-        }
     }
 
     /// Undo the Nth most recent log for this need: subtracts boost and deletes the SwiftData row.
@@ -262,32 +191,28 @@ final class NeedStore {
         let removed = logs[index]
         let current = needs[need] ?? 0
         let delta = removed.boostAmount / 100.0
+        let newValue = max(0.0, min(1.0, current - delta))
         let now = Date()
-        needs[need] = max(0.0, min(1.0, current - delta))
-        // Bump the timestamp so other devices accept the lower value over their cached one.
+        needs[need] = newValue
         lastUpdated[need] = now
+        lastDecayTick[need] = now
 
-        let removedID = removed.id
         context.delete(removed)
         try? context.save()
         refreshRecentActionsCache(for: need)
-        saveNeedsState()
-        let value = needs[need] ?? 0
-        let enabled = enabledNeeds.contains(need)
-        Task {
-            await BackendSync.shared.deleteActivityLog(id: removedID)
-            await BackendSync.shared.pushNeedState(need, value: value, lastUpdated: now, enabled: enabled)
-        }
+        upsertAnchor(for: need, value: newValue, bumpTimestamp: true)
     }
 
     func setValue(_ value: Double, for need: NeedType) {
-        needs[need] = max(0, min(1, value))
-        lastUpdated[need] = Date()
-        saveNeedsState()
+        let clamped = max(0, min(1, value))
+        needs[need] = clamped
+        let now = Date()
+        lastUpdated[need] = now
+        lastDecayTick[need] = now
+        upsertAnchor(for: need, value: clamped, bumpTimestamp: true)
     }
 
-    /// "Estoy estable": parks every enabled need at 0.5 and pushes a fresh
-    /// anchor so all devices converge on the neutral baseline.
+    /// "Estoy estable": parks every enabled need at 0.5.
     func resetAllToBaseline(_ value: Double = 0.5) {
         let clamped = max(0, min(1, value))
         let now = Date()
@@ -295,11 +220,45 @@ final class NeedStore {
             needs[need] = clamped
             lastUpdated[need] = now
             lastDecayTick[need] = now
-            let enabled = enabledNeeds.contains(need)
-            Task { await BackendSync.shared.pushNeedState(need, value: clamped, lastUpdated: now, enabled: enabled) }
+            upsertAnchor(for: need, value: clamped, bumpTimestamp: true)
         }
-        saveNeedsState()
         alertsCache = nil
+    }
+
+    /// Wipes all SwiftData rows + UserDefaults caches + pending notifications.
+    /// SwiftData propagates the deletions through CloudKit, so other devices
+    /// see them on their next foreground. `userName` and prefs survive.
+    func resetEverything() async {
+        guard let context = modelContext else { return }
+
+        await NotificationManager.shared.cancelAllTaskReminders()
+        await NotificationManager.shared.cancelAllTreatmentReminders()
+
+        let treatments = (try? context.fetch(FetchDescriptor<Treatment>())) ?? []
+        let allLogs = (try? context.fetch(FetchDescriptor<ActivityLog>())) ?? []
+        let allAnchors = (try? context.fetch(FetchDescriptor<NeedAnchor>())) ?? []
+        for asp in aspirations { context.delete(asp) }
+        for task in tasks { context.delete(task) }
+        for log in allLogs { context.delete(log) }
+        for t in treatments { context.delete(t) }
+        for anchor in allAnchors { context.delete(anchor) }
+        try? context.save()
+
+        aspirations.removeAll()
+        tasks.removeAll()
+        recentActionsCache.removeAll()
+        recentActionKeys.removeAll()
+        alertsCache = nil
+
+        for need in NeedType.allCases {
+            UserDefaults.standard.removeObject(forKey: "notif.lastFired.\(need.rawValue)")
+        }
+
+        // Recreate fresh anchors with Esencial defaults — also re-syncs to
+        // any other device the user has signed into iCloud.
+        ensureAnchors()
+        refreshAspirations()
+        refreshTasks()
     }
 
     // MARK: - Recent actions (cached; refreshed on log/undo)
@@ -406,9 +365,109 @@ final class NeedStore {
         }
     }
 
+    /// Single rule for `activeAlerts`. The closure receives need values via a
+    /// `(NeedType) -> Double` accessor and the current hour/weekday — returns
+    /// a `SimAlert` if the rule fires, `nil` otherwise. Living as data lets
+    /// `activeAlerts` be a `compactMap` instead of a 90-line if-chain.
+    private struct AlertRule {
+        let evaluate: (_ v: (NeedType) -> Double, _ hour: Int, _ weekday: Int) -> SimAlert?
+    }
+
+    private static let alertRules: [AlertRule] = [
+        // "All above 60%" — positive moodlet when the user is sailing.
+        AlertRule { v, _, _ in
+            guard NeedType.allCases.allSatisfy({ v($0) >= 0.60 }) else { return nil }
+            return SimAlert(message: String(localized: "¡Todo por encima del 60%! Gran momento"),
+                            icon: "star.fill", severity: .positive)
+        },
+        // Late-night sleep nudge (urgent).
+        AlertRule { _, hour, _ in
+            guard hour >= 23 || hour < 5 else { return nil }
+            return SimAlert(message: String(localized: "Es tarde — hora de dormir"),
+                            icon: "moon.zzz.fill", severity: .urgent)
+        },
+        // Pre-bed energy collapse (only if not already in late-night urgent window).
+        AlertRule { v, hour, _ in
+            guard hour >= 22, hour < 23, v(.energy) < 0.20 else { return nil }
+            return SimAlert(message: String(localized: "Tu energía está agotada — ve a descansar"),
+                            icon: "battery.0percent", severity: .warning)
+        },
+        // Meal-time prompts.
+        AlertRule { v, hour, _ in
+            guard (7...9).contains(hour), v(.nutrition) < 0.30 else { return nil }
+            return SimAlert(message: String(localized: "Desayuna — tu cuerpo necesita combustible"),
+                            icon: "cup.and.saucer.fill", severity: .nudge)
+        },
+        AlertRule { v, hour, _ in
+            guard (12...14).contains(hour), v(.nutrition) < 0.25 else { return nil }
+            return SimAlert(message: String(localized: "Hora de comer — no saltes el almuerzo"),
+                            icon: "fork.knife", severity: .warning)
+        },
+        AlertRule { v, hour, _ in
+            guard (19...21).contains(hour), v(.nutrition) < 0.30 else { return nil }
+            return SimAlert(message: String(localized: "¿Has cenado? Tu nutrición está baja"),
+                            icon: "fork.knife", severity: .nudge)
+        },
+        // Hydration — urgent below 15% any hour, nudge below 30% during day.
+        AlertRule { v, _, _ in
+            guard v(.hydration) < 0.15 else { return nil }
+            return SimAlert(message: String(localized: "Bebe agua — llevas demasiado sin hidratarte"),
+                            icon: "drop.fill", severity: .urgent)
+        },
+        AlertRule { v, hour, _ in
+            guard v(.hydration) >= 0.15, v(.hydration) < 0.30, (10...20).contains(hour) else { return nil }
+            return SimAlert(message: String(localized: "Un vaso de agua te vendría bien"),
+                            icon: "drop.fill", severity: .nudge)
+        },
+        AlertRule { v, hour, _ in
+            guard v(.exercise) < 0.15, (10...20).contains(hour) else { return nil }
+            return SimAlert(message: String(localized: "Llevas mucho sin moverte — aunque sea un paseo"),
+                            icon: "figure.walk", severity: .warning)
+        },
+        AlertRule { v, _, _ in
+            guard v(.social) < 0.15 else { return nil }
+            return SimAlert(message: String(localized: "Habla con alguien — tu social está muy bajo"),
+                            icon: "person.2.fill", severity: .warning)
+        },
+        AlertRule { v, _, _ in
+            guard v(.environment) < 0.20 else { return nil }
+            return SimAlert(message: String(localized: "Tu entorno necesita atención — ordena un poco"),
+                            icon: "sparkles", severity: .nudge)
+        },
+        AlertRule { v, hour, _ in
+            guard v(.leisure) < 0.15, hour >= 18 else { return nil }
+            return SimAlert(message: String(localized: "Date un respiro — haz algo que disfrutes"),
+                            icon: "gamecontroller.fill", severity: .nudge)
+        },
+        AlertRule { v, hour, _ in
+            guard v(.hygiene) < 0.20, (8...22).contains(hour) else { return nil }
+            return SimAlert(message: String(localized: "¿Te duchaste hoy? Tu higiene está baja"),
+                            icon: "shower.fill", severity: .nudge)
+        },
+        AlertRule { v, hour, _ in
+            guard (6...8).contains(hour), v(.energy) < 0.15 else { return nil }
+            return SimAlert(message: String(localized: "Buenos días — registra cómo dormiste"),
+                            icon: "sunrise.fill", severity: .nudge)
+        },
+        // 3+ barras críticas — composite alert.
+        AlertRule { v, _, _ in
+            let count = NeedType.allCases.filter { v($0) < 0.15 }.count
+            guard count >= 3 else { return nil }
+            return SimAlert(message: String(localized: "\(count) barras en rojo — cuídate, prioriza lo básico"),
+                            icon: "exclamationmark.triangle.fill", severity: .urgent)
+        },
+        // Weekend social nudge (Sat/Sun).
+        AlertRule { v, hour, weekday in
+            let isWeekend = weekday == 1 || weekday == 7
+            guard isWeekend, v(.social) < 0.40, (10...20).contains(hour) else { return nil }
+            return SimAlert(message: String(localized: "Es fin de semana — buen momento para socializar"),
+                            icon: "person.3.fill", severity: .nudge)
+        }
+    ]
+
     var activeAlerts: [SimAlert] {
-        let now = Date()
         let calendar = Calendar.current
+        let now = Date()
         let hour = calendar.component(.hour, from: now)
         let weekday = calendar.component(.weekday, from: now)
 
@@ -419,88 +478,8 @@ final class NeedStore {
             return cached.alerts
         }
 
-        var alerts: [SimAlert] = []
-
-        let v = { (n: NeedType) -> Double in self.needs[n] ?? 0.5 }
-
-        let allAbove60 = NeedType.allCases.allSatisfy { v($0) >= 0.60 }
-        if allAbove60 {
-            alerts.append(SimAlert(message: String(localized: "¡Todo por encima del 60%! Gran momento"),
-                                   icon: "star.fill", severity: .positive))
-        }
-
-        if hour >= 23 || hour < 5 {
-            alerts.append(SimAlert(message: String(localized: "Es tarde — hora de dormir"),
-                                   icon: "moon.zzz.fill", severity: .urgent))
-        } else if hour >= 22 && v(.energy) < 0.20 {
-            alerts.append(SimAlert(message: String(localized: "Tu energía está agotada — ve a descansar"),
-                                   icon: "battery.0percent", severity: .warning))
-        }
-
-        if hour >= 7 && hour <= 9 && v(.nutrition) < 0.30 {
-            alerts.append(SimAlert(message: String(localized: "Desayuna — tu cuerpo necesita combustible"),
-                                   icon: "cup.and.saucer.fill", severity: .nudge))
-        }
-        if hour >= 12 && hour <= 14 && v(.nutrition) < 0.25 {
-            alerts.append(SimAlert(message: String(localized: "Hora de comer — no saltes el almuerzo"),
-                                   icon: "fork.knife", severity: .warning))
-        }
-        if hour >= 19 && hour <= 21 && v(.nutrition) < 0.30 {
-            alerts.append(SimAlert(message: String(localized: "¿Has cenado? Tu nutrición está baja"),
-                                   icon: "fork.knife", severity: .nudge))
-        }
-
-        if v(.hydration) < 0.15 {
-            alerts.append(SimAlert(message: String(localized: "Bebe agua — llevas demasiado sin hidratarte"),
-                                   icon: "drop.fill", severity: .urgent))
-        } else if v(.hydration) < 0.30 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: String(localized: "Un vaso de agua te vendría bien"),
-                                   icon: "drop.fill", severity: .nudge))
-        }
-
-        if v(.exercise) < 0.15 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: String(localized: "Llevas mucho sin moverte — aunque sea un paseo"),
-                                   icon: "figure.walk", severity: .warning))
-        }
-
-        if v(.social) < 0.15 {
-            alerts.append(SimAlert(message: String(localized: "Habla con alguien — tu social está muy bajo"),
-                                   icon: "person.2.fill", severity: .warning))
-        }
-
-        if v(.environment) < 0.20 {
-            alerts.append(SimAlert(message: String(localized: "Tu entorno necesita atención — ordena un poco"),
-                                   icon: "sparkles", severity: .nudge))
-        }
-
-        if v(.leisure) < 0.15 && hour >= 18 {
-            alerts.append(SimAlert(message: String(localized: "Date un respiro — haz algo que disfrutes"),
-                                   icon: "gamecontroller.fill", severity: .nudge))
-        }
-
-        if v(.hygiene) < 0.20 && hour >= 8 && hour <= 22 {
-            alerts.append(SimAlert(message: String(localized: "¿Te duchaste hoy? Tu higiene está baja"),
-                                   icon: "shower.fill", severity: .nudge))
-        }
-
-        if hour >= 6 && hour <= 8 && v(.energy) < 0.15 {
-            alerts.append(SimAlert(message: String(localized: "Buenos días — registra cómo dormiste"),
-                                   icon: "sunrise.fill", severity: .nudge))
-        }
-
-        let critCount = NeedType.allCases.filter { v($0) < 0.15 }.count
-        if critCount >= 3 {
-            alerts.append(SimAlert(message: String(localized: "\(critCount) barras en rojo — cuídate, prioriza lo básico"),
-                                   icon: "exclamationmark.triangle.fill", severity: .urgent))
-        }
-
-        let isWeekend = weekday == 1 || weekday == 7
-        if isWeekend && v(.social) < 0.40 && hour >= 10 && hour <= 20 {
-            alerts.append(SimAlert(message: String(localized: "Es fin de semana — buen momento para socializar"),
-                                   icon: "person.3.fill", severity: .nudge))
-        }
-
-        let result = Array(alerts.prefix(3))
+        let v: (NeedType) -> Double = { self.needs[$0] ?? 0.5 }
+        let result = Array(Self.alertRules.compactMap { $0.evaluate(v, hour, weekday) }.prefix(3))
         alertsCache = (hour: hour, hash: stateHash, alerts: result)
         return result
     }
@@ -588,14 +567,19 @@ final class NeedStore {
         aspirations = (try? context.fetch(descriptor)) ?? []
     }
 
-    /// Only the aspirations the user can interact with right now (excludes future-scheduled ones).
+    /// Only the aspirations the user can interact with right now (excludes
+    /// future-scheduled ones AND legacy `.treatment` records — those now
+    /// live in the Botiquín tab as `Treatment`).
     var activeAspirations: [Aspiration] {
-        aspirations.filter { !$0.isScheduledForFuture() }
+        aspirations.filter {
+            !$0.isScheduledForFuture() && $0.kind != .treatment
+        }
     }
 
-    /// Aspirations whose `startedAt` is in the future — shown separately as "upcoming".
+    /// Aspirations whose `startedAt` is in the future — shown separately as
+    /// "upcoming". Legacy `.treatment` records are filtered out.
     var upcomingAspirations: [Aspiration] {
-        aspirations.filter { $0.isScheduledForFuture() }
+        aspirations.filter { $0.isScheduledForFuture() && $0.kind != .treatment }
             .sorted { ($0.startedAt ?? Date.distantFuture) < ($1.startedAt ?? Date.distantFuture) }
     }
 
@@ -615,7 +599,6 @@ final class NeedStore {
         try? context.save()
         refreshAspirations()
         triggerHaptic(negative: false)
-        firePush(aspiration)
     }
 
     func addAspiration(_ aspiration: Aspiration) {
@@ -624,24 +607,19 @@ final class NeedStore {
         context.insert(aspiration)
         try? context.save()
         refreshAspirations()
-        firePush(aspiration)
     }
 
     func updateAspiration(_ aspiration: Aspiration) {
-        // Aspiration is a @Model class — caller mutates props directly; we just persist.
         guard let context = modelContext else { return }
         try? context.save()
         refreshAspirations()
-        firePush(aspiration)
     }
 
     func deleteAspiration(_ aspiration: Aspiration) {
         guard let context = modelContext else { return }
-        let id = aspiration.id
         context.delete(aspiration)
         try? context.save()
         refreshAspirations()
-        Task { await BackendSync.shared.deleteAspiration(id: id) }
     }
 
     // MARK: - Tasks (one-off agenda items)
@@ -660,23 +638,44 @@ final class NeedStore {
         context.insert(task)
         try? context.save()
         refreshTasks()
-        firePush(task)
+        syncTaskReminder(task)
     }
 
     func updateTask(_ task: LifeTask) {
         guard let context = modelContext else { return }
         try? context.save()
         refreshTasks()
-        firePush(task)
+        syncTaskReminder(task)
     }
 
     func deleteTask(_ task: LifeTask) {
         guard let context = modelContext else { return }
         let id = task.id
+        Task { @MainActor in
+            NotificationManager.shared.cancelTaskReminder(taskID: id)
+        }
         context.delete(task)
         try? context.save()
         refreshTasks()
-        Task { await BackendSync.shared.deleteTask(id: id) }
+    }
+
+    /// Programs or cancels the local reminder for a task based on its
+    /// current `notify` + `dueDate` state. Centralised here so every entry
+    /// point that mutates a task (editor, MCP server, future shortcuts…)
+    /// stays consistent without each caller wiring `NotificationManager`.
+    /// `NotificationManager` is `@MainActor`-isolated so we hop onto it.
+    private func syncTaskReminder(_ task: LifeTask) {
+        let id = task.id
+        let title = task.title
+        let due = task.dueDate
+        let shouldSchedule = task.notify && due != nil && task.hasSpecificTime
+        Task { @MainActor in
+            if shouldSchedule, let due {
+                NotificationManager.shared.scheduleTaskReminder(taskID: id, title: title, at: due)
+            } else {
+                NotificationManager.shared.cancelTaskReminder(taskID: id)
+            }
+        }
     }
 
     func moveTask(withID draggedID: UUID, toBefore targetID: UUID) {
@@ -693,10 +692,6 @@ final class NeedStore {
         }
         try? context.save()
         refreshTasks()
-        // Push every task whose sortOrder changed so the order replicates.
-        Task {
-            for task in reordered { await BackendSync.shared.pushTask(task) }
-        }
     }
 
     func toggleTask(_ task: LifeTask) {
@@ -706,7 +701,6 @@ final class NeedStore {
         try? context.save()
         refreshTasks()
         triggerHaptic(negative: false)
-        firePush(task)
     }
 
     /// Tasks due today or overdue, with not-done first, then ordered by time.
@@ -722,6 +716,19 @@ final class NeedStore {
         }
     }
 
+    /// Tasks scheduled for a calendar day after today. Surfaced separately
+    /// in the agenda's "Próximamente" row so future tasks don't clutter
+    /// today's view.
+    var upcomingTasks: [LifeTask] {
+        let cal = Calendar.current
+        let now = Date()
+        return tasks.filter { task in
+            guard !task.isDone, let due = task.dueDate else { return false }
+            return cal.startOfDay(for: due) > cal.startOfDay(for: now)
+        }
+        .sorted { ($0.dueDate ?? Date.distantFuture) < ($1.dueDate ?? Date.distantFuture) }
+    }
+
     // MARK: - Decay (uses calibrated rates)
 
     private func startDecayTimer() {
@@ -733,12 +740,10 @@ final class NeedStore {
 
     private func applyDecay() {
         let now = Date()
-        var changed = false
         for need in NeedType.allCases where need.decaysAutomatically && enabledNeeds.contains(need) {
             guard let current = needs[need] else { continue }
-            // Decay measures time since the previous decay tick (or last user
-            // mutation, whichever is more recent). It does NOT touch
-            // `lastUpdated` — that field carries the LWW timestamp for sync.
+            // Decay accumulates locally on top of the synced anchor — the
+            // anchor itself is only bumped when the user takes an action.
             let lastTick = lastDecayTick[need] ?? lastUpdated[need] ?? now
             let hours = now.timeIntervalSince(lastTick) / 3600.0
             guard hours > 0 else { continue }
@@ -756,52 +761,94 @@ final class NeedStore {
                         need: n, currentValue: next, previousValue: prev
                     )
                 }
-                changed = true
             }
         }
-        if changed { saveNeedsState() }
     }
 
-    // MARK: - Persistence (only the live needs values — small + non-critical)
+    // MARK: - Anchors (CloudKit-synced source of truth)
 
-    private func saveNeedsState() {
-        var dict: [String: [String: Double]] = [:]
-        for (need, value) in needs {
-            dict[need.rawValue] = [
-                "value": value,
-                "ts": (lastUpdated[need] ?? Date()).timeIntervalSince1970
-            ]
-        }
-        if let data = try? JSONSerialization.data(withJSONObject: dict) {
-            UserDefaults.standard.set(data, forKey: UDKey.needsState)
-        }
-    }
+    /// Loads the cross-device anchors into the in-memory cache. Dedupes
+    /// concurrent inserts that may briefly exist while CloudKit reconciles
+    /// (keeping the most recent `anchoredAt`). Creates anchors for any need
+    /// that doesn't have one yet — happens on first launch and after wipes.
+    func ensureAnchors() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<NeedAnchor>()
+        let rows = (try? context.fetch(descriptor)) ?? []
 
-    private func loadNeedsState() {
-        guard let data = UserDefaults.standard.data(forKey: UDKey.needsState),
-              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Double]]
-        else { return }
-
-        let now = Date()
-        for (key, state) in dict {
-            guard let needType = NeedType(rawValue: key),
-                  let savedValue = state["value"],
-                  let ts = state["ts"]
-            else { continue }
-            if needType.decaysAutomatically {
-                let hours = now.timeIntervalSince(Date(timeIntervalSince1970: ts)) / 3600.0
-                let rate = calibration.effectiveDecayRate(for: needType)
-                let decay = rate * hours / 100.0
-                needs[needType] = max(0.0, savedValue - decay)
+        var byNeed: [NeedType: NeedAnchor] = [:]
+        for row in rows {
+            guard let need = row.needType else {
+                context.delete(row); continue
+            }
+            if let kept = byNeed[need] {
+                if row.anchoredAt > kept.anchoredAt {
+                    context.delete(kept); byNeed[need] = row
+                } else {
+                    context.delete(row)
+                }
             } else {
-                needs[needType] = savedValue   // manual-only: keep as saved
+                byNeed[need] = row
             }
-            // Preserve the original anchor so LWW stays stable across devices.
-            // Bumping this to `now` would make every launch overwrite the server
-            // with the locally-decayed value — last-opened-device wins.
-            lastUpdated[needType] = Date(timeIntervalSince1970: ts)
-            lastDecayTick[needType] = now
         }
+
+        // Create rows for missing needs using the in-memory defaults so the
+        // dashboard has something to show before the first user action.
+        for need in NeedType.allCases where byNeed[need] == nil {
+            let anchor = NeedAnchor(
+                needType: need,
+                value: needs[need] ?? (need.decaysAutomatically ? 0.5 : 1.0),
+                enabled: NeedPlan.essential.needs.contains(need),
+                anchoredAt: Date()
+            )
+            context.insert(anchor)
+            byNeed[need] = anchor
+        }
+
+        try? context.save()
+
+        // Hydrate caches from anchors. Decay applied later by the timer.
+        let now = Date()
+        for (need, anchor) in byNeed {
+            let decay: Double
+            if need.decaysAutomatically && anchor.enabled {
+                let elapsedHours = max(0, now.timeIntervalSince(anchor.anchoredAt) / 3600.0)
+                let rate = calibration.effectiveDecayRate(for: need)
+                decay = rate * elapsedHours / 100.0
+            } else {
+                decay = 0
+            }
+            needs[need] = max(0.0, min(1.0, anchor.value - decay))
+            lastUpdated[need] = anchor.anchoredAt
+            lastDecayTick[need] = now
+        }
+        enabledNeeds = Set(byNeed.compactMap { $0.value.enabled ? $0.key : nil })
+        alertsCache = nil
+    }
+
+    /// Get-or-create the anchor row for `need`, applying optional updates.
+    /// `bumpTimestamp = true` for user actions (the bar value is "now"),
+    /// `false` for enable/disable toggles where the value didn't change.
+    @discardableResult
+    private func upsertAnchor(for need: NeedType,
+                              value: Double? = nil,
+                              enabled: Bool? = nil,
+                              bumpTimestamp: Bool = true) -> NeedAnchor? {
+        guard let context = modelContext else { return nil }
+        let needRaw = need.rawValue
+        let descriptor = FetchDescriptor<NeedAnchor>(predicate: #Predicate { $0.needTypeRaw == needRaw })
+        let anchor: NeedAnchor
+        if let existing = (try? context.fetch(descriptor))?.first {
+            anchor = existing
+        } else {
+            anchor = NeedAnchor(needType: need)
+            context.insert(anchor)
+        }
+        if let value { anchor.value = value }
+        if let enabled { anchor.enabled = enabled }
+        if bumpTimestamp { anchor.anchoredAt = Date() }
+        try? context.save()
+        return anchor
     }
 
     // MARK: - Haptic
