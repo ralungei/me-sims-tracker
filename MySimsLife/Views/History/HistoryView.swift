@@ -31,7 +31,7 @@ struct HistoryView: View {
     private var header: some View {
         HStack(spacing: 10) {
             Text("Historial")
-                .font(.system(size: 32, weight: .heavy, design: .rounded))
+                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
                 .tracking(-0.5)
                 .foregroundStyle(SimsTheme.textPrimary)
             Spacer()

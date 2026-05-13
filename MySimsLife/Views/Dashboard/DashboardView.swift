@@ -153,7 +153,12 @@ struct DashboardView: View {
     private var tabTitle: some View {
         HStack(spacing: 10) {
             Text(selectedTab.label)
-                .font(.system(size: isCompact ? 26 : 32, weight: .heavy, design: .rounded))
+                // Semantic `.title` (≈ 28pt) scales with Dynamic Type. The
+                // old fixed 26/32 pt looked nicer but stayed put at AX
+                // sizes; this lets low-vision users see the header grow.
+                .font(.system(isCompact ? .title : .largeTitle,
+                              design: .rounded,
+                              weight: .heavy))
                 .tracking(-0.5)
                 .foregroundStyle(SimsTheme.textPrimary)
             tabTitleCounter
@@ -876,18 +881,26 @@ private struct TimeAwareGreeting: View {
     }
 
     private var greetingLine: some View {
-        HStack(spacing: 6) {
+        // `.title2` ≈ 22pt at default, scales with Dynamic Type up to
+        // ~37pt at AX1 (the global cap). Wrapping on the same line is
+        // intentional via HStack with `.lineLimit(1)` to keep one row.
+        let style: Font = .system(isCompact ? .title2 : .title,
+                                  design: .rounded,
+                                  weight: .bold)
+        return HStack(spacing: 6) {
             Text(greeting)
-                .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                .font(style)
                 .foregroundStyle(SimsTheme.textPrimary)
                 .tracking(-0.5)
             if !userName.isEmpty {
                 Text(userName)
-                    .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
+                    .font(style)
                     .foregroundStyle(SimsTheme.accentPrimary)
                     .tracking(-0.5)
             }
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
     }
 
     /// Sims-style weekday strip with today's letter highlighted (filled

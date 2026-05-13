@@ -37,7 +37,7 @@ struct AboutView: View {
                     .foregroundStyle(Color.white)
             }
             Text("Me")
-                .font(.system(size: 28, weight: .heavy, design: .rounded))
+                .font(.system(.title, design: .rounded, weight: .heavy))
                 .foregroundStyle(SimsTheme.textPrimary)
                 .tracking(-0.5)
             Text("Versión \(appVersion)")

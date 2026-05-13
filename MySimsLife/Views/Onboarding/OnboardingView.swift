@@ -55,7 +55,7 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: 14) {
             Text("Hola.")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 .foregroundStyle(SimsTheme.textPrimary)
                 .multilineTextAlignment(.center)
                 .tracking(-0.6)

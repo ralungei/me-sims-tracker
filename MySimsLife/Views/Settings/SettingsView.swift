@@ -25,7 +25,7 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         Text("Ajustes")
-                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .font(.system(.largeTitle, design: .rounded, weight: .heavy))
                             .tracking(-0.5)
                             .foregroundStyle(SimsTheme.textPrimary)
 
@@ -93,9 +93,11 @@ struct SettingsView: View {
                 .frame(width: 54, height: 54)
             if let initial {
                 Text(initial)
-                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .font(.system(.title2, design: .rounded, weight: .heavy))
                     .foregroundStyle(Color.white)
             } else {
+                // SF Symbol — size is for the glyph's geometry, not for
+                // Dynamic Type. Leaving fixed so the avatar stays circular.
                 Image(systemName: "person.fill")
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(Color.white)

@@ -39,6 +39,12 @@ struct MySimsLifeApp: App {
             ContentView()
                 .environment(store)
                 .preferredColorScheme(.dark)
+                // Cap Dynamic Type growth. Some views (the 144×148 cards,
+                // the pip-readout numbers inside bars) have hard physical
+                // constraints — letting iOS scale them to AX5 (310 %)
+                // would clip text. AX1 gives ~133 %, enough headroom for
+                // most low-vision users without breaking the Sims-2 grid.
+                .dynamicTypeSize(.medium ... .accessibility1)
                 // Tint at the WindowGroup level so system alerts /
                 // confirmationDialogs / share sheets adopt the app's navy
                 // instead of falling back to iOS's default bright blue.
