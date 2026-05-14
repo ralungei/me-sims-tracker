@@ -59,35 +59,52 @@ struct OnboardingView: View {
                 .foregroundStyle(SimsTheme.textPrimary)
                 .multilineTextAlignment(.center)
                 .tracking(-0.6)
-            Text("Lleva el tracking de tu día como en Los Sims.\nNecesidades, retos y agenda en un sitio.")
+            Text("Lleva tu día como en Los Sims.\nNecesidades, aspiraciones, botiquín y agenda en un sitio.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(SimsTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
+            // Privacy line — the main selling point of the app. Mentioning
+            // it in the welcome step means anyone who skipped the App Store
+            // description still gets the message before they invest data.
+            HStack(spacing: 6) {
+                Image(systemName: "lock.fill")
+                    .font(.system(.caption2, weight: .bold))
+                Text("Todo en tu iCloud privado. Sin servidor, sin analítica.")
+                    .font(.system(.footnote, design: .rounded, weight: .medium))
+            }
+            .foregroundStyle(SimsTheme.textDim)
+            .padding(.top, 6)
         }
     }
 
     // MARK: - Intro
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        // Slightly tighter spacing (16 vs 20) so the extra Botiquín row fits
+        // without pushing the button off-screen on smaller iPhones.
+        VStack(alignment: .leading, spacing: 16) {
             Text("Qué vas a ver")
                 .font(.system(.title3, design: .rounded, weight: .bold))
                 .foregroundStyle(SimsTheme.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 4)
+                .padding(.bottom, 2)
 
-            row("circle.hexagongrid.fill",
+            row("suit.diamond.fill",
                 "El rombo",
-                "Tu estado general. Cambia de color: verde si vas bien, rojo si vas mal.")
+                "Tu estado general. Verde si vas bien, rojo si vas mal.")
 
-            row("drop.fill",
+            row("chart.bar.fill",
                 "Necesidades",
-                "10 barras que bajan con el tiempo. Toca una y registra lo que hiciste.")
+                "Barras que bajan con el tiempo. Toca una y registra lo que hiciste.")
 
-            row("sparkles",
+            row("flag.fill",
                 "Aspiraciones",
-                "Retos que querés mantener. Diarios, semanales o tratamientos.")
+                "Retos diarios, semanales o de una vez. Suman XP al completarlos.")
+
+            row("pills.fill",
+                "Botiquín",
+                "Tratamientos, suplementos y vitaminas con recordatorios.")
 
             row("checklist",
                 "Agenda",
