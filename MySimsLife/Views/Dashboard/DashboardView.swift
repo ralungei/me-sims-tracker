@@ -498,42 +498,72 @@ struct DashboardView: View {
         if isCompact { compactHeader } else { regularHeader }
     }
 
-    /// Plumbob + three completion dots below it (aspirations, botiquín,
-    /// agenda). Each dot reads as "today's box for that tab":
+    /// Plumbob with three completion dots fanning out in an arc from its
+    /// bottom-LEFT corner — the same Sims-2 cluster geometry the old action
+    /// chips used, repurposed for daily progress. Each dot reads as
+    /// "today's box for that tab":
     /// - filled green w/ ✓ = everything done for today
     /// - hollow navy = pending items remaining
     /// - gray = nothing scheduled today for that tab
     private var plumbobWithActions: some View {
         let mood = store.overallMood
         let plumbobSize: CGFloat = isCompact ? 74 : 100
-        return VStack(spacing: 8) {
+        let dotSize:     CGFloat = isCompact ? 28 : 32
+        let radius:      CGFloat = isCompact ? 50 : 58
+        let stepDeg: Double = 48
+        let startDeg: Double = 95
+        let dropY: CGFloat = 6
+        let shiftX: CGFloat = 4
+
+        // 3 slots — aspirations, botiquín, agenda. Order: middle slot
+        // (index 1) anchors to the plumbob's bottom-left corner; the others
+        // sweep above and below it along the arc.
+        let specs: [(tab: DashboardTab, icon: String,
+                     done: Int, total: Int,
+                     accessibility: LocalizedStringKey)] = [
+            (.aspirations, "flag.fill",    aspirationDoneCount, aspirationTotal, "Aspiraciones"),
+            (.botiquin,    "pills.fill",   treatmentDoneCount,  treatmentTotal,  "Botiquín"),
+            (.agenda,      "checklist",    taskDoneCount,       taskTotal,       "Agenda")
+        ]
+
+        // Centres of each dot on the arc, relative to (0,0).
+        let centres = specs.indices.map { i -> CGPoint in
+            let θ = (startDeg + stepDeg * Double(i)) * .pi / 180
+            return CGPoint(x: CGFloat(cos(θ)) * radius,
+                           y: CGFloat(sin(θ)) * radius)
+        }
+        // Top-lefts then normalize so the bounding box starts at (0, 0).
+        let topLefts = centres.map { CGPoint(x: $0.x - dotSize / 2, y: $0.y - dotSize / 2) }
+        let minX = topLefts.map(\.x).min() ?? 0
+        let minY = topLefts.map(\.y).min() ?? 0
+        let normalized = topLefts.map { CGPoint(x: $0.x - minX, y: $0.y - minY) }
+        // Middle dot (index 1) lines up with the plumbob's bottom-LEFT corner.
+        let dot1 = CGPoint(x: normalized[1].x + dotSize / 2,
+                           y: normalized[1].y + dotSize / 2)
+        let dotsMaxX = normalized.map(\.x).max()! + dotSize
+        let dotsMaxY = normalized.map(\.y).max()! + dotSize
+
+        return ZStack(alignment: .topLeading) {
+            ForEach(specs.indices, id: \.self) { i in
+                let spec = specs[i]
+                completionDot(for: spec.tab,
+                              icon: spec.icon,
+                              done: spec.done,
+                              total: spec.total,
+                              diameter: dotSize,
+                              accessibility: spec.accessibility)
+                    .offset(x: normalized[i].x,
+                            y: normalized[i].y + plumbobSize - dot1.y + dropY)
+            }
             PlumbobView(mood: mood, compact: isCompact, size: plumbobSize)
                 .frame(width: plumbobSize, height: plumbobSize)
-            dailyCompletionDots
+                .offset(x: dot1.x + shiftX, y: 0)
         }
-    }
-
-    /// Three small circles directly under the plumbob — Sims-2 daily score
-    /// strip. Tapping a dot jumps to its tab so the user can act on what's
-    /// pending without hunting through the tab bar.
-    private var dailyCompletionDots: some View {
-        HStack(spacing: 6) {
-            completionDot(for: .aspirations,
-                          icon: "flag.fill",
-                          done: aspirationDoneCount,
-                          total: aspirationTotal,
-                          accessibility: "Aspiraciones")
-            completionDot(for: .botiquin,
-                          icon: "pills.fill",
-                          done: treatmentDoneCount,
-                          total: treatmentTotal,
-                          accessibility: "Botiquín")
-            completionDot(for: .agenda,
-                          icon: "checklist",
-                          done: taskDoneCount,
-                          total: taskTotal,
-                          accessibility: "Agenda")
-        }
+        .frame(width: max(dotsMaxX, dot1.x + shiftX + plumbobSize),
+               height: plumbobSize + dotsMaxY - dot1.y + dropY,
+               alignment: .topLeading)
+        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78),
+                       value: aspirationDoneCount + treatmentDoneCount + taskDoneCount)
     }
 
     /// One completion dot. Falls back to a disabled grey state when there's
@@ -543,11 +573,11 @@ struct DashboardView: View {
                                icon: String,
                                done: Int,
                                total: Int,
+                               diameter: CGFloat,
                                accessibility: LocalizedStringKey) -> some View {
         let disabled = total == 0
         let complete = !disabled && done == total
-        let diameter: CGFloat = isCompact ? 22 : 26
-        let iconSize: CGFloat = isCompact ? 10 : 11
+        let iconSize: CGFloat = diameter * 0.42
         return Button {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
                 selectedTab = tab
