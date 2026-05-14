@@ -192,6 +192,8 @@ struct TreatmentEditor: View {
 
                 DatePicker("Empieza el", selection: $startDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tint(SimsTheme.frame)
                     .padding(12)
                     .simsFieldStyle()
             }
@@ -233,6 +235,8 @@ struct TreatmentEditor: View {
             if hasReminder {
                 DatePicker("Hora", selection: $reminderTime, displayedComponents: .hourAndMinute)
                     .datePickerStyle(.compact)
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tint(SimsTheme.frame)
                     .padding(12)
                     .simsFieldStyle()
 

@@ -65,6 +65,12 @@ struct TaskEditor: View {
             if hasDueDate {
                 DatePicker("Fecha", selection: $dueDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
+                    // Forced dark colour scheme on the WindowGroup makes
+                    // DatePicker's built-in label render system-white.
+                    // Override to navy so it matches the rest of the
+                    // editor's body copy.
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tint(SimsTheme.frame)
                     .padding(12)
                     .simsFieldStyle()
 
@@ -79,6 +85,8 @@ struct TaskEditor: View {
                 if hasSpecificTime {
                     DatePicker("Hora", selection: $dueTime, displayedComponents: .hourAndMinute)
                         .datePickerStyle(.compact)
+                        .foregroundStyle(SimsTheme.textPrimary)
+                        .tint(SimsTheme.frame)
                         .padding(12)
                         .simsFieldStyle()
                 }

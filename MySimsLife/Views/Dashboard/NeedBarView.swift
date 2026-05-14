@@ -42,9 +42,13 @@ struct NeedBarView: View {
                         // Differentiate Without Color Alone label. ⚠ stays
                         // for critical states as an extra non-colour cue.
                         if critical {
+                            // Brick red, midway between bright moodlet red
+                            // (#E03020 — too loud against periwinkle) and
+                            // the dark boostNegative (#6A0000 — too muted).
+                            // Reads as "warning" without screaming.
                             Text("⚠")
                                 .font(.system(.caption, weight: .bold))
-                                .foregroundStyle(SimsTheme.valueColor(for: value))
+                                .foregroundStyle(Color(red: 0.65, green: 0.13, blue: 0.13))
                         }
                         Text("\(pct)%")
                             .font(.system(.caption, design: .rounded, weight: .heavy))

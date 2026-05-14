@@ -253,6 +253,8 @@ struct AspirationEditor: View {
                            displayedComponents: .hourAndMinute)
                     .datePickerStyle(.compact)
                     .labelsHidden()
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .tint(SimsTheme.frame)
                 Spacer()
                 Button { reminderTime = nil } label: {
                     Image(systemName: "xmark.circle.fill")

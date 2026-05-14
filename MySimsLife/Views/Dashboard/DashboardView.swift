@@ -45,7 +45,9 @@ struct DashboardView: View {
                 headerSection
                     .padding(.horizontal, isCompact ? 16 : 32)
                     .padding(.top, isCompact ? 6 : 10)
-                    .padding(.bottom, isCompact ? 14 : 22)
+                    // More breathing room between the VITAL spindle and
+                    // the start of the dashboard tabs — felt cramped at 14.
+                    .padding(.bottom, isCompact ? 24 : 32)
 
                 // ZStack so tabsBar is rendered AFTER (on top of) the bridge
                 // and contentArea — that way the active tab body's negative
@@ -233,8 +235,11 @@ struct DashboardView: View {
         case .needs:
             EmptyView()
         case .aspirations:
-            let donesToday = store.aspirations.filter { $0.isDoneNow() }.count
-            let total = store.aspirations.count
+            // `activeAspirations` already excludes the ones scheduled for
+            // the future — they live in the "PRÓXIMAMENTE" row, not in
+            // today's roll, so they don't count here.
+            let donesToday = store.activeAspirations.filter { $0.isDoneNow() }.count
+            let total = store.activeAspirations.count
             if total > 0 {
                 Text("\(donesToday)/\(total) hoy")
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
@@ -245,8 +250,10 @@ struct DashboardView: View {
                     .accessibilityLabel(Text("\(donesToday) de \(total) completadas hoy"))
             }
         case .agenda:
-            let done = store.tasks.filter { $0.isDone }.count
-            let total = store.tasks.count
+            // Use the same filter as the agenda list itself (visibleTasks)
+            // so the chip matches "what you see is what you can mark".
+            let done = store.visibleTasks.filter { $0.isDone }.count
+            let total = store.visibleTasks.count
             if total > 0 {
                 Text("\(done)/\(total) hechas")
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
@@ -337,11 +344,17 @@ struct DashboardView: View {
                 )
                 .overlay(alignment: .topTrailing) {
                     if alertCount > 0 {
+                        // For a 30 pt frame with a 10 pt badge, the default
+                        // top-trailing alignment lands the badge centre at
+                        // ≈(25, 5) — almost exactly on the inscribed
+                        // circle's NE perimeter point (25.6, 4.4). A tiny
+                        // nudge outward gives the half-overlapping look
+                        // native iOS app icon badges use.
                         Circle()
                             .fill(SimsTheme.simsRed)
                             .frame(width: 10, height: 10)
                             .overlay(Circle().stroke(Color.white, lineWidth: 1.4))
-                            .offset(x: -30 * 0.18, y: 30 * 0.18)
+                            .offset(x: 3, y: -3)
                     }
                 }
         }
@@ -507,13 +520,18 @@ struct DashboardView: View {
     /// - gray = nothing scheduled today for that tab
     private var plumbobWithActions: some View {
         let mood = store.overallMood
-        let plumbobSize: CGFloat = isCompact ? 74 : 100
-        let plumbobAspect: CGFloat = 1.15  // matches PlumbobView's frame()
+        // Values tuned interactively via the (now-removed) dev tuner.
+        // Regular layouts scale up by ~1.35.
+        let plumbobSize:   CGFloat = isCompact ? 59 : 80
+        let plumbobAspect: CGFloat = 1.15
         let plumbobHeight = plumbobSize * plumbobAspect
-        let dotSize: CGFloat = isCompact ? 18 : 22
-        // Perpendicular offset (in pt) from the diamond's upper-left edge
-        // to the line the dots ride on. Negative = outside the gem.
-        let outwardOffset: CGFloat = isCompact ? 8 : 10
+        let dotSize:       CGFloat = 9.9
+        let outwardOffset: CGFloat = -4.6
+        let angleDeg:      CGFloat = -15
+        let offsetX:       CGFloat = -13.1
+        let offsetY:       CGFloat = 0
+        let tStart:        CGFloat = -0.08
+        let tEnd:          CGFloat = 0.60
 
         let specs: [(tab: DashboardTab, icon: String,
                      done: Int, total: Int,
@@ -527,24 +545,35 @@ struct DashboardView: View {
         // of the plumbob's bounding box).
         let topVertex  = CGPoint(x: plumbobSize / 2, y: 0)
         let leftVertex = CGPoint(x: 0,               y: plumbobHeight / 2)
-        // Outward perpendicular unit vector for face 1. Edge direction is
-        // (left-top, +bottom); the outward (up-left) normal flips and
-        // rotates -90°: (-Δy, -Δx)/|edge|.
+        // Natural face-1 direction + length.
         let dx = leftVertex.x - topVertex.x          // -plumbobSize/2
         let dy = leftVertex.y - topVertex.y          // +plumbobHeight/2
         let edgeLen = (dx * dx + dy * dy).squareRoot()
-        let normal = CGPoint(x: -dy / edgeLen, y: -dx / edgeLen)  // points outside-up-left
+        let baseAngle = atan2(dy, dx)
+        // User-controlled rotation added to the natural face-1 angle so
+        // 0° would mean exactly along the diamond's edge. The -15° tweak
+        // tilts the dot line closer to horizontal.
+        let effectiveAngle = baseAngle + angleDeg * .pi / 180
+        let cosA = cos(effectiveAngle)
+        let sinA = sin(effectiveAngle)
+        // Outward normal = line direction rotated -90° → (sin, -cos)
+        // mapped to point away from the plumbob's centre.
+        let normal = CGPoint(x: -sinA, y:  cosA)
 
-        // Shifted line endpoints (the actual centre line the dots ride on).
-        let lineStart = CGPoint(x: topVertex.x  + normal.x * outwardOffset,
-                                y: topVertex.y  + normal.y * outwardOffset)
-        let lineEnd   = CGPoint(x: leftVertex.x + normal.x * outwardOffset,
-                                y: leftVertex.y + normal.y * outwardOffset)
+        // Centre the rotated line on the face's midpoint so the dots
+        // pivot in place when the angle slider moves, instead of swinging
+        // wildly from one endpoint.
+        let centre = CGPoint(x: (topVertex.x + leftVertex.x) / 2,
+                             y: (topVertex.y + leftVertex.y) / 2)
+        let half = edgeLen / 2
+        let lineStart = CGPoint(x: centre.x - cosA * half + normal.x * outwardOffset,
+                                y: centre.y - sinA * half + normal.y * outwardOffset)
+        let lineEnd   = CGPoint(x: centre.x + cosA * half + normal.x * outwardOffset,
+                                y: centre.y + sinA * half + normal.y * outwardOffset)
 
-        // 3 dots at t = 0.18, 0.5, 0.82 along the line. The end-padding
-        // keeps the outermost dots from sitting at the very tips of the
-        // edge where they'd visually drop off the diamond.
-        let tValues: [CGFloat] = [0.18, 0.50, 0.82]
+        // 3 dots distributed evenly between t-start and t-end. Middle
+        // dot sits at the midpoint for symmetry.
+        let tValues: [CGFloat] = [tStart, (tStart + tEnd) / 2, tEnd]
         let centres = tValues.map { t in
             CGPoint(x: lineStart.x + (lineEnd.x - lineStart.x) * t,
                     y: lineStart.y + (lineEnd.y - lineStart.y) * t)
@@ -573,7 +602,11 @@ struct DashboardView: View {
                               total: spec.total,
                               diameter: dotSize,
                               accessibility: spec.accessibility)
-                    .offset(x: dotOrigins[i].x, y: dotOrigins[i].y)
+                    // Free-floating X/Y translation on top of the
+                    // perpendicular offset — nudges the cluster left of
+                    // the gem for the final tuned position.
+                    .offset(x: dotOrigins[i].x + offsetX,
+                            y: dotOrigins[i].y + offsetY)
             }
             PlumbobView(mood: mood, compact: isCompact, size: plumbobSize)
                 .frame(width: plumbobSize, height: plumbobSize)
@@ -602,8 +635,14 @@ struct DashboardView: View {
             }
         } label: {
             ZStack {
+                // Complete fill matches the periwinkle button bg
+                // (`white @ 0.55` over the gradient → light pearly blue),
+                // so a completed dot reads as "filled like a real button"
+                // next to its outlined siblings. Check stays navy for
+                // contrast against the lighter fill.
                 Circle()
-                    .fill(complete ? SimsTheme.simsGreen : Color.white.opacity(0.20))
+                    .fill(complete ? Color.white.opacity(0.55)
+                                   : Color.white.opacity(0.20))
                     .frame(width: diameter, height: diameter)
                 Circle()
                     .stroke(disabled ? SimsTheme.textDim
@@ -612,9 +651,8 @@ struct DashboardView: View {
                     .frame(width: diameter, height: diameter)
                 Image(systemName: complete ? "checkmark" : icon)
                     .font(.system(size: iconSize, weight: .black))
-                    .foregroundStyle(complete ? Color.white
-                                              : (disabled ? SimsTheme.textDim
-                                                          : SimsTheme.frame))
+                    .foregroundStyle(disabled ? SimsTheme.textDim
+                                              : SimsTheme.frame)
             }
             .opacity(disabled ? 0.45 : 1)
         }
@@ -631,14 +669,21 @@ struct DashboardView: View {
     // MARK: - Completion counts (match `tabTitleCounter` semantics)
 
     private var aspirationDoneCount: Int {
-        store.aspirations.filter { $0.isDoneNow() }.count
+        store.activeAspirations.filter { $0.isDoneNow() }.count
     }
-    private var aspirationTotal: Int { store.aspirations.count }
+    /// Active aspirations only — excludes upcoming ones (`startedAt` in
+    /// the future). Otherwise "Hyrox in October" would block the dot
+    /// from ever completing in May.
+    private var aspirationTotal: Int { store.activeAspirations.count }
 
     private var taskDoneCount: Int {
-        store.tasks.filter { $0.isDone }.count
+        store.visibleTasks.filter { $0.isDone }.count
     }
-    private var taskTotal: Int { store.tasks.count }
+    /// Today + overdue + inbox tasks — matches what the Agenda tab renders.
+    /// Using `store.tasks` here would count tasks scheduled for next week,
+    /// next month, etc., so the dot could never reach "all done" until the
+    /// user reached into the future to tick those too.
+    private var taskTotal: Int { store.visibleTasks.count }
 
     private var treatmentDoneCount: Int {
         treatments.filter { $0.isActive && $0.isTakenToday() }.count
@@ -701,11 +746,16 @@ struct DashboardView: View {
         let fillCount = Int((Double(half) * abs(signedAmount)).rounded())
         let posColor = SimsTheme.valueColor(for: 0.85)
         let negColor = SimsTheme.valueColor(for: 0.10)
-        let track = Color.white.opacity(0.10)
-        // Fixed pip dimensions — bar width stays constant regardless of the
-        // available space so it doesn't stretch on wider devices.
+        // Unfilled pip colour — dim navy reads on the periwinkle bg without
+        // needing the old dark rounded-rectangle container, which was
+        // hiding the spindle silhouette inside a rectangular frame.
+        let track = SimsTheme.frame.opacity(0.30)
+        // Sims-2 spindle bar: pips taper from tall at the ends to short
+        // in the middle. Saturated colours sit at the extremes where the
+        // bar visually swells; the centre pivot is narrowed to a pinch.
         let pipWidth:  CGFloat = isCompact ? 12 : 14
-        let pipHeight: CGFloat = isCompact ? 12 : 10
+        let pipHeightMax: CGFloat = isCompact ? 16 : 18
+        let pipHeightMin: CGFloat = isCompact ? 7 : 8
 
         func isFilled(_ index: Int) -> Bool {
             if abs(signedAmount) < 0.005 { return false }
@@ -723,35 +773,46 @@ struct DashboardView: View {
             ))
         }
 
-        return HStack(spacing: 2) {
+        /// Per-pip height — distance from the centre pivot (between
+        /// indices 5 and 6) maps to a lerp between min and max heights.
+        /// Pip 0 and pip 11 hit max; pips 5 and 6 hit min.
+        func pipHeight(_ index: Int) -> CGFloat {
+            let pivot = Double(segments - 1) / 2.0  // 5.5
+            let distance = abs(Double(index) - pivot)
+            let maxDistance = pivot                  // 5.5
+            let t = CGFloat(distance / maxDistance)  // 0 at centre, 1 at ends
+            return pipHeightMin + (pipHeightMax - pipHeightMin) * t
+        }
+
+        return HStack(alignment: .center, spacing: 2) {
             ForEach(0..<segments, id: \.self) { i in
                 let isFirst = i == 0
                 let isLast  = i == segments - 1
                 let shape = UnevenRoundedRectangle(
-                    topLeadingRadius:     isFirst ? 6 : 1,
-                    bottomLeadingRadius:  isFirst ? 6 : 1,
-                    bottomTrailingRadius: isLast  ? 6 : 1,
-                    topTrailingRadius:    isLast  ? 6 : 1
+                    topLeadingRadius:     isFirst ? 4 : 1,
+                    bottomLeadingRadius:  isFirst ? 4 : 1,
+                    bottomTrailingRadius: isLast  ? 4 : 1,
+                    topTrailingRadius:    isLast  ? 4 : 1
                 )
                 shape
                     .fill(fillStyle(i))
-                    .frame(width: pipWidth, height: pipHeight)
+                    .frame(width: pipWidth, height: pipHeight(i))
                     .overlay(alignment: .trailing) {
-                        // Center divider: white tick between pip 5 and 6.
+                        // Centre divider: white tick between pip 5 and 6,
+                        // tall enough to overhang the narrow centre pips
+                        // and read as the spindle's pivot point.
                         if i == half - 1 {
                             Rectangle()
                                 .fill(Color.white)
-                                .frame(width: 2, height: pipHeight + 4)
+                                .frame(width: 2, height: pipHeightMax + 4)
                                 .offset(x: 1)
                         }
                     }
             }
         }
-        .padding(2)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(SimsTheme.frame)
-        )
+        // No rectangular container — the pip heights themselves draw the
+        // spindle silhouette. Wrapping the whole thing in a rounded
+        // navy rect (the old design) hid the shape inside a box.
         .fixedSize()
         .simsAnimation(.easeInOut(duration: 0.3), value: signedAmount)
         // VITAL bar: the 12 pips and the centre tick are decoration. Fold the
