@@ -548,6 +548,16 @@
         }
       }
     },
+    "Atrás": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
     "Avisar cuando una necesidad esté baja": {
       "extractionState": "stale",
       "localizations": {
@@ -1362,6 +1372,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick a plan or adjust category by category. You can change it anytime."
+          }
+        }
+      }
+    },
+    "Elige un plan o ajústalo categoría a categoría. Puedes cambiarlo cuando quieras.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a plan or tune it category by category. You can change it whenever."
           }
         }
       }
@@ -2287,6 +2307,26 @@
         }
       }
     },
+    "Paso %lld de %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of %lld"
+          }
+        }
+      }
+    },
+    "Paso anterior": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous step"
+          }
+        }
+      }
+    },
     "Pequeña": {
       "localizations": {
         "en": {
@@ -2405,6 +2445,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dosage, brand, instructions…"
+          }
+        }
+      }
+    },
+    "Privado. iCloud. Sin servidor ni analítica.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private. iCloud. No server, no analytics."
           }
         }
       }
