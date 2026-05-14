@@ -560,7 +560,10 @@ struct DashboardView: View {
     /// just with action icons (Estable, categorías, notificaciones).
     private var plumbobWithActions: some View {
         let mood = store.overallMood
-        let plumbobSize: CGFloat = isCompact ? 56 : 78
+        // Bumped from 56/78 → 74/100 now that the arc cluster is gone.
+        // Without chips to share the corner, the plumbob can dominate
+        // the header as the mood ornament it's meant to be.
+        let plumbobSize: CGFloat = isCompact ? 74 : 100
         let chipSize: CGFloat = isCompact ? 37 : 43
         let radius: CGFloat = isCompact ? 52 : 58
         let stepDeg: Double = 48
