@@ -295,10 +295,10 @@ struct DashboardView: View {
                 .fill(SimsTheme.frame)
                 .frame(height: 1.5)
 
-            // Tabs row, leading-aligned. The trailing area used to host the
-            // "A neutro" reset pill, but that's a needs-specific action and
-            // now lives next to the "Necesidades" title (same pattern as the
-            // "+" on the other tabs). Tabs alone here keep the row clean.
+            // Tabs leading + notifications bell trailing. The bell is a
+            // global control (alerts apply across every tab) and lives in
+            // this row instead of the plumbob arc cluster — easier to reach,
+            // more obvious as an affordance.
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(DashboardTab.allCases) { tab in
                     sims2Tab(tab,
@@ -308,11 +308,47 @@ struct DashboardView: View {
                              radius: tabRadius)
                 }
                 Spacer(minLength: 8)
+                tabsBarBellButton
+                    .padding(.bottom, 6)
             }
             .padding(.horizontal, isCompact ? 16 : 32)
         }
         .frame(height: tabHeight)
         .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78), value: selectedTab)
+    }
+
+    /// Notifications bell anchored at the trailing edge of the tabs row.
+    /// Used to live in the plumbob arc — moved here so it stays at thumb
+    /// distance and reads as part of the tab chrome instead of decoration.
+    private var tabsBarBellButton: some View {
+        let alertCount = visibleAlerts.count
+        let icon: String = alertCount > 0 ? "bell.badge.fill" : "bell"
+        return Button {
+            showAlerts = true
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(SimsTheme.frame)
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.55))
+                        .overlay(Circle().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
+                )
+                .overlay(alignment: .topTrailing) {
+                    if alertCount > 0 {
+                        Circle()
+                            .fill(SimsTheme.simsRed)
+                            .frame(width: 10, height: 10)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 1.4))
+                            .offset(x: -30 * 0.18, y: 30 * 0.18)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(alertCount > 0
+                                 ? "Ver \(alertCount) notificaciones"
+                                 : "Notificaciones"))
     }
 
     /// Pill that parks every enabled need at 50 %. Lives on the right edge
@@ -443,24 +479,15 @@ struct DashboardView: View {
         let action: () -> Void
     }
 
-    /// Global controls — always visible regardless of tab. The slots are
-    /// fixed in space (`nil` = skip) so removing a button doesn't shift
-    /// the remaining ones along the arc. Slots 0 + 1 are intentionally
-    /// empty now: the "A neutro" reset and the categories configurator
-    /// both moved to the right side of the Necesidades title row,
-    /// matching how the other tabs put their action buttons there.
+    /// Global controls — used to surround the plumbob with an action arc.
+    /// All three slots are nil now:
+    /// - slot 0: "A neutro" → moved to Necesidades title row
+    /// - slot 1: sliders/categories → moved to Necesidades title row
+    /// - slot 2: bell/notifications → moved to the tabs bar trailing edge
+    /// The arc layout machinery stays so the plumbob's position math
+    /// doesn't shift; nil slots are skipped at render time.
     private var arcActions: [ArcAction?] {
-        let alertCount = visibleAlerts.count
-        return [
-            nil, // slot 0 — empty
-            nil, // slot 1 — empty (was sliders/categories, moved to title)
-            ArcAction(systemName: alertCount > 0 ? "bell.badge.fill" : "bell",
-                      accessibility: alertCount > 0
-                          ? "Ver \(alertCount) notificaciones"
-                          : "Notificaciones",
-                      badge: alertCount > 0,
-                      action: { showAlerts = true })
-        ]
+        [nil, nil, nil]
     }
 
     /// One Sims-style icon button: circle, navy frame, semitransparent
