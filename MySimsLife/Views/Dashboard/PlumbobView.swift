@@ -48,7 +48,9 @@ struct Plumbob3DScene {
         // Specular kept as a SMALL tight white highlight ONLY (low
         // shininess number → bigger spot, high → tiny spot) — too much
         // and the gem looks washed; none at all and it looks like felt.
-        let outer = octahedron(h: 1.55, r: 0.78, segments: 8)
+        // 4 segments → classic 8-facet diamond (4 top + 4 bottom). The
+        // 8-segment version felt too "smooth", less like a Sims gem.
+        let outer = octahedron(h: 1.55, r: 0.78, segments: 4)
         let outerMat = SCNMaterial()
         outerMat.lightingModel = .lambert
         outerMat.diffuse.contents  = PlatformColor(deepened(color))
