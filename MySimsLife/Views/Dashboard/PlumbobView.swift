@@ -1,7 +1,7 @@
 import SwiftUI
 import SceneKit
 
-// MARK: - Mood Plumbob — procedural 3D octahedron via SceneKit
+// MARK: - Mood Plumbob — procedural 3D bipyramid via SceneKit
 
 struct PlumbobView: View {
     let mood: Double
@@ -12,14 +12,31 @@ struct PlumbobView: View {
     private var orbSize: CGFloat { size ?? (compact ? 60 : 78) }
 
     var body: some View {
-        Plumbob3DScene(color: color)
-            .frame(width: orbSize, height: orbSize * 1.15)
-            // VITAL plumbob. Without a label VoiceOver just says "image" —
-            // give it a name + the current mood description so blind users
-            // also get the at-a-glance vibe the colour communicates visually.
-            .accessibilityElement()
-            .accessibilityLabel(Text("VITAL"))
-            .accessibilityValue(Text(mood.accessibilityNeedValue))
+        ZStack {
+            // Soft halo behind the gem — radial gradient blob that ties
+            // the plumbob to its mood colour without competing with the
+            // facets. Sized larger than the gem so it leaks out around it.
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [color.opacity(0.45), color.opacity(0)],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: orbSize * 0.7
+                    )
+                )
+                .frame(width: orbSize * 1.6, height: orbSize * 1.6)
+                .blur(radius: 6)
+
+            Plumbob3DScene(color: color)
+                .frame(width: orbSize, height: orbSize * 1.4)
+        }
+        // VITAL plumbob. Without a label VoiceOver just says "image" —
+        // give it a name + the current mood description so blind users
+        // also get the at-a-glance vibe the colour communicates visually.
+        .accessibilityElement()
+        .accessibilityLabel(Text("VITAL"))
+        .accessibilityValue(Text(mood.accessibilityNeedValue))
     }
 }
 
@@ -35,44 +52,69 @@ struct Plumbob3DScene {
     let color: Color
 
     private static let plumbobNodeName = "plumbob"
+    private static let coreNodeName    = "plumbobCore"
 
     private func makeScene() -> SCNScene {
         let scene = SCNScene()
         scene.background.contents = PlatformColor.clear
 
-        let geometry = octahedron()
-        let material = SCNMaterial()
-        material.lightingModel = .blinn
-        material.diffuse.contents = PlatformColor(color)
-        material.specular.contents = PlatformColor.white
-        // Concentrated highlight + barely-there inner glow so the facets read
-        // their own light/shadow gradient rather than washing out flat.
-        material.shininess = 0.45
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.06)
-        geometry.firstMaterial = material
+        // Outer gem — coloured, glossy crystal.
+        let outer = octahedron(h: 2.2, r: 0.68, segments: 8)
+        let outerMat = SCNMaterial()
+        outerMat.lightingModel = .blinn
+        outerMat.diffuse.contents = PlatformColor(color)
+        outerMat.specular.contents = PlatformColor.white
+        outerMat.shininess = 0.85           // tighter, more crystal-like highlight
+        outerMat.emission.contents = PlatformColor(color).withAlphaComponent(0.10)
+        outer.firstMaterial = outerMat
 
-        let node = SCNNode(geometry: geometry)
+        let node = SCNNode(geometry: outer)
         node.name = Self.plumbobNodeName
         scene.rootNode.addChildNode(node)
 
+        // Inner "core" — slightly smaller, near-white gem with strong
+        // emission. Visible through the slight translucency of the outer
+        // facets as a bright vertical sliver — the characteristic plumbob
+        // highlight strip without needing a textured face.
+        let core = octahedron(h: 1.95, r: 0.18, segments: 6)
+        let coreMat = SCNMaterial()
+        coreMat.lightingModel = .blinn
+        coreMat.diffuse.contents = PlatformColor.white
+        coreMat.emission.contents = PlatformColor(color).withAlphaComponent(0.85)
+        core.firstMaterial = coreMat
+        let coreNode = SCNNode(geometry: core)
+        coreNode.name = Self.coreNodeName
+        node.addChildNode(coreNode)
+
+        // Slow Y-axis spin so the highlight sweeps around continuously.
         let spin = CABasicAnimation(keyPath: "rotation")
         spin.fromValue = SCNVector4(0, 1, 0, 0)
-        spin.toValue = SCNVector4(0, 1, 0, Float.pi * 2)
-        spin.duration = 12
+        spin.toValue   = SCNVector4(0, 1, 0, Float.pi * 2)
+        spin.duration  = 9
         spin.repeatCount = .infinity
         node.addAnimation(spin, forKey: "spin")
 
+        // Gentle vertical bob — Sims-style "hovering" feel.
+        let bob = CABasicAnimation(keyPath: "position.y")
+        bob.fromValue = -0.08
+        bob.toValue   = 0.08
+        bob.duration  = 2.4
+        bob.autoreverses = true
+        bob.repeatCount = .infinity
+        bob.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        node.addAnimation(bob, forKey: "bob")
+
         let camera = SCNCamera()
-        camera.fieldOfView = 35
+        camera.fieldOfView = 32
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 0, 5)
+        cameraNode.position = SCNVector3(0, 0, 5.6)
         scene.rootNode.addChildNode(cameraNode)
 
-        // Strong key light from upper-right hits one set of facets bright.
+        // Strong key light from upper-right.
         let key = SCNLight()
         key.type = .directional
-        key.intensity = 1200
+        key.intensity = 1400
         key.color = PlatformColor.white
         let keyNode = SCNNode()
         keyNode.light = key
@@ -80,8 +122,7 @@ struct Plumbob3DScene {
         keyNode.eulerAngles = SCNVector3(-0.5, 0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
-        // Cool blue rim light from the opposite side — gives the shadowed
-        // facets a subtle blue tint instead of dead-flat dark.
+        // Cool blue rim light from the opposite side.
         let fill = SCNLight()
         fill.type = .directional
         fill.intensity = 320
@@ -92,10 +133,9 @@ struct Plumbob3DScene {
         fillNode.eulerAngles = SCNVector3(0.3, -0.6, 0)
         scene.rootNode.addChildNode(fillNode)
 
-        // Ambient kept low so the light/shadow contrast survives.
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 70
+        ambient.intensity = 60
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
@@ -103,13 +143,11 @@ struct Plumbob3DScene {
         return scene
     }
 
-    /// Hexagonal bipyramid: 6 segments → 12 facets. Equator near-circular so silhouette
-    /// stays even while rotating (4 segments looked like it shrank at 45°).
-    private func octahedron() -> SCNGeometry {
-        let h: Float = 1.55
-        let r: Float = 0.78
-        let segments = 8
-
+    /// Hexagonal bipyramid: `segments` facets at the equator → 2×segments
+    /// triangular faces. Equator near-circular so silhouette stays even
+    /// while rotating. Elongated proportions (h ≫ r) match the Sims-2
+    /// vertical-diamond plumbob silhouette.
+    private func octahedron(h: Float, r: Float, segments: Int) -> SCNGeometry {
         let topApex = SCNVector3(0,  h, 0)
         let botApex = SCNVector3(0, -h, 0)
 
@@ -172,7 +210,12 @@ private extension Plumbob3DScene {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
               let material = node.geometry?.firstMaterial else { return }
         material.diffuse.contents = PlatformColor(color)
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.06)
+        material.emission.contents = PlatformColor(color).withAlphaComponent(0.10)
+        // Keep the inner core tinted with the mood colour too.
+        if let core = view.scene?.rootNode.childNode(withName: Self.coreNodeName, recursively: true),
+           let coreMat = core.geometry?.firstMaterial {
+            coreMat.emission.contents = PlatformColor(color).withAlphaComponent(0.85)
+        }
     }
 }
 
