@@ -12,25 +12,11 @@ struct PlumbobView: View {
     private var orbSize: CGFloat { size ?? (compact ? 60 : 78) }
 
     var body: some View {
-        ZStack {
-            // Subtle halo — kept low opacity so it nudges the eye toward
-            // the gem without washing it out. Bumping above 0.25 made
-            // the facets disappear into the glow.
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [color.opacity(0.22), color.opacity(0)],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: orbSize * 0.6
-                    )
-                )
-                .frame(width: orbSize * 1.5, height: orbSize * 1.5)
-                .blur(radius: 4)
-
-            Plumbob3DScene(color: color)
-                .frame(width: orbSize, height: orbSize * 1.15)
-        }
+        // Halo entirely removed — was making the gem read as a glow
+        // instead of a hard-faceted crystal. The plumbob needs sharp
+        // edges on the periwinkle background to register as 3D.
+        Plumbob3DScene(color: color)
+            .frame(width: orbSize, height: orbSize * 1.15)
         // VITAL plumbob. Without a label VoiceOver just says "image" —
         // give it a name + the current mood description so blind users
         // also get the at-a-glance vibe the colour communicates visually.
@@ -57,17 +43,18 @@ struct Plumbob3DScene {
         let scene = SCNScene()
         scene.background.contents = PlatformColor.clear
 
-        // Single gem, original proportions. The inner-core idea washed
-        // the whole thing out — Blinn shading with low emission + tight
-        // shininess already gives the bright sliver naturally on the
-        // edges where the light hits.
+        // Cel-shaded look: Lambert (no specular falloff) + a deeper,
+        // more saturated diffuse so the gem reads against periwinkle.
+        // Specular kept as a SMALL tight white highlight ONLY (low
+        // shininess number → bigger spot, high → tiny spot) — too much
+        // and the gem looks washed; none at all and it looks like felt.
         let outer = octahedron(h: 1.55, r: 0.78, segments: 8)
         let outerMat = SCNMaterial()
-        outerMat.lightingModel = .blinn
-        outerMat.diffuse.contents = PlatformColor(color)
+        outerMat.lightingModel = .lambert
+        outerMat.diffuse.contents  = PlatformColor(deepened(color))
         outerMat.specular.contents = PlatformColor.white
-        outerMat.shininess = 0.80           // tight, crystal-like highlight
-        outerMat.emission.contents = PlatformColor(color).withAlphaComponent(0.04)
+        outerMat.shininess = 0.95           // tiny pinpoint highlight
+        outerMat.emission.contents = PlatformColor.clear
         outer.firstMaterial = outerMat
 
         let node = SCNNode(geometry: outer)
@@ -99,12 +86,13 @@ struct Plumbob3DScene {
         cameraNode.position = SCNVector3(0, 0, 5.6)
         scene.rootNode.addChildNode(cameraNode)
 
-        // Strong key light from upper-right. The shadow facets need to
-        // stay dark for the gem to read as faceted — don't push fill /
-        // ambient too high or it all flattens.
+        // Single strong key light — no fill, no ambient. Lambert + a
+        // bare key gives the brutal light/shadow contrast Sims plumbobs
+        // have: lit facets are saturated colour, shadow facets are
+        // almost black. Any ambient kills it.
         let key = SCNLight()
         key.type = .directional
-        key.intensity = 1200
+        key.intensity = 1100
         key.color = PlatformColor.white
         let keyNode = SCNNode()
         keyNode.light = key
@@ -112,22 +100,11 @@ struct Plumbob3DScene {
         keyNode.eulerAngles = SCNVector3(-0.5, 0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
-        // Cool blue rim light from the opposite side — barely there,
-        // just enough to tint the shadow facets without filling them.
-        let fill = SCNLight()
-        fill.type = .directional
-        fill.intensity = 220
-        fill.color = PlatformColor(red: 0.55, green: 0.65, blue: 0.95, alpha: 1)
-        let fillNode = SCNNode()
-        fillNode.light = fill
-        fillNode.position = SCNVector3(-3, -1, 2)
-        fillNode.eulerAngles = SCNVector3(0.3, -0.6, 0)
-        scene.rootNode.addChildNode(fillNode)
-
-        // Ambient kept low so light/shadow contrast survives.
+        // Very low ambient just so shadow facets aren't 100 % black —
+        // 30 keeps the silhouette readable while preserving contrast.
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 50
+        ambient.intensity = 30
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
@@ -201,9 +178,27 @@ private extension Plumbob3DScene {
     func applyColor(to view: SCNView) {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
               let material = node.geometry?.firstMaterial else { return }
-        material.diffuse.contents = PlatformColor(color)
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.04)
+        material.diffuse.contents = PlatformColor(deepened(color))
     }
+}
+
+// MARK: - Colour helpers
+
+/// Pull the diffuse colour a bit darker + more saturated so the gem
+/// reads against the periwinkle background. Sims plumbob greens are
+/// significantly more vivid than the calibrated bar palette tones.
+private func deepened(_ color: Color) -> Color {
+    let ui = PlatformColor(color)
+    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+    #if os(macOS)
+    ui.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+    #else
+    ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+    #endif
+    // Multiply each channel by 0.78 to darken the lit colour. The
+    // single key light pushes lit facets back up close to the original
+    // hue, while shadow facets go properly dim.
+    return Color(red: r * 0.78, green: g * 0.78, blue: b * 0.78)
 }
 
 // MARK: - SCNVector3 math
