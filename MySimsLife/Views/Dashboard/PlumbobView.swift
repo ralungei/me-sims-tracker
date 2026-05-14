@@ -13,23 +13,23 @@ struct PlumbobView: View {
 
     var body: some View {
         ZStack {
-            // Soft halo behind the gem — radial gradient blob that ties
-            // the plumbob to its mood colour without competing with the
-            // facets. Sized larger than the gem so it leaks out around it.
+            // Subtle halo — kept low opacity so it nudges the eye toward
+            // the gem without washing it out. Bumping above 0.25 made
+            // the facets disappear into the glow.
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [color.opacity(0.45), color.opacity(0)],
+                        colors: [color.opacity(0.22), color.opacity(0)],
                         center: .center,
                         startRadius: 0,
-                        endRadius: orbSize * 0.7
+                        endRadius: orbSize * 0.6
                     )
                 )
-                .frame(width: orbSize * 1.6, height: orbSize * 1.6)
-                .blur(radius: 6)
+                .frame(width: orbSize * 1.5, height: orbSize * 1.5)
+                .blur(radius: 4)
 
             Plumbob3DScene(color: color)
-                .frame(width: orbSize, height: orbSize * 1.4)
+                .frame(width: orbSize, height: orbSize * 1.15)
         }
         // VITAL plumbob. Without a label VoiceOver just says "image" —
         // give it a name + the current mood description so blind users
@@ -52,39 +52,27 @@ struct Plumbob3DScene {
     let color: Color
 
     private static let plumbobNodeName = "plumbob"
-    private static let coreNodeName    = "plumbobCore"
 
     private func makeScene() -> SCNScene {
         let scene = SCNScene()
         scene.background.contents = PlatformColor.clear
 
-        // Outer gem — coloured, glossy crystal.
-        let outer = octahedron(h: 2.2, r: 0.68, segments: 8)
+        // Single gem, original proportions. The inner-core idea washed
+        // the whole thing out — Blinn shading with low emission + tight
+        // shininess already gives the bright sliver naturally on the
+        // edges where the light hits.
+        let outer = octahedron(h: 1.55, r: 0.78, segments: 8)
         let outerMat = SCNMaterial()
         outerMat.lightingModel = .blinn
         outerMat.diffuse.contents = PlatformColor(color)
         outerMat.specular.contents = PlatformColor.white
-        outerMat.shininess = 0.85           // tighter, more crystal-like highlight
-        outerMat.emission.contents = PlatformColor(color).withAlphaComponent(0.10)
+        outerMat.shininess = 0.80           // tight, crystal-like highlight
+        outerMat.emission.contents = PlatformColor(color).withAlphaComponent(0.04)
         outer.firstMaterial = outerMat
 
         let node = SCNNode(geometry: outer)
         node.name = Self.plumbobNodeName
         scene.rootNode.addChildNode(node)
-
-        // Inner "core" — slightly smaller, near-white gem with strong
-        // emission. Visible through the slight translucency of the outer
-        // facets as a bright vertical sliver — the characteristic plumbob
-        // highlight strip without needing a textured face.
-        let core = octahedron(h: 1.95, r: 0.18, segments: 6)
-        let coreMat = SCNMaterial()
-        coreMat.lightingModel = .blinn
-        coreMat.diffuse.contents = PlatformColor.white
-        coreMat.emission.contents = PlatformColor(color).withAlphaComponent(0.85)
-        core.firstMaterial = coreMat
-        let coreNode = SCNNode(geometry: core)
-        coreNode.name = Self.coreNodeName
-        node.addChildNode(coreNode)
 
         // Slow Y-axis spin so the highlight sweeps around continuously.
         let spin = CABasicAnimation(keyPath: "rotation")
@@ -111,10 +99,12 @@ struct Plumbob3DScene {
         cameraNode.position = SCNVector3(0, 0, 5.6)
         scene.rootNode.addChildNode(cameraNode)
 
-        // Strong key light from upper-right.
+        // Strong key light from upper-right. The shadow facets need to
+        // stay dark for the gem to read as faceted — don't push fill /
+        // ambient too high or it all flattens.
         let key = SCNLight()
         key.type = .directional
-        key.intensity = 1400
+        key.intensity = 1200
         key.color = PlatformColor.white
         let keyNode = SCNNode()
         keyNode.light = key
@@ -122,10 +112,11 @@ struct Plumbob3DScene {
         keyNode.eulerAngles = SCNVector3(-0.5, 0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
-        // Cool blue rim light from the opposite side.
+        // Cool blue rim light from the opposite side — barely there,
+        // just enough to tint the shadow facets without filling them.
         let fill = SCNLight()
         fill.type = .directional
-        fill.intensity = 320
+        fill.intensity = 220
         fill.color = PlatformColor(red: 0.55, green: 0.65, blue: 0.95, alpha: 1)
         let fillNode = SCNNode()
         fillNode.light = fill
@@ -133,9 +124,10 @@ struct Plumbob3DScene {
         fillNode.eulerAngles = SCNVector3(0.3, -0.6, 0)
         scene.rootNode.addChildNode(fillNode)
 
+        // Ambient kept low so light/shadow contrast survives.
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 60
+        ambient.intensity = 50
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
@@ -210,12 +202,7 @@ private extension Plumbob3DScene {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
               let material = node.geometry?.firstMaterial else { return }
         material.diffuse.contents = PlatformColor(color)
-        material.emission.contents = PlatformColor(color).withAlphaComponent(0.10)
-        // Keep the inner core tinted with the mood colour too.
-        if let core = view.scene?.rootNode.childNode(withName: Self.coreNodeName, recursively: true),
-           let coreMat = core.geometry?.firstMaterial {
-            coreMat.emission.contents = PlatformColor(color).withAlphaComponent(0.85)
-        }
+        material.emission.contents = PlatformColor(color).withAlphaComponent(0.04)
     }
 }
 
