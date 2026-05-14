@@ -171,35 +171,46 @@ struct DashboardView: View {
                        value: selectedTab)
     }
 
-    /// Small circular "+" affordance, right-aligned in the title row. Only
-    /// appears once the tab has at least one item — when empty, the big
-    /// dashed "Nueva X" card in the row IS the CTA, so a header button would
-    /// be redundant. Mirrors the iOS Reminders / Notes pattern.
+    /// Right-aligned action buttons in the title row. Each tab has its own
+    /// affordances — for `.needs` it's the "A neutro" reset + the categories
+    /// configurator (both need-specific actions). For content tabs, it's the
+    /// "+" to create a new item once the list is non-empty (when empty, the
+    /// big dashed "Nueva X" card in the row IS the CTA, so a header button
+    /// would be redundant). Mirrors the iOS Reminders / Notes pattern.
     @ViewBuilder
     private var tabTitleAddButton: some View {
         switch selectedTab {
         case .needs:
-            EmptyView()
+            HStack(spacing: 8) {
+                resetToNeutralButton
+                iconButton("slider.horizontal.3", "Configurar necesidades") {
+                    showCategoriesEditor = true
+                }
+            }
         case .aspirations:
             if !store.aspirations.isEmpty {
-                addButton("Nueva aspiración") { showNewAspiration = true }
+                iconButton("plus", "Nueva aspiración") { showNewAspiration = true }
             }
         case .agenda:
             if !store.tasks.isEmpty {
-                addButton("Nueva tarea") { showNewTask = true }
+                iconButton("plus", "Nueva tarea") { showNewTask = true }
             }
         case .botiquin:
             let hasAny = treatments.contains(where: \.isActive)
             if hasAny {
-                addButton("Nuevo tratamiento") { showNewTreatment = true }
+                iconButton("plus", "Nuevo tratamiento") { showNewTreatment = true }
             }
         }
     }
 
-    private func addButton(_ accessibility: LocalizedStringKey,
-                           action: @escaping () -> Void) -> some View {
+    /// Generic Sims-style icon-only button in the title row. The "+" used to
+    /// live here as a hand-rolled view; now it shares geometry with the
+    /// needs-tab configurator so both buttons sit at the same 30×30 size.
+    private func iconButton(_ systemName: String,
+                            _ accessibility: LocalizedStringKey,
+                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: "plus")
+            Image(systemName: systemName)
                 .font(.system(size: 13, weight: .heavy))
                 .foregroundStyle(SimsTheme.frame)
                 .frame(width: 30, height: 30)
@@ -284,9 +295,10 @@ struct DashboardView: View {
                 .fill(SimsTheme.frame)
                 .frame(height: 1.5)
 
-            // Tabs row, leading-aligned. Bodies cover the line in their x
-            // range; line is naked in the Spacer area to the right — that
-            // gap is where the trailing "Marcar a neutro" pill sits.
+            // Tabs row, leading-aligned. The trailing area used to host the
+            // "A neutro" reset pill, but that's a needs-specific action and
+            // now lives next to the "Necesidades" title (same pattern as the
+            // "+" on the other tabs). Tabs alone here keep the row clean.
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(DashboardTab.allCases) { tab in
                     sims2Tab(tab,
@@ -296,8 +308,6 @@ struct DashboardView: View {
                              radius: tabRadius)
                 }
                 Spacer(minLength: 8)
-                resetToNeutralButton
-                    .padding(.bottom, 6)
             }
             .padding(.horizontal, isCompact ? 16 : 32)
         }
@@ -435,17 +445,15 @@ struct DashboardView: View {
 
     /// Global controls — always visible regardless of tab. The slots are
     /// fixed in space (`nil` = skip) so removing a button doesn't shift
-    /// the remaining ones along the arc. Slot 0 (bottom, closest to the
-    /// plumbob) is intentionally empty since the "neutro" reset moved to
-    /// the tabs bar.
+    /// the remaining ones along the arc. Slots 0 + 1 are intentionally
+    /// empty now: the "A neutro" reset and the categories configurator
+    /// both moved to the right side of the Necesidades title row,
+    /// matching how the other tabs put their action buttons there.
     private var arcActions: [ArcAction?] {
         let alertCount = visibleAlerts.count
         return [
-            nil, // slot 0 — left empty
-            ArcAction(systemName: "slider.horizontal.3",
-                      accessibility: "Configurar necesidades",
-                      badge: false,
-                      action: { showCategoriesEditor = true }),
+            nil, // slot 0 — empty
+            nil, // slot 1 — empty (was sliders/categories, moved to title)
             ArcAction(systemName: alertCount > 0 ? "bell.badge.fill" : "bell",
                       accessibility: alertCount > 0
                           ? "Ver \(alertCount) notificaciones"
