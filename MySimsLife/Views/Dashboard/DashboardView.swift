@@ -498,26 +498,23 @@ struct DashboardView: View {
         if isCompact { compactHeader } else { regularHeader }
     }
 
-    /// Plumbob with three completion dots fanning out in an arc from its
-    /// bottom-LEFT corner — the same Sims-2 cluster geometry the old action
-    /// chips used, repurposed for daily progress. Each dot reads as
-    /// "today's box for that tab":
+    /// Plumbob with three completion dots running along its UPPER-LEFT
+    /// edge — the diamond's "face 1" diagonal (top vertex → left vertex).
+    /// Dots descend in the same slope as the edge, offset slightly outside
+    /// so they don't overlap the gem. Each reads as "today's box":
     /// - filled green w/ ✓ = everything done for today
     /// - hollow navy = pending items remaining
     /// - gray = nothing scheduled today for that tab
     private var plumbobWithActions: some View {
         let mood = store.overallMood
         let plumbobSize: CGFloat = isCompact ? 74 : 100
-        let dotSize:     CGFloat = isCompact ? 28 : 32
-        let radius:      CGFloat = isCompact ? 50 : 58
-        let stepDeg: Double = 48
-        let startDeg: Double = 95
-        let dropY: CGFloat = 6
-        let shiftX: CGFloat = 4
+        let plumbobAspect: CGFloat = 1.15  // matches PlumbobView's frame()
+        let plumbobHeight = plumbobSize * plumbobAspect
+        let dotSize: CGFloat = isCompact ? 18 : 22
+        // Perpendicular offset (in pt) from the diamond's upper-left edge
+        // to the line the dots ride on. Negative = outside the gem.
+        let outwardOffset: CGFloat = isCompact ? 8 : 10
 
-        // 3 slots — aspirations, botiquín, agenda. Order: middle slot
-        // (index 1) anchors to the plumbob's bottom-left corner; the others
-        // sweep above and below it along the arc.
         let specs: [(tab: DashboardTab, icon: String,
                      done: Int, total: Int,
                      accessibility: LocalizedStringKey)] = [
@@ -526,22 +523,46 @@ struct DashboardView: View {
             (.agenda,      "checklist",    taskDoneCount,       taskTotal,       "Agenda")
         ]
 
-        // Centres of each dot on the arc, relative to (0,0).
-        let centres = specs.indices.map { i -> CGPoint in
-            let θ = (startDeg + stepDeg * Double(i)) * .pi / 180
-            return CGPoint(x: CGFloat(cos(θ)) * radius,
-                           y: CGFloat(sin(θ)) * radius)
+        // Face-1 endpoints in the plumbob's local frame (origin = top-left
+        // of the plumbob's bounding box).
+        let topVertex  = CGPoint(x: plumbobSize / 2, y: 0)
+        let leftVertex = CGPoint(x: 0,               y: plumbobHeight / 2)
+        // Outward perpendicular unit vector for face 1. Edge direction is
+        // (left-top, +bottom); the outward (up-left) normal flips and
+        // rotates -90°: (-Δy, -Δx)/|edge|.
+        let dx = leftVertex.x - topVertex.x          // -plumbobSize/2
+        let dy = leftVertex.y - topVertex.y          // +plumbobHeight/2
+        let edgeLen = (dx * dx + dy * dy).squareRoot()
+        let normal = CGPoint(x: -dy / edgeLen, y: -dx / edgeLen)  // points outside-up-left
+
+        // Shifted line endpoints (the actual centre line the dots ride on).
+        let lineStart = CGPoint(x: topVertex.x  + normal.x * outwardOffset,
+                                y: topVertex.y  + normal.y * outwardOffset)
+        let lineEnd   = CGPoint(x: leftVertex.x + normal.x * outwardOffset,
+                                y: leftVertex.y + normal.y * outwardOffset)
+
+        // 3 dots at t = 0.18, 0.5, 0.82 along the line. The end-padding
+        // keeps the outermost dots from sitting at the very tips of the
+        // edge where they'd visually drop off the diamond.
+        let tValues: [CGFloat] = [0.18, 0.50, 0.82]
+        let centres = tValues.map { t in
+            CGPoint(x: lineStart.x + (lineEnd.x - lineStart.x) * t,
+                    y: lineStart.y + (lineEnd.y - lineStart.y) * t)
         }
-        // Top-lefts then normalize so the bounding box starts at (0, 0).
         let topLefts = centres.map { CGPoint(x: $0.x - dotSize / 2, y: $0.y - dotSize / 2) }
         let minX = topLefts.map(\.x).min() ?? 0
         let minY = topLefts.map(\.y).min() ?? 0
-        let normalized = topLefts.map { CGPoint(x: $0.x - minX, y: $0.y - minY) }
-        // Middle dot (index 1) lines up with the plumbob's bottom-LEFT corner.
-        let dot1 = CGPoint(x: normalized[1].x + dotSize / 2,
-                           y: normalized[1].y + dotSize / 2)
-        let dotsMaxX = normalized.map(\.x).max()! + dotSize
-        let dotsMaxY = normalized.map(\.y).max()! + dotSize
+        // Negative minX means dots extend leftward of the plumbob; shift the
+        // plumbob right by abs(minX) so the whole composition has a clean
+        // (0, 0) origin in its bounding box.
+        let shiftX: CGFloat = max(0, -minX)
+        let shiftY: CGFloat = max(0, -minY)
+        let plumbobOrigin = CGPoint(x: shiftX, y: shiftY)
+        let dotOrigins = topLefts.map { CGPoint(x: $0.x + shiftX, y: $0.y + shiftY) }
+        let frameW = max(plumbobOrigin.x + plumbobSize,
+                         dotOrigins.map { $0.x + dotSize }.max() ?? 0)
+        let frameH = max(plumbobOrigin.y + plumbobHeight,
+                         dotOrigins.map { $0.y + dotSize }.max() ?? 0)
 
         return ZStack(alignment: .topLeading) {
             ForEach(specs.indices, id: \.self) { i in
@@ -552,16 +573,13 @@ struct DashboardView: View {
                               total: spec.total,
                               diameter: dotSize,
                               accessibility: spec.accessibility)
-                    .offset(x: normalized[i].x,
-                            y: normalized[i].y + plumbobSize - dot1.y + dropY)
+                    .offset(x: dotOrigins[i].x, y: dotOrigins[i].y)
             }
             PlumbobView(mood: mood, compact: isCompact, size: plumbobSize)
                 .frame(width: plumbobSize, height: plumbobSize)
-                .offset(x: dot1.x + shiftX, y: 0)
+                .offset(x: plumbobOrigin.x, y: plumbobOrigin.y)
         }
-        .frame(width: max(dotsMaxX, dot1.x + shiftX + plumbobSize),
-               height: plumbobSize + dotsMaxY - dot1.y + dropY,
-               alignment: .topLeading)
+        .frame(width: frameW, height: frameH, alignment: .topLeading)
         .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78),
                        value: aspirationDoneCount + treatmentDoneCount + taskDoneCount)
     }
