@@ -25,3 +25,4 @@ xcuserdata/
 # SPM
 .build/
 Packages/
+.claude/worktrees/
