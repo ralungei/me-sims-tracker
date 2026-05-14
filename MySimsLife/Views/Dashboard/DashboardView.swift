@@ -468,63 +468,6 @@ struct DashboardView: View {
         )
     }
 
-    // MARK: - Plumbob-side actions (arc cluster around the rombo's bottom-left)
-
-    /// One slot in the action arc — declarative spec for `plumbobWithActions`
-    /// to render via `sideActionButton`.
-    private struct ArcAction {
-        let systemName: String
-        let accessibility: LocalizedStringKey
-        let badge: Bool
-        let action: () -> Void
-    }
-
-    /// Global controls — used to surround the plumbob with an action arc.
-    /// All three slots are nil now:
-    /// - slot 0: "A neutro" → moved to Necesidades title row
-    /// - slot 1: sliders/categories → moved to Necesidades title row
-    /// - slot 2: bell/notifications → moved to the tabs bar trailing edge
-    /// The arc layout machinery stays so the plumbob's position math
-    /// doesn't shift; nil slots are skipped at render time.
-    private var arcActions: [ArcAction?] {
-        [nil, nil, nil]
-    }
-
-    /// One Sims-style icon button: circle, navy frame, semitransparent
-    /// white fill. `badge: true` adds a red dot in the top-trailing corner.
-    private func sideActionButton(_ slot: ArcAction, size: CGFloat) -> some View {
-        Button(action: slot.action) {
-            Image(systemName: slot.systemName)
-                .font(.system(size: size * 0.42, weight: .semibold))
-                .foregroundStyle(SimsTheme.textSecondary)
-                .frame(width: size, height: size)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(0.10))
-                        .overlay(Circle().stroke(SimsTheme.frame.opacity(0.5), lineWidth: 1))
-                )
-                .overlay(alignment: .topTrailing) {
-                    if slot.badge {
-                        // Badge needs to ride the circle's NE-quadrant edge,
-                        // not float in the empty corner of the bounding box.
-                        // For a circle inscribed in a size×size frame, the
-                        // 45° point on the perimeter sits at roughly
-                        // (size·0.85, size·0.15) — offsetting `topTrailing`
-                        // by (-size·0.15, +size·0.15) lands the badge's
-                        // centre exactly on that edge, half-overlapping so
-                        // it reads as attached.
-                        Circle()
-                            .fill(SimsTheme.simsRed)
-                            .frame(width: 10, height: 10)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 1.4))
-                            .offset(x: -size * 0.18, y: size * 0.18)
-                    }
-                }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text(slot.accessibility))
-    }
-
     /// Active alerts excluding ones the user dismissed this session.
     private var visibleAlerts: [NeedStore.SimAlert] {
         store.activeAlerts.filter { !dismissedAlertMessages.contains($0.message) }
@@ -555,60 +498,105 @@ struct DashboardView: View {
         if isCompact { compactHeader } else { regularHeader }
     }
 
-    /// Plumbob with global action buttons fanning out in an arc from its
-    /// bottom-LEFT corner — same Sims-2 cluster geometry as the old tab arc,
-    /// just with action icons (Estable, categorías, notificaciones).
+    /// Plumbob + three completion dots below it (aspirations, botiquín,
+    /// agenda). Each dot reads as "today's box for that tab":
+    /// - filled green w/ ✓ = everything done for today
+    /// - hollow navy = pending items remaining
+    /// - gray = nothing scheduled today for that tab
     private var plumbobWithActions: some View {
         let mood = store.overallMood
-        // Bumped from 56/78 → 74/100 now that the arc cluster is gone.
-        // Without chips to share the corner, the plumbob can dominate
-        // the header as the mood ornament it's meant to be.
         let plumbobSize: CGFloat = isCompact ? 74 : 100
-        let chipSize: CGFloat = isCompact ? 37 : 43
-        let radius: CGFloat = isCompact ? 52 : 58
-        let stepDeg: Double = 48
-        let startDeg: Double = 95
-        let dropY: CGFloat = 8
-        let shiftX: CGFloat = 6
-        let slots = arcActions
-
-        // Centres of each chip on the arc, relative to (0,0).
-        let centres = slots.indices.map { i -> CGPoint in
-            let θ = (startDeg + stepDeg * Double(i)) * .pi / 180
-            return CGPoint(x: CGFloat(cos(θ)) * radius,
-                           y: CGFloat(sin(θ)) * radius)
-        }
-        // Top-lefts then normalize so the bounding box starts at (0, 0).
-        let topLefts = centres.map { CGPoint(x: $0.x - chipSize / 2, y: $0.y - chipSize / 2) }
-        let minX = topLefts.map(\.x).min() ?? 0
-        let minY = topLefts.map(\.y).min() ?? 0
-        let normalized = topLefts.map { CGPoint(x: $0.x - minX, y: $0.y - minY) }
-        // chip 1 (middle) anchors to the plumbob's bottom-LEFT corner.
-        let chip1 = CGPoint(x: normalized[1].x + chipSize / 2,
-                            y: normalized[1].y + chipSize / 2)
-        let chipsMaxX = normalized.map(\.x).max()! + chipSize
-        let chipsMaxY = normalized.map(\.y).max()! + chipSize
-
-        return ZStack(alignment: .topLeading) {
-            // Action chips — skip nil slots so the geometry (the centres
-            // computed for all indices) stays the same as when the arc was
-            // full. Removing a button doesn't reflow the remaining ones.
-            ForEach(slots.indices, id: \.self) { i in
-                if let action = slots[i] {
-                    sideActionButton(action, size: chipSize)
-                        .offset(x: normalized[i].x,
-                                y: normalized[i].y + plumbobSize - chip1.y + dropY)
-                }
-            }
-            // Plumbob — chip1 centre lines up with its bottom-LEFT corner.
+        return VStack(spacing: 8) {
             PlumbobView(mood: mood, compact: isCompact, size: plumbobSize)
                 .frame(width: plumbobSize, height: plumbobSize)
-                .offset(x: chip1.x + shiftX, y: 0)
+            dailyCompletionDots
         }
-        .frame(width: max(chipsMaxX, chip1.x + shiftX + plumbobSize),
-               height: plumbobSize + chipsMaxY - chip1.y + dropY,
-               alignment: .topLeading)
-        .simsAnimation(.spring(response: 0.4, dampingFraction: 0.78), value: visibleAlerts.count)
+    }
+
+    /// Three small circles directly under the plumbob — Sims-2 daily score
+    /// strip. Tapping a dot jumps to its tab so the user can act on what's
+    /// pending without hunting through the tab bar.
+    private var dailyCompletionDots: some View {
+        HStack(spacing: 6) {
+            completionDot(for: .aspirations,
+                          icon: "flag.fill",
+                          done: aspirationDoneCount,
+                          total: aspirationTotal,
+                          accessibility: "Aspiraciones")
+            completionDot(for: .botiquin,
+                          icon: "pills.fill",
+                          done: treatmentDoneCount,
+                          total: treatmentTotal,
+                          accessibility: "Botiquín")
+            completionDot(for: .agenda,
+                          icon: "checklist",
+                          done: taskDoneCount,
+                          total: taskTotal,
+                          accessibility: "Agenda")
+        }
+    }
+
+    /// One completion dot. Falls back to a disabled grey state when there's
+    /// nothing on the user's plate for the day — no false-positive "you've
+    /// finished!" if you have zero tasks.
+    private func completionDot(for tab: DashboardTab,
+                               icon: String,
+                               done: Int,
+                               total: Int,
+                               accessibility: LocalizedStringKey) -> some View {
+        let disabled = total == 0
+        let complete = !disabled && done == total
+        let diameter: CGFloat = isCompact ? 22 : 26
+        let iconSize: CGFloat = isCompact ? 10 : 11
+        return Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
+                selectedTab = tab
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(complete ? SimsTheme.simsGreen : Color.white.opacity(0.20))
+                    .frame(width: diameter, height: diameter)
+                Circle()
+                    .stroke(disabled ? SimsTheme.textDim
+                                     : SimsTheme.frame,
+                            lineWidth: 1.2)
+                    .frame(width: diameter, height: diameter)
+                Image(systemName: complete ? "checkmark" : icon)
+                    .font(.system(size: iconSize, weight: .black))
+                    .foregroundStyle(complete ? Color.white
+                                              : (disabled ? SimsTheme.textDim
+                                                          : SimsTheme.frame))
+            }
+            .opacity(disabled ? 0.45 : 1)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .accessibilityLabel(Text(accessibility))
+        .accessibilityValue(Text(disabled
+                                 ? "nada hoy"
+                                 : (complete ? "completado"
+                                             : "\(done) de \(total)")))
+        .accessibilityHint(Text(disabled ? "" : "Toca dos veces para abrir"))
+    }
+
+    // MARK: - Completion counts (match `tabTitleCounter` semantics)
+
+    private var aspirationDoneCount: Int {
+        store.aspirations.filter { $0.isDoneNow() }.count
+    }
+    private var aspirationTotal: Int { store.aspirations.count }
+
+    private var taskDoneCount: Int {
+        store.tasks.filter { $0.isDone }.count
+    }
+    private var taskTotal: Int { store.tasks.count }
+
+    private var treatmentDoneCount: Int {
+        treatments.filter { $0.isActive && $0.isTakenToday() }.count
+    }
+    private var treatmentTotal: Int {
+        treatments.filter { $0.isActive }.count
     }
 
     /// iPad/Mac layout: VITAL pip bar on the left, greeting absolutely
