@@ -328,12 +328,19 @@ final class NeedStore {
         return totalWeight > 0 ? weightedSum / totalWeight : 0.5
     }
 
-    /// VITAL score 0–100 — overall mood + aspiration bonus (max +10)
+    /// VITAL score 0–100 — mood mapped 1:1 to the centred pip bar (so all
+    /// needs at 50 % reads as a *neutral* VITAL of 50, not "1 pip into the
+    /// red") plus a small aspirations bonus that can lift the bar above
+    /// the centre. Clamped at 100 so excellent days don't overflow.
+    ///
+    /// Old formula was `mood * 90 + bonus(max 10)` — that capped neutral
+    /// mood at 45, which the VITAL bar (centre = 50) always rendered as
+    /// "slightly negative". Visible bug at app launch with default state.
     var vitalScore: Int {
-        let base = overallMood * 90.0
+        let base = overallMood * 100.0
         let donesToday = aspirations.filter { $0.isDoneNow() }.count
         let bonus = min(10.0, Double(donesToday) * 3.0)
-        return Int((base + bonus).rounded())
+        return Int(min(100.0, base + bonus).rounded())
     }
 
     var vitalLabel: String { SimsTheme.vitalLabel(for: vitalScore) }

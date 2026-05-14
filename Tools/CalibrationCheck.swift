@@ -107,9 +107,11 @@ func overallMood(_ bars: Bars, enabled: Set<String>) -> Double {
 }
 
 func vital(_ bars: Bars, enabled: Set<String>, aspirationsDone: Int = 0) -> Int {
-    let base = overallMood(bars, enabled: enabled) * 90.0
+    // Matches `NeedStore.vitalScore` — mood maps 1:1 to 0-100 so neutral
+    // bars (all at 50 %) give a centred VITAL of 50 instead of 45.
+    let base = overallMood(bars, enabled: enabled) * 100.0
     let bonus = min(10.0, Double(aspirationsDone) * 3.0)
-    return Int((base + bonus).rounded())
+    return Int(min(100.0, base + bonus).rounded())
 }
 
 func hoursTo(_ from: Double, _ to: Double, rate: Double) -> Double {
@@ -255,10 +257,13 @@ do {
     for need in decayRates.keys where decayRates[need]! > 0 { b[need] = 1.0 }
     let v = vital(b, enabled: essentialPlan, aspirationsDone: 4)
     check("Perfecto + 4 aspiraciones: VITAL = 100", v == 100,
-          "got VITAL=\(v) (mood×90 + 10 bonus)")
+          "got VITAL=\(v) (mood + clamped bonus)")
     let vNoAsp = vital(b, enabled: essentialPlan, aspirationsDone: 0)
-    check("Perfecto sin aspiraciones: VITAL = 90", vNoAsp == 90,
-          "got VITAL=\(vNoAsp)")
+    check("Perfecto sin aspiraciones: VITAL = 100", vNoAsp == 100,
+          "got VITAL=\(vNoAsp) — mood ahora va 1:1 a 0-100")
+    let vNeutral = vital(freshBars(), enabled: essentialPlan, aspirationsDone: 0)
+    check("Neutro (todas al 50%): VITAL = 50", vNeutral == 50,
+          "got VITAL=\(vNeutral) — el bug que motivó el cambio")
 }
 
 section("8. Mental health resiste (es el ancla)")

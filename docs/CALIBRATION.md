@@ -50,8 +50,18 @@ Confirma que un usuario nuevo abre la app y ve:
 
 - Todas las barras decaying al 50%
 - Health al 100% (es manual, no decae)
-- VITAL en [40, 55] (típicamente 45 = mood 50% × 90)
+- VITAL = **50** exactos (centro del bar, no negativo)
 - Mood global = 50% exacto
+
+**Nota histórica:** la fórmula original era `mood × 90 + bonus(max 10)`,
+con la idea de reservar 10 puntos al bonus de aspiraciones. Efecto
+colateral: con todas las barras al 50% (mood = 0.5), VITAL salía a 45,
+que el centrado-bar renderizaba como "1 pip en rojo a la izquierda
+del centro". Eso era el primer estado que veía un usuario nuevo →
+mensaje confuso ("¿qué he hecho mal si acabo de abrir la app?").
+Cambio a `mood × 100 + bonus(max 10)` clamped en 100. Aspiraciones
+ahora pueden empujar partial-mood-states por encima del techo
+natural en lugar de competir por un cupo de 10 puntos.
 
 ### 2. Decay rates en rangos sensatos
 

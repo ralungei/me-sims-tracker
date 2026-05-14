@@ -470,11 +470,19 @@ struct DashboardView: View {
                 )
                 .overlay(alignment: .topTrailing) {
                     if slot.badge {
+                        // Badge needs to ride the circle's NE-quadrant edge,
+                        // not float in the empty corner of the bounding box.
+                        // For a circle inscribed in a size×size frame, the
+                        // 45° point on the perimeter sits at roughly
+                        // (size·0.85, size·0.15) — offsetting `topTrailing`
+                        // by (-size·0.15, +size·0.15) lands the badge's
+                        // centre exactly on that edge, half-overlapping so
+                        // it reads as attached.
                         Circle()
                             .fill(SimsTheme.simsRed)
-                            .frame(width: 8, height: 8)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 1.2))
-                            .offset(x: 2, y: -2)
+                            .frame(width: 10, height: 10)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 1.4))
+                            .offset(x: -size * 0.18, y: size * 0.18)
                     }
                 }
         }
