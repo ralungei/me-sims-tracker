@@ -58,6 +58,10 @@ struct NeedBarView: View {
                     pips
                     lastActionLabel
                 }
+                // Animate the row's height when chips appear/disappear so
+                // the layout doesn't snap.
+                .simsAnimation(.spring(response: 0.4, dampingFraction: 0.85),
+                               value: recentActions.count)
             }
             .padding(.vertical, compact ? 4 : 6)
             .contentShape(Rectangle())
@@ -107,6 +111,9 @@ struct NeedBarView: View {
                 }
             }
             .padding(.top, 2)
+            // Slide + fade so the row's height change is animated when
+            // a fresh action appears or the latest chip expires.
+            .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
