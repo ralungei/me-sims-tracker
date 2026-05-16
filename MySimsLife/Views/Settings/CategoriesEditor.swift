@@ -9,6 +9,12 @@ struct CategoriesEditor: View {
 
     var embedded: Bool = false
 
+    /// Tracks vertical scroll inside the list so the top fade mask only
+    /// appears once the user has scrolled past the first row — at the
+    /// very top there's nothing being clipped, so the fade would just
+    /// dim the first row for no reason.
+    @State private var listScrollOffset: CGFloat = 0
+
     var body: some View {
         if embedded {
             scrollContent
@@ -34,34 +40,66 @@ struct CategoriesEditor: View {
     }
 
     private var scrollContent: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                planPicker
+        // Plan chips stay pinned at the top; only the per-need list
+        // scrolls. The list mask fades BOTH ends so the row currently
+        // crossing either edge doesn't get a hard chop on the periwinkle
+        // background. Clear gap between the chip block and the list so
+        // the two sections read as separate.
+        VStack(spacing: 24) {
+            planPicker
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+
+            ScrollView {
                 VStack(spacing: 8) {
                     ForEach(NeedType.sorted) { need in
                         row(need)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(
+                            key: ScrollOffsetKey.self,
+                            value: proxy.frame(in: .named("needList")).minY
+                        )
+                    }
+                )
             }
-            .padding(20)
+            .coordinateSpace(name: "needList")
+            .onPreferenceChange(ScrollOffsetKey.self) { listScrollOffset = $0 }
+            .mask(
+                // Top fade only kicks in once the user has scrolled past
+                // the first ~8 px. While at the top there's nothing to
+                // hide above, so a fade there would just dim row #1.
+                LinearGradient(
+                    stops: [
+                        .init(color: listScrollOffset < -8 ? .clear : .black, location: 0.0),
+                        .init(color: .black, location: 0.06),
+                        .init(color: .black, location: 0.92),
+                        .init(color: .clear, location: 1.0)
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+            )
         }
     }
 
-    /// Four-chip preset selector. Tapping overwrites `enabledNeeds`; the
-    /// chip whose set matches the current selection lights up (none if the
-    /// user has a custom mix). Shared between onboarding and Ajustes.
+    /// 2×2 grid of preset chips instead of horizontal scroll so all four
+    /// tiers (Esencial / Equilibrado / Detallado / Completo) are visible
+    /// at once without swiping.
     private var planPicker: some View {
         let active = NeedPlan.matching(store.enabledNeeds)
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(NeedPlan.allCases) { plan in
-                    planChip(plan, isActive: active == plan)
-                }
+        return LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: 10),
+                      GridItem(.flexible(), spacing: 10)],
+            spacing: 10
+        ) {
+            ForEach(NeedPlan.allCases) { plan in
+                planChip(plan, isActive: active == plan)
             }
-            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, -20)
-        .scrollClipDisabled()
     }
 
     private func planChip(_ plan: NeedPlan, isActive: Bool) -> some View {
@@ -70,20 +108,21 @@ struct CategoriesEditor: View {
                 store.applyPlan(plan)
             }
         } label: {
-            VStack(spacing: 4) {
+            HStack(spacing: 8) {
                 SimsOutlinedIcon(systemName: plan.icon, size: 16)
-                    .padding(.bottom, 2)
-
-                Text(plan.label)
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                Text("\(plan.count) cat.")
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
-                    .foregroundStyle(SimsTheme.textSecondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(plan.label)
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                    Text("\(plan.count) cat.")
+                        .font(.system(.caption2, design: .rounded, weight: .semibold))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                }
+                Spacer(minLength: 0)
             }
-            .frame(width: 92)
-            .padding(.vertical, 12)
-            .padding(.horizontal, 8)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .simsChipStyle(selected: isActive)
         }
         .buttonStyle(.plain)
@@ -134,5 +173,12 @@ struct CategoriesEditor: View {
         case .social:        return String(localized: "Tiempo con gente")
         case .leisure:       return String(localized: "Hobbies, descanso, diversión")
         }
+    }
+}
+
+private struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }

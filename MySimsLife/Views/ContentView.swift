@@ -16,10 +16,18 @@ struct ContentView: View {
         }
     }()
 
+    @State private var onboardingDone: Bool = false
+
     var body: some View {
+        // TEMP DEBUG: -ForceOnboarding launch arg shows the onboarding
+        // even if userName persists from iCloud KVS, so the flow can be
+        // reviewed without nuking the simulator. `onboardingDone` lets
+        // OnboardingView close itself even in that forced state.
+        let forceOnboarding = ProcessInfo.processInfo.arguments.contains("-ForceOnboarding")
+            && !onboardingDone
         Group {
-            if userName.isEmpty {
-                OnboardingView(onFinish: {})
+            if userName.isEmpty || forceOnboarding {
+                OnboardingView(onFinish: { onboardingDone = true })
                     .environment(store)
                     .transition(.opacity)
             } else {
@@ -28,6 +36,7 @@ struct ContentView: View {
             }
         }
         .simsAnimation(.easeInOut(duration: 0.35), value: userName.isEmpty)
+        .simsAnimation(.easeInOut(duration: 0.35), value: onboardingDone)
         .onAppear {
             store.configure(with: modelContext)
             #if os(iOS)
