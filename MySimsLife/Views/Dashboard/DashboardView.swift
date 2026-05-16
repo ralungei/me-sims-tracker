@@ -617,53 +617,43 @@ struct DashboardView: View {
                        value: aspirationDoneCount + treatmentDoneCount + taskDoneCount)
     }
 
-    /// One completion dot. Falls back to a disabled grey state when there's
-    /// nothing on the user's plate for the day — no false-positive "you've
-    /// finished!" if you have zero tasks.
+    /// One completion dot — purely decorative status indicator next to
+    /// the plumbob. Renders done/total state visually but does NOT
+    /// react to taps; opening the corresponding tab happens from the
+    /// main tab bar instead. The unused `tab` parameter is kept so
+    /// callers don't have to be rewritten.
     private func completionDot(for tab: DashboardTab,
                                icon: String,
                                done: Int,
                                total: Int,
                                diameter: CGFloat,
                                accessibility: LocalizedStringKey) -> some View {
+        _ = tab
         let disabled = total == 0
         let complete = !disabled && done == total
         let iconSize: CGFloat = diameter * 0.42
-        return Button {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
-                selectedTab = tab
-            }
-        } label: {
-            ZStack {
-                // Complete fill matches the periwinkle button bg
-                // (`white @ 0.55` over the gradient → light pearly blue),
-                // so a completed dot reads as "filled like a real button"
-                // next to its outlined siblings. Check stays navy for
-                // contrast against the lighter fill.
-                Circle()
-                    .fill(complete ? Color.white.opacity(0.55)
-                                   : Color.white.opacity(0.20))
-                    .frame(width: diameter, height: diameter)
-                Circle()
-                    .stroke(disabled ? SimsTheme.textDim
-                                     : SimsTheme.frame,
-                            lineWidth: 1.2)
-                    .frame(width: diameter, height: diameter)
-                Image(systemName: complete ? "checkmark" : icon)
-                    .font(.system(size: iconSize, weight: .black))
-                    .foregroundStyle(disabled ? SimsTheme.textDim
-                                              : SimsTheme.frame)
-            }
-            .opacity(disabled ? 0.45 : 1)
+        return ZStack {
+            Circle()
+                .fill(complete ? Color.white.opacity(0.55)
+                               : Color.white.opacity(0.20))
+                .frame(width: diameter, height: diameter)
+            Circle()
+                .stroke(disabled ? SimsTheme.textDim
+                                 : SimsTheme.frame,
+                        lineWidth: 1.2)
+                .frame(width: diameter, height: diameter)
+            Image(systemName: complete ? "checkmark" : icon)
+                .font(.system(size: iconSize, weight: .black))
+                .foregroundStyle(disabled ? SimsTheme.textDim
+                                          : SimsTheme.frame)
         }
-        .buttonStyle(.plain)
-        .disabled(disabled)
+        .opacity(disabled ? 0.45 : 1)
+        .allowsHitTesting(false)
         .accessibilityLabel(Text(accessibility))
         .accessibilityValue(Text(disabled
                                  ? "nada hoy"
                                  : (complete ? "completado"
                                              : "\(done) de \(total)")))
-        .accessibilityHint(Text(disabled ? "" : "Toca dos veces para abrir"))
     }
 
     // MARK: - Completion counts (match `tabTitleCounter` semantics)
@@ -812,7 +802,7 @@ struct DashboardView: View {
         }
         // No rectangular container — the pip heights themselves draw the
         // spindle silhouette. Wrapping the whole thing in a rounded
-        // navy rect (the old design) hid the shape inside a box.
+        // navy rect hid the shape inside a box.
         .fixedSize()
         .simsAnimation(.easeInOut(duration: 0.3), value: signedAmount)
         // VITAL bar: the 12 pips and the centre tick are decoration. Fold the

@@ -7,22 +7,21 @@ struct PlumbobView: View {
     let mood: Double
     var compact: Bool = false
     var size: CGFloat? = nil
+    /// Height-to-width ratio of the SCNView frame. Default 1.15 leaves
+    /// breathing room above/below the gem for the dashboard layout; the
+    /// onboarding passes a tighter value (~0.95) to crop the empty
+    /// vertical space when the plumbob is the hero.
+    var aspectRatio: CGFloat = 1.15
 
     private var color: Color { SimsTheme.plumbobColor(for: mood) }
-    private var orbSize: CGFloat { size ?? (compact ? 60 : 78) }
+    private var orbSize: CGFloat { size ?? (compact ? 78 : 104) }
 
     var body: some View {
-        // Halo entirely removed — was making the gem read as a glow
-        // instead of a hard-faceted crystal. The plumbob needs sharp
-        // edges on the periwinkle background to register as 3D.
         Plumbob3DScene(color: color)
-            .frame(width: orbSize, height: orbSize * 1.15)
-        // VITAL plumbob. Without a label VoiceOver just says "image" —
-        // give it a name + the current mood description so blind users
-        // also get the at-a-glance vibe the colour communicates visually.
-        .accessibilityElement()
-        .accessibilityLabel(Text("VITAL"))
-        .accessibilityValue(Text(mood.accessibilityNeedValue))
+            .frame(width: orbSize, height: orbSize * aspectRatio)
+            .accessibilityElement()
+            .accessibilityLabel(Text("VITAL"))
+            .accessibilityValue(Text(mood.accessibilityNeedValue))
     }
 }
 
@@ -30,8 +29,10 @@ struct PlumbobView: View {
 
 #if os(macOS)
 private typealias PlatformColor = NSColor
+private typealias PlatformImage = NSImage
 #else
 private typealias PlatformColor = UIColor
+private typealias PlatformImage = UIImage
 #endif
 
 struct Plumbob3DScene {
@@ -39,31 +40,57 @@ struct Plumbob3DScene {
 
     private static let plumbobNodeName = "plumbob"
 
+    private func makeFacetMaterial(color: Color, lightnessOffset: CGFloat, mirroredBeam: Bool) -> SCNMaterial {
+        let m = SCNMaterial()
+        m.lightingModel = .blinn
+        m.diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: lightnessOffset)
+        m.specular.contents = PlatformColor.white
+        m.specular.intensity = mirroredBeam ? 0.15 : 0.55
+        m.shininess = 0.95
+        m.fresnelExponent = mirroredBeam ? 0.6 : 1.5
+        m.emission.contents = mirroredBeam
+            ? PlatformColor.clear
+            : adjustLightness(PlatformColor(color), by: -0.30)
+        m.shaderModifiers = [.surface: beamShaderModifier(mirrored: mirroredBeam)]
+        return m
+    }
+
+    private func beamShaderModifier(mirrored: Bool) -> String {
+        let ySign = mirrored ? "-1.0" : "1.0"
+        let intensity = mirrored ? "0.02" : "0.12"
+        return """
+        #pragma body
+        float t = scn_frame.time;
+        float angle = 1.309 + sin(t * 0.4) * 0.10;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
+        float4 worldPos = scn_frame.inverseViewTransform * float4(_surface.position, 1.0);
+        float yShifted = (worldPos.y * \(ySign)) - 0.70;
+        float perp = worldPos.x * cosA + yShifted * sinA;
+        float along = -worldPos.x * sinA + yShifted * cosA;
+        float shift = sin(t * 0.7) * 0.18;
+        float curvedPerp = perp + along * along * 0.45 + shift;
+        float thickness = 6.0 + along * along * 55.0;
+        float lengthFade = exp(-along * along * 0.65);
+        float beam = exp(-curvedPerp * curvedPerp * thickness) * lengthFade;
+        _surface.emission.rgb += float3(beam * \(intensity));
+        """
+    }
+
     private func makeScene() -> SCNScene {
         let scene = SCNScene()
         scene.background.contents = PlatformColor.clear
 
-        // Cel-shaded look: Lambert (no specular falloff) + a deeper,
-        // more saturated diffuse so the gem reads against periwinkle.
-        // Specular kept as a SMALL tight white highlight ONLY (low
-        // shininess number → bigger spot, high → tiny spot) — too much
-        // and the gem looks washed; none at all and it looks like felt.
-        // 4 segments → classic 8-facet diamond (4 top + 4 bottom). The
-        // 8-segment version felt too "smooth", less like a Sims gem.
-        let outer = octahedron(h: 1.55, r: 0.78, segments: 4)
-        let outerMat = SCNMaterial()
-        outerMat.lightingModel = .lambert
-        outerMat.diffuse.contents  = PlatformColor(deepened(color))
-        outerMat.specular.contents = PlatformColor.white
-        outerMat.shininess = 0.95           // tiny pinpoint highlight
-        outerMat.emission.contents = PlatformColor.clear
-        outer.firstMaterial = outerMat
+        let outer = octahedron(h: 1.55, r: 0.78, segments: 6)
+        outer.materials = [
+            makeFacetMaterial(color: color, lightnessOffset: +0.06, mirroredBeam: false),
+            makeFacetMaterial(color: color, lightnessOffset: -0.10, mirroredBeam: true)
+        ]
 
         let node = SCNNode(geometry: outer)
         node.name = Self.plumbobNodeName
         scene.rootNode.addChildNode(node)
 
-        // Slow Y-axis spin so the highlight sweeps around continuously.
         let spin = CABasicAnimation(keyPath: "rotation")
         spin.fromValue = SCNVector4(0, 1, 0, 0)
         spin.toValue   = SCNVector4(0, 1, 0, Float.pi * 2)
@@ -71,7 +98,6 @@ struct Plumbob3DScene {
         spin.repeatCount = .infinity
         node.addAnimation(spin, forKey: "spin")
 
-        // Gentle vertical bob — Sims-style "hovering" feel.
         let bob = CABasicAnimation(keyPath: "position.y")
         bob.fromValue = -0.08
         bob.toValue   = 0.08
@@ -88,13 +114,9 @@ struct Plumbob3DScene {
         cameraNode.position = SCNVector3(0, 0, 5.6)
         scene.rootNode.addChildNode(cameraNode)
 
-        // Single strong key light — no fill, no ambient. Lambert + a
-        // bare key gives the brutal light/shadow contrast Sims plumbobs
-        // have: lit facets are saturated colour, shadow facets are
-        // almost black. Any ambient kills it.
         let key = SCNLight()
         key.type = .directional
-        key.intensity = 1100
+        key.intensity = 800
         key.color = PlatformColor.white
         let keyNode = SCNNode()
         keyNode.light = key
@@ -102,22 +124,64 @@ struct Plumbob3DScene {
         keyNode.eulerAngles = SCNVector3(-0.5, 0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
-        // Very low ambient just so shadow facets aren't 100 % black —
-        // 30 keeps the silhouette readable while preserving contrast.
+        let fill = SCNLight()
+        fill.type = .directional
+        fill.intensity = 165
+        fill.color = PlatformColor(red: 0.70, green: 0.78, blue: 0.95, alpha: 1)
+        let fillNode = SCNNode()
+        fillNode.light = fill
+        fillNode.position = SCNVector3(-3, -1, 2)
+        fillNode.eulerAngles = SCNVector3(0.3, -0.6, 0)
+        scene.rootNode.addChildNode(fillNode)
+
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 30
+        ambient.intensity = 170
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
 
+        let sweepPivot = SCNNode()
+        scene.rootNode.addChildNode(sweepPivot)
+
+        let sweep = SCNLight()
+        sweep.type = .directional
+        sweep.intensity = 480
+        sweep.color = PlatformColor.white
+        let sweepNode = SCNNode()
+        sweepNode.light = sweep
+        sweepNode.eulerAngles = SCNVector3(-0.25, 0, 0)
+        sweepPivot.addChildNode(sweepNode)
+
+        let sweepSpin = CABasicAnimation(keyPath: "rotation")
+        sweepSpin.fromValue = SCNVector4(0, 1, 0, 0)
+        sweepSpin.toValue   = SCNVector4(0, 1, 0, -Float.pi * 2)
+        sweepSpin.duration  = 4.0
+        sweepSpin.repeatCount = .infinity
+        sweepPivot.addAnimation(sweepSpin, forKey: "sweepSpin")
+
+        let sweepPivotX = SCNNode()
+        scene.rootNode.addChildNode(sweepPivotX)
+
+        let sweepX = SCNLight()
+        sweepX.type = .directional
+        sweepX.intensity = 380
+        sweepX.color = PlatformColor.white
+        let sweepNodeX = SCNNode()
+        sweepNodeX.light = sweepX
+        sweepNodeX.eulerAngles = SCNVector3(0, -0.25, 0)
+        sweepPivotX.addChildNode(sweepNodeX)
+
+        let sweepSpinX = CABasicAnimation(keyPath: "rotation")
+        sweepSpinX.fromValue = SCNVector4(1, 0, 0, 0)
+        sweepSpinX.toValue   = SCNVector4(1, 0, 0, Float.pi * 2)
+        sweepSpinX.duration  = 5.5
+        sweepSpinX.repeatCount = .infinity
+        sweepPivotX.addAnimation(sweepSpinX, forKey: "sweepSpinX")
+
         return scene
     }
 
-    /// Hexagonal bipyramid: `segments` facets at the equator → 2×segments
-    /// triangular faces. Equator near-circular so silhouette stays even
-    /// while rotating. Elongated proportions (h ≫ r) match the Sims-2
-    /// vertical-diamond plumbob silhouette.
     private func octahedron(h: Float, r: Float, segments: Int) -> SCNGeometry {
         let topApex = SCNVector3(0,  h, 0)
         let botApex = SCNVector3(0, -h, 0)
@@ -128,28 +192,43 @@ struct Plumbob3DScene {
             equator.append(SCNVector3(r * cos(a), 0, r * sin(a)))
         }
 
-        var faces: [(SCNVector3, SCNVector3, SCNVector3)] = []
+        var topFaces: [(SCNVector3, SCNVector3, SCNVector3)] = []
+        var botFaces: [(SCNVector3, SCNVector3, SCNVector3)] = []
         for i in 0..<segments {
             let n = (i + 1) % segments
-            faces.append((topApex, equator[i], equator[n]))
-            faces.append((botApex, equator[n], equator[i]))
+            topFaces.append((topApex, equator[i], equator[n]))
+            botFaces.append((botApex, equator[n], equator[i]))
         }
+
+        let apexUV  = CGPoint(x: 0.5, y: 0.0)
+        let leftUV  = CGPoint(x: 0.0, y: 1.0)
+        let rightUV = CGPoint(x: 1.0, y: 1.0)
 
         var verts: [SCNVector3] = []
         var norms: [SCNVector3] = []
-        var idx: [Int32] = []
-        for (a, b, c) in faces {
+        var uvs:   [CGPoint]    = []
+        var topIdx: [Int32]     = []
+        var botIdx: [Int32]     = []
+
+        func append(face: (SCNVector3, SCNVector3, SCNVector3), into idx: inout [Int32]) {
+            let (a, b, c) = face
             let n = normalize(cross(b - a, c - a))
             let base = Int32(verts.count)
             verts.append(contentsOf: [a, b, c])
             norms.append(contentsOf: [n, n, n])
+            uvs.append(contentsOf: [apexUV, leftUV, rightUV])
             idx.append(contentsOf: [base, base + 1, base + 2])
         }
 
+        for face in topFaces { append(face: face, into: &topIdx) }
+        for face in botFaces { append(face: face, into: &botIdx) }
+
         let vsrc = SCNGeometrySource(vertices: verts)
         let nsrc = SCNGeometrySource(normals: norms)
-        let elem = SCNGeometryElement(indices: idx, primitiveType: .triangles)
-        return SCNGeometry(sources: [vsrc, nsrc], elements: [elem])
+        let usrc = SCNGeometrySource(textureCoordinates: uvs)
+        let topElem = SCNGeometryElement(indices: topIdx, primitiveType: .triangles)
+        let botElem = SCNGeometryElement(indices: botIdx, primitiveType: .triangles)
+        return SCNGeometry(sources: [vsrc, nsrc, usrc], elements: [topElem, botElem])
     }
 }
 
@@ -179,28 +258,87 @@ private extension Plumbob3DScene {
 
     func applyColor(to view: SCNView) {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
-              let material = node.geometry?.firstMaterial else { return }
-        material.diffuse.contents = PlatformColor(deepened(color))
+              let materials = node.geometry?.materials,
+              materials.count >= 2 else { return }
+        materials[0].diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: +0.06)
+        materials[1].diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: -0.10)
+        materials[0].emission.contents = adjustLightness(PlatformColor(color), by: -0.30)
+        materials[1].emission.contents = PlatformColor.clear
     }
 }
 
-// MARK: - Colour helpers
+// MARK: - Cabochon per-facet texture
 
-/// Pull the diffuse colour a bit darker + more saturated so the gem
-/// reads against the periwinkle background. Sims plumbob greens are
-/// significantly more vivid than the calibrated bar palette tones.
-private func deepened(_ color: Color) -> Color {
-    let ui = PlatformColor(color)
+#if os(iOS)
+import UIKit
+#else
+import AppKit
+#endif
+
+private func facetCabochonTexture(color: Color, lightnessOffset: CGFloat = 0) -> PlatformImage {
+    let size = CGSize(width: 256, height: 256)
+    #if os(iOS)
+    return UIGraphicsImageRenderer(size: size).image { ctx in
+        drawCabochon(in: ctx.cgContext, size: size, color: color, lightnessOffset: lightnessOffset)
+    }
+    #else
+    let img = NSImage(size: size)
+    img.lockFocus()
+    if let cg = NSGraphicsContext.current?.cgContext {
+        drawCabochon(in: cg, size: size, color: color, lightnessOffset: lightnessOffset)
+    }
+    img.unlockFocus()
+    return img
+    #endif
+}
+
+private func drawCabochon(in cg: CGContext, size: CGSize, color: Color, lightnessOffset: CGFloat) {
+    let base = adjustLightness(PlatformColor(color), by: lightnessOffset)
+    cg.setFillColor(base.cgColor)
+    cg.fill(CGRect(origin: .zero, size: size))
+}
+
+private func adjustLightness(_ color: PlatformColor, by delta: CGFloat) -> PlatformColor {
     var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
     #if os(macOS)
-    ui.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+    color.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
     #else
-    ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+    color.getRed(&r, green: &g, blue: &b, alpha: &a)
     #endif
-    // Multiply each channel by 0.78 to darken the lit colour. The
-    // single key light pushes lit facets back up close to the original
-    // hue, while shadow facets go properly dim.
-    return Color(red: r * 0.78, green: g * 0.78, blue: b * 0.78)
+    let maxC = max(r, max(g, b))
+    let minC = min(r, min(g, b))
+    let l0 = (maxC + minC) / 2
+    var hh: CGFloat = 0
+    var s: CGFloat = 0
+    if maxC != minC {
+        let d = maxC - minC
+        s = l0 > 0.5 ? d / (2 - maxC - minC) : d / (maxC + minC)
+        if maxC == r { hh = (g - b) / d + (g < b ? 6 : 0) }
+        else if maxC == g { hh = (b - r) / d + 2 }
+        else { hh = (r - g) / d + 4 }
+        hh /= 6
+    }
+    let l = max(0, min(1, l0 + delta))
+    let (nr, ng, nb) = hslToRGB(h: hh, s: s, l: l)
+    return PlatformColor(red: nr, green: ng, blue: nb, alpha: 1)
+}
+
+private func hslToRGB(h: CGFloat, s: CGFloat, l: CGFloat) -> (CGFloat, CGFloat, CGFloat) {
+    guard s != 0 else { return (l, l, l) }
+    let q = l < 0.5 ? l * (1 + s) : l + s - l * s
+    let p = 2 * l - q
+    func hueToRGB(_ p: CGFloat, _ q: CGFloat, _ t: CGFloat) -> CGFloat {
+        var t = t
+        if t < 0 { t += 1 }
+        if t > 1 { t -= 1 }
+        if t < 1.0/6 { return p + (q - p) * 6 * t }
+        if t < 1.0/2 { return q }
+        if t < 2.0/3 { return p + (q - p) * (2.0/3 - t) * 6 }
+        return p
+    }
+    return (hueToRGB(p, q, h + 1.0/3),
+            hueToRGB(p, q, h),
+            hueToRGB(p, q, h - 1.0/3))
 }
 
 // MARK: - SCNVector3 math
