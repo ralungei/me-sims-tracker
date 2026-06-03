@@ -23,7 +23,6 @@ final class NeedStore {
     var aspirations: [Aspiration] = []
     var tasks: [LifeTask] = []
     private var recentActionsCache: [NeedType: [LastActionRecord]] = [:]
-    private var recentActionKeys: Set<String> = []
     private var alertsCache: (hour: Int, hash: Int, alerts: [SimAlert])?
 
     static let recentActionsLimit = 3
@@ -227,7 +226,7 @@ final class NeedStore {
 
     /// Wipes all SwiftData rows + UserDefaults caches + pending notifications.
     /// SwiftData propagates the deletions through CloudKit, so other devices
-    /// see them on their next foreground. `userName` and prefs survive.
+    /// see them on their next foreground. App prefs survive.
     func resetEverything() async {
         guard let context = modelContext else { return }
 
@@ -247,7 +246,6 @@ final class NeedStore {
         aspirations.removeAll()
         tasks.removeAll()
         recentActionsCache.removeAll()
-        recentActionKeys.removeAll()
         alertsCache = nil
 
         for need in NeedType.allCases {
@@ -288,17 +286,6 @@ final class NeedStore {
                 )
             }
         }
-        rebuildRecentActionKeys()
-    }
-
-    private func rebuildRecentActionKeys() {
-        var set = Set<String>()
-        for (need, records) in recentActionsCache {
-            for rec in records {
-                set.insert("\(need.rawValue):\(rec.actionName)")
-            }
-        }
-        recentActionKeys = set
     }
 
     // MARK: - Calibration
@@ -344,16 +331,6 @@ final class NeedStore {
     }
 
     var vitalLabel: String { SimsTheme.vitalLabel(for: vitalScore) }
-
-    var mostUrgentNeed: NeedType? {
-        needs.min { $0.value < $1.value }?.key
-    }
-
-    var criticalNeeds: [NeedType] {
-        needs.filter { enabledNeeds.contains($0.key) && $0.value < 0.30 }
-            .sorted { $0.value < $1.value }
-            .map(\.key)
-    }
 
     // MARK: - Alerts
 
@@ -485,7 +462,10 @@ final class NeedStore {
             return cached.alerts
         }
 
-        let v: (NeedType) -> Double = { self.needs[$0] ?? 0.5 }
+        // Disabled needs report as satisfied (1.0): rules never fire for a
+        // category the user isn't tracking, and the "all above 60%" rule can
+        // actually reach `true` on plans that don't enable all 11 needs.
+        let v: (NeedType) -> Double = { self.enabledNeeds.contains($0) ? (self.needs[$0] ?? 0.5) : 1.0 }
         let result = Array(Self.alertRules.compactMap { $0.evaluate(v, hour, weekday) }.prefix(3))
         alertsCache = (hour: hour, hash: stateHash, alerts: result)
         return result
@@ -500,68 +480,6 @@ final class NeedStore {
             hasher.combine(Int(((needs[need] ?? 0) * 20).rounded()))
         }
         return hasher.finalize()
-    }
-
-    /// Below this, a need is "low" and earns top-up suggestions.
-    private static let lowNeedThreshold = 0.65
-    /// At/above this, a need is "satisfied" — skip its actions to avoid noise.
-    private static let highNeedThreshold = 0.85
-    private static let topUpPerNeed = 2
-
-    var smartSuggestions: [QuickAction] {
-        let hour = Calendar.current.component(.hour, from: Date())
-        var candidates: [QuickAction] = []
-
-        switch hour {
-        case 6...9:
-            candidates += makeActions(.energy, filter: { $0.contains("Dormí") }, limit: 1)
-            candidates += makeActions(.nutrition, filter: { $0 == "Desayuno" })
-            candidates += makeActions(.hydration, filter: { $0 == "Café" || $0 == "Agua" })
-        case 10...13:
-            candidates += makeActions(.hydration, filter: { $0 == "Agua" })
-            candidates += makeActions(.nutrition, filter: { $0 == "Almuerzo" })
-            candidates += makeActions(.environment, limit: 1)
-        case 14...17:
-            candidates += makeActions(.hydration, filter: { $0 == "Agua" })
-            candidates += makeActions(.exercise, limit: 1)
-        case 18...21:
-            candidates += makeActions(.nutrition, filter: { $0 == "Cena" })
-            candidates += makeActions(.leisure, limit: 1)
-            candidates += makeActions(.social, limit: 1)
-        default:
-            candidates += makeActions(.hygiene, filter: { $0 == "Ducha" || $0 == "Lavé dientes" })
-            candidates += makeActions(.leisure, filter: { $0 == "Medité" || $0 == "Leí" })
-        }
-
-        for need in criticalNeeds.prefix(2) {
-            if let top = need.positiveActions.first {
-                candidates.insert(withNeed(top, need), at: 0)
-            }
-        }
-
-        // Backfill from low needs so the chip row never looks empty after filtering.
-        for need in NeedType.sorted where (needs[need] ?? 0) < Self.lowNeedThreshold {
-            candidates += makeActions(need, limit: Self.topUpPerNeed)
-        }
-
-        let filtered = candidates
-            .filter { enabledNeeds.contains($0.needType)
-                      && !recentActionKeys.contains("\($0.needType.rawValue):\($0.name)")
-                      && (needs[$0.needType] ?? 0) < Self.highNeedThreshold }
-            .deduplicated()
-        return Array(filtered.prefix(5))
-    }
-
-    private func makeActions(_ need: NeedType, filter: ((String) -> Bool)? = nil, limit: Int = 5) -> [QuickAction] {
-        let actions = need.positiveActions
-        let filtered = filter != nil ? actions.filter { filter!($0.name) } : Array(actions.prefix(limit))
-        return filtered.map { withNeed($0, need) }
-    }
-
-    private func withNeed(_ action: QuickAction, _ need: NeedType) -> QuickAction {
-        var a = action
-        a.needType = need
-        return a
     }
 
     // MARK: - Aspirations (SwiftData backed)
@@ -870,12 +788,5 @@ final class NeedStore {
             gen.impactOccurred()
         }
         #endif
-    }
-}
-
-private extension Array where Element == QuickAction {
-    func deduplicated() -> [QuickAction] {
-        var seen = Set<String>()
-        return filter { seen.insert("\($0.needType.rawValue):\($0.name)").inserted }
     }
 }

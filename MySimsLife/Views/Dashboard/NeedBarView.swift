@@ -12,13 +12,12 @@ struct NeedBarView: View {
 
     private let segments = 12
 
-    private var hue: Double { need.hue }
     private var pct: Int { Int((value * 100).rounded()) }
     private var filled: Int { Int((value * Double(segments)).rounded()) }
     private var critical: Bool { value < 0.25 }
 
-    private var fill: Color { SimsTheme.needFill(hue: hue, value: value) }
-    private var track: Color { SimsTheme.needTrack(hue: hue) }
+    private var fill: Color { SimsTheme.needFill(value: value) }
+    private var track: Color { SimsTheme.needTrack }
 
     private var pipHeight: CGFloat { compact ? 10 : 12 }
     private var tileSize: CGFloat { compact ? 40 : 46 }

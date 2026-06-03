@@ -36,7 +36,7 @@ struct AboutView: View {
                     .font(.system(size: 30, weight: .heavy))
                     .foregroundStyle(Color.white)
             }
-            Text("Me")
+            Text("Livebars")
                 .font(.system(.title, design: .rounded, weight: .heavy))
                 .foregroundStyle(SimsTheme.textPrimary)
                 .tracking(-0.5)

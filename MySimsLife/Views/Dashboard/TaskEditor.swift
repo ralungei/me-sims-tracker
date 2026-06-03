@@ -26,7 +26,10 @@ struct TaskEditor: View {
         ) {
             SimsSection("Tarea") { titleField }
             SimsSection("Cuándo") { whenFields }
-            if hasDueDate {
+            // Only offer the reminder toggle once there's a specific time —
+            // `save()` ignores `notify` without one, so showing it earlier
+            // would be a control that silently does nothing.
+            if hasDueDate && hasSpecificTime {
                 SimsSection("Notificación") { notifyField }
             }
             SimsSection("Notas") { notesField }

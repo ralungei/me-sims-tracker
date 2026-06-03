@@ -69,7 +69,14 @@ let positiveBoostBudget: [String: Double] = [
     "bladder":      460   // 100+80+60+100+60+60
 ]
 
-let essentialPlan: Set<String> = ["energy", "mentalHealth", "nutrition", "exercise"]
+// Mirrors `NeedPlan.essentialSet` in NeedType.swift: the four
+// lowest-logging-effort pillars. Nutrition is NOT here — it needs 3-5 logs/day,
+// too heavy for the default tier, so it lives in `balancedPlan`.
+let essentialPlan: Set<String> = ["energy", "exercise", "hygiene", "mentalHealth"]
+// Mirrors `NeedPlan.balancedSet`: essential + nutrition, social, health.
+// Scenarios that exercise nutrition run under this plan, since in the app you
+// only track nutrition once you've opted into Equilibrado or above.
+let balancedPlan: Set<String> = essentialPlan.union(["nutrition", "social", "health"])
 let completePlan: Set<String> = Set(decayRates.keys)
 
 // MARK: - Simulation helpers
@@ -202,10 +209,11 @@ do {
 section("4. Comer ≠ hambre 5 min después")
 do {
     var b = freshBars()
-    applyDecay(&b, hours: 5, enabled: essentialPlan)  // hambre antes de almuerzo
+    // Nutrition lives in Equilibrado+, so this scenario runs under balancedPlan.
+    applyDecay(&b, hours: 5, enabled: balancedPlan)  // hambre antes de almuerzo
     boost(&b, "nutrition", 55)                         // Almuerzo
     let afterAlmuerzo = b["nutrition"] ?? 0
-    applyDecay(&b, hours: 5.0 / 60.0, enabled: essentialPlan)  // 5 min después
+    applyDecay(&b, hours: 5.0 / 60.0, enabled: balancedPlan)  // 5 min después
     let after5min = b["nutrition"] ?? 0
     check("Nutrición tras Almuerzo > 60%", afterAlmuerzo > 0.60,
           "got \(Int(afterAlmuerzo * 100))%")
@@ -219,20 +227,22 @@ do {
 
 section("5. Día activo logra VITAL alto")
 do {
+    // The active day logs breakfast + lunch (nutrition), so it represents a
+    // user on Equilibrado+ — run under balancedPlan.
     var b = freshBars()
     var peakVital = 0
-    applyDecay(&b, hours: 0.5, enabled: essentialPlan)
+    applyDecay(&b, hours: 0.5, enabled: balancedPlan)
     boost(&b, "energy", 100)                                    // 07:30 Dormí 8h
-    peakVital = max(peakVital, vital(b, enabled: essentialPlan))
-    applyDecay(&b, hours: 0.5, enabled: essentialPlan)
+    peakVital = max(peakVital, vital(b, enabled: balancedPlan))
+    applyDecay(&b, hours: 0.5, enabled: balancedPlan)
     boost(&b, "nutrition", 50)                                  // 08:00 Desayuno
-    peakVital = max(peakVital, vital(b, enabled: essentialPlan))
-    applyDecay(&b, hours: 0.5, enabled: essentialPlan)
+    peakVital = max(peakVital, vital(b, enabled: balancedPlan))
+    applyDecay(&b, hours: 0.5, enabled: balancedPlan)
     boost(&b, "mentalHealth", 35)                               // 08:30 Medité
-    peakVital = max(peakVital, vital(b, enabled: essentialPlan))
-    applyDecay(&b, hours: 4, enabled: essentialPlan)
+    peakVital = max(peakVital, vital(b, enabled: balancedPlan))
+    applyDecay(&b, hours: 4, enabled: balancedPlan)
     boost(&b, "nutrition", 55)                                  // 12:30 Almuerzo
-    let midday = vital(b, enabled: essentialPlan)
+    let midday = vital(b, enabled: balancedPlan)
     peakVital = max(peakVital, midday)
 
     check("Pico VITAL en la mañana ≥ 70", peakVital >= 70,

@@ -29,10 +29,8 @@ struct PlumbobView: View {
 
 #if os(macOS)
 private typealias PlatformColor = NSColor
-private typealias PlatformImage = NSImage
 #else
 private typealias PlatformColor = UIColor
-private typealias PlatformImage = UIImage
 #endif
 
 struct Plumbob3DScene {
@@ -43,7 +41,7 @@ struct Plumbob3DScene {
     private func makeFacetMaterial(color: Color, lightnessOffset: CGFloat, mirroredBeam: Bool) -> SCNMaterial {
         let m = SCNMaterial()
         m.lightingModel = .blinn
-        m.diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: lightnessOffset)
+        m.diffuse.contents = adjustLightness(PlatformColor(color), by: lightnessOffset)
         m.specular.contents = PlatformColor.white
         m.specular.intensity = mirroredBeam ? 0.15 : 0.55
         m.shininess = 0.95
@@ -260,43 +258,19 @@ private extension Plumbob3DScene {
         guard let node = view.scene?.rootNode.childNode(withName: Self.plumbobNodeName, recursively: true),
               let materials = node.geometry?.materials,
               materials.count >= 2 else { return }
-        materials[0].diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: +0.06)
-        materials[1].diffuse.contents = facetCabochonTexture(color: color, lightnessOffset: -0.10)
+        materials[0].diffuse.contents = adjustLightness(PlatformColor(color), by: +0.06)
+        materials[1].diffuse.contents = adjustLightness(PlatformColor(color), by: -0.10)
         materials[0].emission.contents = adjustLightness(PlatformColor(color), by: -0.30)
         materials[1].emission.contents = PlatformColor.clear
     }
 }
 
-// MARK: - Cabochon per-facet texture
-
+// UIColor / NSColor back the per-facet material colours below.
 #if os(iOS)
 import UIKit
 #else
 import AppKit
 #endif
-
-private func facetCabochonTexture(color: Color, lightnessOffset: CGFloat = 0) -> PlatformImage {
-    let size = CGSize(width: 256, height: 256)
-    #if os(iOS)
-    return UIGraphicsImageRenderer(size: size).image { ctx in
-        drawCabochon(in: ctx.cgContext, size: size, color: color, lightnessOffset: lightnessOffset)
-    }
-    #else
-    let img = NSImage(size: size)
-    img.lockFocus()
-    if let cg = NSGraphicsContext.current?.cgContext {
-        drawCabochon(in: cg, size: size, color: color, lightnessOffset: lightnessOffset)
-    }
-    img.unlockFocus()
-    return img
-    #endif
-}
-
-private func drawCabochon(in cg: CGContext, size: CGSize, color: Color, lightnessOffset: CGFloat) {
-    let base = adjustLightness(PlatformColor(color), by: lightnessOffset)
-    cg.setFillColor(base.cgColor)
-    cg.fill(CGRect(origin: .zero, size: size))
-}
 
 private func adjustLightness(_ color: PlatformColor, by delta: CGFloat) -> PlatformColor {
     var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0

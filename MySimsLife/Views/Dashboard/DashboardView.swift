@@ -5,7 +5,6 @@ struct DashboardView: View {
     @Environment(NeedStore.self) private var store
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var modelContext
-    @AppStorage("userName") private var userName: String = ""
 
     @Query(sort: \Treatment.createdAt, order: .reverse)
     private var treatments: [Treatment]
@@ -142,7 +141,6 @@ struct DashboardView: View {
     private var centeredGreeting: some View {
         let mood = store.overallMood
         return TimeAwareGreeting(
-            userName: userName,
             isCompact: isCompact,
             moodCopy: moodCopy(for: mood),
             moodColor: SimsTheme.plumbobColor(for: mood),
@@ -702,8 +700,7 @@ struct DashboardView: View {
         return HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 8) {
                 TimeAwareGreeting(
-                    userName: userName,
-                    isCompact: true,
+                            isCompact: true,
                     moodCopy: moodCopy(for: mood),
                     moodColor: SimsTheme.plumbobColor(for: mood),
                     horizontalAlignment: .leading
@@ -941,7 +938,7 @@ struct DashboardView: View {
             onEdit: { t in editingTreatment = t },
             onDelete: { t in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                    NotificationManager.shared.cancelTaskReminder(taskID: t.id)
+                    NotificationManager.shared.cancelTreatmentReminder(treatmentID: t.id)
                     modelContext.delete(t)
                     try? modelContext.save()
                 }
@@ -949,43 +946,11 @@ struct DashboardView: View {
         )
     }
 
-    // MARK: - Smart Suggestions
-
-    private var suggestionsBar: some View {
-        let inset: CGFloat = isCompact ? 16 : 32
-        // Compute once — both the empty-check and the ForEach used to access this twice.
-        let suggestions = store.smartSuggestions
-        return Group {
-            if !suggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("⚡ RÁPIDO")
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .foregroundStyle(SimsTheme.textDim)
-                        .tracking(1.4)
-                        .padding(.horizontal, inset)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(suggestions) { action in
-                                SuggestionChip(action: action) {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                        store.logAction(action, for: action.needType)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, inset)
-                    }
-                }
-            }
-        }
-    }
 }
 
 // MARK: - Time-aware greeting (isolated so the 30s tick doesn't invalidate the whole dashboard)
 
 private struct TimeAwareGreeting: View {
-    let userName: String
     let isCompact: Bool
     let moodCopy: String
     let moodColor: Color
@@ -1020,18 +985,10 @@ private struct TimeAwareGreeting: View {
         let style: Font = .system(isCompact ? .title2 : .title,
                                   design: .rounded,
                                   weight: .bold)
-        return HStack(spacing: 6) {
-            Text(greeting)
-                .font(style)
-                .foregroundStyle(SimsTheme.textPrimary)
-                .tracking(-0.5)
-            if !userName.isEmpty {
-                Text(userName)
-                    .font(style)
-                    .foregroundStyle(SimsTheme.accentPrimary)
-                    .tracking(-0.5)
-            }
-        }
+        return Text(greeting)
+            .font(style)
+            .foregroundStyle(SimsTheme.textPrimary)
+            .tracking(-0.5)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
     }
@@ -1074,50 +1031,10 @@ private struct TimeAwareGreeting: View {
 
     private var greeting: String {
         switch Calendar.current.component(.hour, from: now) {
-        case 6..<13:  return String(localized: "Buenos días,")
-        case 13..<20: return String(localized: "Buenas tardes,")
-        default:      return String(localized: "Buenas noches,")
+        case 6..<13:  return String(localized: "Buenos días")
+        case 13..<20: return String(localized: "Buenas tardes")
+        default:      return String(localized: "Buenas noches")
         }
-    }
-}
-
-// MARK: - Suggestion Chip (per-need hue)
-
-struct SuggestionChip: View {
-    let action: QuickAction
-    let onTap: () -> Void
-
-    private var hueDeg: Double { action.needType.hue }
-    private var iconColor:   Color { SimsTheme.hueIconColor(hueDeg) }
-    private var bgTop:       Color { SimsTheme.hueGradientTop(hueDeg) }
-    private var bgBottom:    Color { SimsTheme.hueGradientBottom(hueDeg) }
-    private var strokeColor: Color { SimsTheme.hueStroke(hueDeg) }
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 8) {
-                Image(systemName: action.icon)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(iconColor)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(action.localizedName)
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(SimsTheme.textPrimary)
-                    Text("\(action.needType.displayName) · +\(Int(action.boost))%")
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundStyle(SimsTheme.textSecondary)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(
-                Capsule()
-                    .fill(LinearGradient(colors: [bgTop, bgBottom],
-                                         startPoint: .top, endPoint: .bottom))
-                    .overlay(Capsule().stroke(strokeColor, lineWidth: 1))
-            )
-        }
-        .buttonStyle(BounceButtonStyle())
     }
 }
 

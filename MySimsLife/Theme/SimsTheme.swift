@@ -59,15 +59,14 @@ enum SimsTheme {
 
     // MARK: - Per-need helpers — bar color follows VALUE (sims-style indicative)
 
-    static func needFill(hue: Double, value: Double) -> Color {
-        // Ignore hue: bar color reflects state, not identity
+    /// Bar fill follows VALUE, not the need's identity hue (Sims-style
+    /// indicative colour).
+    static func needFill(value: Double) -> Color {
         valueColor(for: value)
     }
 
-    static func needTrack(hue: Double) -> Color {
-        // Neutral track so the colored fill stands out
-        Color.white.opacity(0.06)
-    }
+    /// Neutral track so the coloured fill stands out.
+    static let needTrack = Color.white.opacity(0.06)
 
     // Sims classic moodlet palette (5 tiers) — used for bars, plumbob, VITAL.
     static let simsGreen       = Color(red: 0.298, green: 0.769, blue: 0.090)   // #4CC417 — genial
