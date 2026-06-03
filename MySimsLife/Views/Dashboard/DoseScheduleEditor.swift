@@ -54,7 +54,16 @@ struct DoseScheduleEditor: View {
                     Text("Sem")
                         .font(.system(.caption2, design: .rounded))
                         .foregroundStyle(SimsTheme.textSecondary)
-                    Stepper(value: $schedule[index].fromWeek, in: 1...52) {
+                    // Custom binding keeps the invariant `toWeek >= fromWeek`:
+                    // raising fromWeek past toWeek drags toWeek up with it, so
+                    // `Treatment.currentDose` never builds an inverted range.
+                    Stepper(value: Binding(
+                        get: { schedule[index].fromWeek },
+                        set: {
+                            schedule[index].fromWeek = $0
+                            if schedule[index].toWeek < $0 { schedule[index].toWeek = $0 }
+                        }
+                    ), in: 1...52) {
                         Text("\(step.fromWeek)")
                             .font(.system(.caption, design: .rounded, weight: .bold))
                             .foregroundStyle(SimsTheme.textPrimary)

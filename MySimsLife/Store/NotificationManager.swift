@@ -171,22 +171,27 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Treatment reminders
 
-    /// Schedule a one-shot reminder for a treatment dose. Same semantics as
-    /// `scheduleTaskReminder` but lives in its own identifier namespace so it
-    /// can be cancelled independently when the user toggles the botiquín
+    /// Schedule a **daily** reminder for a treatment dose. Only the
+    /// hour/minute of `date` matter — it repeats every day so ongoing
+    /// regimens (vitamins, chronic meds) keep reminding instead of firing
+    /// once and going silent. Lives in its own identifier namespace so it can
+    /// be cancelled independently when the user toggles the botiquín
     /// sub-category off.
+    ///
+    /// Note: a finite course keeps reminding past its end date until the user
+    /// edits or deletes the treatment — acceptable at this scale; scheduling
+    /// N one-shot triggers to stop exactly on the last day isn't worth it.
     func scheduleTreatmentReminder(treatmentID: UUID, title: String, at date: Date) {
         cancelTreatmentReminder(treatmentID: treatmentID)
         guard NotificationsPrefs.masterEnabled,
               NotificationsPrefs.treatmentsEnabled else { return }
-        guard date > Date() else { return }
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Botiquín")
         content.body  = title
         content.sound = .default
-        let comps = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute], from: date)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        // Hour + minute only → the trigger fires daily at that wall-clock time.
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
         let req = UNNotificationRequest(
             identifier: Self.treatmentID(treatmentID),
             content: content,

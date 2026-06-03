@@ -98,7 +98,10 @@ final class Treatment {
     func currentDose(reference: Date = Date()) -> Int {
         guard let day = currentDay(reference: reference) else { return defaultDose }
         let week = (day - 1) / 7 + 1
-        for step in schedule where (step.fromWeek...step.toWeek).contains(week) {
+        // Comparison form (not `fromWeek...toWeek`): a malformed step with
+        // fromWeek > toWeek would trap when constructing the ClosedRange.
+        // Bad data can arrive via CloudKit from an older/buggy client.
+        for step in schedule where week >= step.fromWeek && week <= step.toWeek {
             return step.count
         }
         return defaultDose
