@@ -4,7 +4,11 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(NeedStore.self) private var store
-    @AppStorage("userName") private var userName: String = ""
+    /// Persists across launches so the onboarding only runs once. Mirrored
+    /// to iCloud KVS (see `CloudPrefsMirror`) so a second device skips the
+    /// flow once the first device has finished it — which also stops it from
+    /// re-seeding duplicate aspirations / treatments.
+    @AppStorage(UDKey.onboardingComplete) private var onboardingComplete: Bool = false
     /// Defaults to Status (0). Screenshot script overrides via `-RootTab status|history|settings`.
     @State private var selectedTab: Int = {
         let args = ProcessInfo.processInfo.arguments
@@ -16,27 +20,29 @@ struct ContentView: View {
         }
     }()
 
-    @State private var onboardingDone: Bool = false
+    @State private var onboardingDoneThisLaunch: Bool = false
 
     var body: some View {
-        // TEMP DEBUG: -ForceOnboarding launch arg shows the onboarding
-        // even if userName persists from iCloud KVS, so the flow can be
-        // reviewed without nuking the simulator. `onboardingDone` lets
-        // OnboardingView close itself even in that forced state.
+        // -ForceOnboarding launch arg re-shows the onboarding even
+        // after it's been marked complete, for review/debugging.
         let forceOnboarding = ProcessInfo.processInfo.arguments.contains("-ForceOnboarding")
-            && !onboardingDone
+            && !onboardingDoneThisLaunch
+        let showOnboarding = (!onboardingComplete || forceOnboarding)
         Group {
-            if userName.isEmpty || forceOnboarding {
-                OnboardingView(onFinish: { onboardingDone = true })
-                    .environment(store)
-                    .transition(.opacity)
+            if showOnboarding {
+                OnboardingView(onFinish: {
+                    onboardingComplete = true
+                    onboardingDoneThisLaunch = true
+                })
+                .environment(store)
+                .transition(.opacity)
             } else {
                 mainTabs
                     .transition(.opacity)
             }
         }
-        .simsAnimation(.easeInOut(duration: 0.35), value: userName.isEmpty)
-        .simsAnimation(.easeInOut(duration: 0.35), value: onboardingDone)
+        .simsAnimation(.easeInOut(duration: 0.35), value: onboardingComplete)
+        .simsAnimation(.easeInOut(duration: 0.35), value: onboardingDoneThisLaunch)
         .onAppear {
             store.configure(with: modelContext)
             #if os(iOS)

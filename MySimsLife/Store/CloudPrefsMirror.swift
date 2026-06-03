@@ -7,8 +7,8 @@ import Foundation
 /// underneath syncs the values both ways.
 ///
 /// What's mirrored:
-/// - `userName`
-/// - `enabledNeeds`
+/// - `onboardingComplete` (so a 2nd device skips onboarding instead of
+///   re-running it and re-seeding duplicate aspirations / treatments)
 /// - all `NotificationsPrefs.*Key`
 ///
 /// What's NOT mirrored:
@@ -34,7 +34,7 @@ final class CloudPrefsMirror {
         // `enabledNeeds` lives in `NeedAnchor.enabled` (CloudKit-synced via
         // SwiftData) — not mirrored here. Keep this list to true app-prefs.
         self.mirroredKeys = [
-            UDKey.userName,
+            UDKey.onboardingComplete,
             NotificationsPrefs.masterEnabledKey,
             NotificationsPrefs.needsLowEnabledKey,
             NotificationsPrefs.tasksEnabledKey,

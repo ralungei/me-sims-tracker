@@ -40,7 +40,6 @@ enum MockData {
         guard isRequested else { return }
 
         wipeAll(in: context)
-        injectName()
         injectAspirations(in: context)
         injectTreatments(in: context)
         injectTasks(in: context)
@@ -57,12 +56,6 @@ enum MockData {
         for tr in (try? context.fetch(FetchDescriptor<Treatment>())) ?? [] { context.delete(tr) }
         for log in (try? context.fetch(FetchDescriptor<ActivityLog>())) ?? [] { context.delete(log) }
         for a in (try? context.fetch(FetchDescriptor<NeedAnchor>())) ?? [] { context.delete(a) }
-    }
-
-    // MARK: - Name
-
-    private static func injectName() {
-        UserDefaults.standard.set("Alex", forKey: UDKey.userName)
     }
 
     // MARK: - Aspirations

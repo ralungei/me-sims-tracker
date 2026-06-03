@@ -8,13 +8,11 @@ import UserNotifications
 struct SettingsView: View {
     @Environment(NeedStore.self) private var store
 
-    @AppStorage("userName")                              private var userName: String = ""
     @AppStorage(NotificationsPrefs.masterEnabledKey)     private var masterEnabled: Bool = false
     @AppStorage(NotificationsPrefs.needsLowEnabledKey)   private var needsLowEnabled: Bool = true
     @AppStorage(NotificationsPrefs.tasksEnabledKey)      private var tasksEnabled: Bool = true
     @AppStorage(NotificationsPrefs.treatmentsEnabledKey) private var treatmentsEnabled: Bool = true
 
-    @State private var showingProfileEditor: Bool = false
     @State private var showingResetConfirm: Bool = false
     @State private var isResetting: Bool = false
 
@@ -29,15 +27,11 @@ struct SettingsView: View {
                             .tracking(-0.5)
                             .foregroundStyle(SimsTheme.textPrimary)
 
-                        profileCard
                         configRows
                         dangerZoneSection
                     }
                     .padding(20)
                 }
-            }
-            .sheet(isPresented: $showingProfileEditor) {
-                ProfileEditor()
             }
             .alert("¿Empezar de cero?",
                    isPresented: $showingResetConfirm) {
@@ -51,56 +45,6 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tu nombre y prefs. Esta acción no se puede deshacer.")
-            }
-        }
-    }
-
-    // MARK: - Profile card
-
-    private var profileCard: some View {
-        Button {
-            showingProfileEditor = true
-        } label: {
-            HStack(spacing: 14) {
-                avatarCircle
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(userName.isEmpty ? "Sin nombre" : userName)
-                        .font(.system(.title3, design: .rounded, weight: .heavy))
-                        .foregroundStyle(userName.isEmpty
-                                         ? SimsTheme.textDim
-                                         : SimsTheme.textPrimary)
-                    Text("Cambiar nombre")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(SimsTheme.textSecondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(SimsTheme.textDim)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .simsPanelStyle()
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var avatarCircle: some View {
-        let initial = userName.trimmingCharacters(in: .whitespaces).first.map(String.init)?.uppercased()
-        return ZStack {
-            Circle()
-                .fill(SimsTheme.frame)
-                .frame(width: 54, height: 54)
-            if let initial {
-                Text(initial)
-                    .font(.system(.title2, design: .rounded, weight: .heavy))
-                    .foregroundStyle(Color.white)
-            } else {
-                // SF Symbol — size is for the glyph's geometry, not for
-                // Dynamic Type. Leaving fixed so the avatar stays circular.
-                Image(systemName: "person.fill")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(Color.white)
             }
         }
     }

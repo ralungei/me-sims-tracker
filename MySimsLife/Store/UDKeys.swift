@@ -4,5 +4,8 @@ import Foundation
 /// `CloudPrefsMirror`; per-need state (`enabled`, `value`, `anchoredAt`)
 /// lives in the `NeedAnchor` SwiftData model instead.
 enum UDKey {
-    static let userName = "userName"
+    /// Set once the user finishes onboarding. Mirrored to iCloud KVS so a
+    /// second device skips the flow (and doesn't re-seed duplicate
+    /// aspirations / treatments) once the first device has completed it.
+    static let onboardingComplete = "onboardingComplete"
 }

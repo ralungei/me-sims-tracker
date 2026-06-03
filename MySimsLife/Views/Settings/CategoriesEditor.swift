@@ -9,10 +9,9 @@ struct CategoriesEditor: View {
 
     var embedded: Bool = false
 
-    /// Tracks vertical scroll inside the list so the top fade mask only
-    /// appears once the user has scrolled past the first row — at the
-    /// very top there's nothing being clipped, so the fade would just
-    /// dim the first row for no reason.
+    /// How far the user has scrolled down inside the list, in points.
+    /// Drives the top fade overlay (which only appears once there's
+    /// content above the visible region).
     @State private var listScrollOffset: CGFloat = 0
 
     var body: some View {
@@ -51,31 +50,40 @@ struct CategoriesEditor: View {
                 .padding(.top, 20)
 
             ScrollView {
+                // Sentinel as the first child writes its position into a
+                // preference, so SwiftUI gets a reliable per-frame scroll
+                // signal — `background(GeometryReader)` on the VStack
+                // missed updates when only the offset moved.
                 VStack(spacing: 8) {
+                    Color.clear
+                        .frame(height: 0)
+                        .background(
+                            GeometryReader { proxy in
+                                Color.clear
+                                    .preference(
+                                        key: ScrollOffsetKey.self,
+                                        value: -proxy.frame(in: .named("needList")).minY
+                                    )
+                            }
+                        )
                     ForEach(NeedType.sorted) { need in
                         row(need)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear.preference(
-                            key: ScrollOffsetKey.self,
-                            value: proxy.frame(in: .named("needList")).minY
-                        )
-                    }
-                )
             }
             .coordinateSpace(name: "needList")
             .onPreferenceChange(ScrollOffsetKey.self) { listScrollOffset = $0 }
+            // Transparent mask — fades pixel alpha, doesn't add colour,
+            // so the result blends with whatever gradient is behind it.
+            // Top stop interpolates with scroll: clear at offset 0,
+            // solid black by offset 12 → first row fades in gradually.
             .mask(
-                // Top fade only kicks in once the user has scrolled past
-                // the first ~8 px. While at the top there's nothing to
-                // hide above, so a fade there would just dim row #1.
                 LinearGradient(
                     stops: [
-                        .init(color: listScrollOffset < -8 ? .clear : .black, location: 0.0),
+                        .init(color: Color.black.opacity(min(1.0, max(0, listScrollOffset) / 12.0)),
+                              location: 0.0),
                         .init(color: .black, location: 0.06),
                         .init(color: .black, location: 0.92),
                         .init(color: .clear, location: 1.0)

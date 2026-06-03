@@ -342,8 +342,13 @@ enum NeedPlan: String, CaseIterable, Identifiable {
 
     // Pre-built once at type init so SwiftUI re-renders don't rebuild
     // each Set via `.union(...)` on every body evaluation.
-    private static let essentialSet: Set<NeedType> = [.energy, .mentalHealth, .nutrition, .exercise]
-    private static let balancedSet:  Set<NeedType> = essentialSet.union([.hygiene, .social, .health])
+    /// Esencial — only the four categories whose daily log effort is
+    /// genuinely minimal: sleep (1×), exercise (0–1×), hygiene (1–2×),
+    /// mental health (intentional, not constant). Heavy-logging
+    /// categories (nutrition 3–5×, hydration 5–8×) live in Equilibrado
+    /// or above so people don't burn out on the default plan.
+    private static let essentialSet: Set<NeedType> = [.energy, .exercise, .hygiene, .mentalHealth]
+    private static let balancedSet:  Set<NeedType> = essentialSet.union([.nutrition, .social, .health])
     private static let detailedSet:  Set<NeedType> = balancedSet.union([.hydration, .leisure])
     private static let completeSet:  Set<NeedType> = Set(NeedType.allCases)
 

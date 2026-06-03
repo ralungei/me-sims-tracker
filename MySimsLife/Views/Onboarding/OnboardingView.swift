@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 #if os(iOS)
 import UIKit
 #endif
@@ -8,25 +9,22 @@ import UIKit
 /// builds visual attachment before the dashboard appears.
 struct OnboardingView: View {
     @Environment(NeedStore.self) private var store
-    @AppStorage("userName") private var savedName: String = ""
+    @Environment(\.modelContext) private var modelContext
 
     @State private var step: Step = {
-        // -OnboardingStep=N (0–5) jumps straight to a step for screenshots.
         let args = ProcessInfo.processInfo.arguments
         for arg in args where arg.hasPrefix("-OnboardingStep=") {
             let raw = arg.replacingOccurrences(of: "-OnboardingStep=", with: "")
             if let n = Int(raw), let s = Step(rawValue: n) { return s }
         }
-        return .hook
-    }()
-    @State private var plan: PlanChoice = .light
-    @State private var name: String = {
-        ProcessInfo.processInfo.arguments.contains("-OnboardingStep=6") ? "Alex" : ""
+        return .welcome
     }()
     /// Drives the live demo on the model step — plumbob and bar both
     /// reflect this value, bouncing from full → empty → full to show the
     /// "decays automatically, you refill it" loop.
     @State private var demoValue: Double = 0.85
+    @State private var selectedAspirations: Set<AspirationPreset.ID> = []
+    @State private var selectedTreatments:  Set<TreatmentPreset.ID> = []
     @State private var sleepChoice: SleepHours? = {
         // -OnboardingSleep=N (0–3) preselects a sleep band — only used
         // by the screenshot harness so you can review the insight card.
@@ -40,7 +38,6 @@ struct OnboardingView: View {
         return nil
     }()
     @State private var confettiBurst: Int = 0
-    @FocusState private var nameFocused: Bool
 
     let onFinish: () -> Void
 
@@ -76,12 +73,12 @@ struct OnboardingView: View {
 
                 Group {
                     switch step {
-                    case .hook:      hookStep
-                    case .welcome:   welcomeStep
-                    case .model:     modelStep
-                    case .customize: customizeStep
-                    case .name:      nameStep
-                    case .sleep:     sleepStep
+                    case .welcome:     welcomeStep
+                    case .model:       modelStep
+                    case .customize:   customizeStep
+                    case .aspirations: aspirationsStep
+                    case .treatments:  treatmentsStep
+                    case .sleep:       sleepStep
                     }
                 }
                 .frame(maxWidth: 480)
@@ -115,8 +112,55 @@ struct OnboardingView: View {
     // MARK: - Step model
 
     enum Step: Int, CaseIterable {
-        case hook, welcome, model, customize, name, sleep
+        case welcome, model, customize, aspirations, treatments, sleep
     }
+
+    /// Aspiration preset shown as a multi-select chip in the aspirations
+    /// step. `need` filters: the preset only surfaces if its need is
+    /// active on the user's plan (after customize), so the list stays
+    /// relevant.
+    struct AspirationPreset: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let emoji: String
+        let hue: Double
+        let xp: Int
+        let need: NeedType
+    }
+
+    /// Curated to 6 picks max — onboarding shouldn't be a full catalog,
+    /// only the most universally useful starters. The rest live in
+    /// "Nueva aspiración" inside the app for power users.
+    static let aspirationCatalog: [AspirationPreset] = [
+        .init(name: "10.000 pasos al día",       emoji: "👟", hue: 38,  xp: 25, need: .exercise),
+        .init(name: "5 piezas de fruta o verdura", emoji: "🥗", hue: 158, xp: 25, need: .nutrition),
+        .init(name: "1,5 L de agua al día",      emoji: "💧", hue: 195, xp: 25, need: .hydration),
+        .init(name: "Meditar 10 min",            emoji: "🧘", hue: 280, xp: 25, need: .mentalHealth),
+        .init(name: "Acostarme antes de las 23h", emoji: "🌙", hue: 38, xp: 25, need: .energy),
+        .init(name: "Llamar a familia",          emoji: "📞", hue: 295, xp: 25, need: .social)
+    ]
+
+    /// Treatment preset for the supplements step. Catálogo agnóstico a
+    /// las categorías — los más comunes que la mayoría toma o conoce.
+    struct TreatmentPreset: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let emoji: String
+        let hue: Double
+        let unit: String
+        let defaultDose: Int
+    }
+
+    static let treatmentCatalog: [TreatmentPreset] = [
+        .init(name: "Creatina",         emoji: "💪", hue: 38,  unit: "g",   defaultDose: 5),
+        .init(name: "Vitamina D",       emoji: "☀️", hue: 38,  unit: "UI",  defaultDose: 1000),
+        .init(name: "Omega 3",          emoji: "🐟", hue: 195, unit: "mg",  defaultDose: 1000),
+        .init(name: "Magnesio",         emoji: "✨", hue: 280, unit: "mg",  defaultDose: 200),
+        .init(name: "Multivitamínico",  emoji: "💊", hue: 158, unit: "ud",  defaultDose: 1),
+        .init(name: "Melatonina",       emoji: "🌙", hue: 258, unit: "mg",  defaultDose: 1),
+        .init(name: "Probiótico",       emoji: "🦠", hue: 22,  unit: "ud",  defaultDose: 1),
+        .init(name: "Café",             emoji: "☕", hue: 22,  unit: "ud",  defaultDose: 1)
+    ]
 
     /// Mirrors the four "Dormí …h" rows in NeedType.energy's QuickAction
     /// catalog (NeedType.swift). Same name, same icon, same boost — so
@@ -157,40 +201,6 @@ struct OnboardingView: View {
         }
     }
 
-    enum PlanChoice: String, CaseIterable, Identifiable {
-        case light, balanced, intense
-        var id: String { rawValue }
-        var needPlan: NeedPlan {
-            switch self {
-            case .light:    return .essential
-            case .balanced: return .balanced
-            case .intense:  return .complete
-            }
-        }
-        var emoji: String {
-            switch self {
-            case .light:    return "🌱"
-            case .balanced: return "⚖️"
-            case .intense:  return "🔥"
-            }
-        }
-        var title: LocalizedStringKey {
-            switch self {
-            case .light:    return "Ligero"
-            case .balanced: return "Equilibrado"
-            case .intense:  return "Intenso"
-            }
-        }
-        var subtitle: LocalizedStringKey {
-            switch self {
-            case .light:    return "Lo que la mayoría elige"
-            case .balanced: return "Un punto medio"
-            case .intense:  return "Si vienes con todo"
-            }
-        }
-        var count: Int { needPlan.count }
-    }
-
     // MARK: - Plumbob sizing per step
 
     /// Sizing has intent: bookends (hook + sleep) and the demo step are
@@ -202,12 +212,12 @@ struct OnboardingView: View {
     /// the steps that NEED the headroom (hook intro, final reveal) grow it.
     private var plumbobSize: CGFloat {
         switch step {
-        case .hook:      return 230
-        case .welcome:   return 150
-        case .model:     return 175
-        case .customize: return 0     // hidden — list needs the height
-        case .name:      return 130
-        case .sleep:     return 200
+        case .welcome:     return 200   // hero entry — replaces the old hook
+        case .model:       return 175
+        case .customize:   return 0
+        case .aspirations: return 0
+        case .treatments:  return 0
+        case .sleep:       return 200
         }
     }
     private var plumbobOffsetX: CGFloat {
@@ -218,19 +228,18 @@ struct OnboardingView: View {
     }
     private var plumbobOffsetY: CGFloat {
         switch step {
-        case .hook:  return -10
         case .sleep: return -6
         default:     return 0
         }
     }
-    /// On the model step the plumbob mirrors the demo bar so users see the
-    /// gem changing colour as a need rises and falls. On the rest of the
-    /// steps it sits at calm levels that don't compete with the text.
+    /// On the model step the plumbob mirrors the demo bar so the gem
+    /// changes colour as the need rises and falls. Elsewhere it sits
+    /// at calm levels that don't fight the text.
     private var plumbobMood: Double {
         switch step {
-        case .hook, .sleep: return 0.92
-        case .model:        return demoValue
-        default:            return 0.7
+        case .welcome, .sleep: return 0.92
+        case .model:           return demoValue
+        default:               return 0.7
         }
     }
 
@@ -238,7 +247,7 @@ struct OnboardingView: View {
 
     private var topBar: some View {
         HStack {
-            if step != .hook {
+            if step != .welcome {
                 Button { goBack() } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
@@ -265,40 +274,21 @@ struct OnboardingView: View {
         .simsAnimation(.easeInOut(duration: 0.25), value: step)
     }
 
-    // MARK: - Step 0 — Hook
-
-    private var hookStep: some View {
-        VStack(spacing: 12) {
-            Text("Una app para todo.")
-                .font(.system(size: 40, weight: .heavy, design: .rounded))
-                .foregroundStyle(SimsTheme.textPrimary)
-                .multilineTextAlignment(.center)
-                .tracking(-0.9)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("Lo que sueles olvidar.\nLo que sueles dejar a medias.")
-                .font(.system(.title3, design: .rounded, weight: .medium))
-                .foregroundStyle(SimsTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: - Step 1 — Welcome (what the app actually does)
+    // MARK: - Step 0 — Welcome (hero entry — what the app actually does)
 
     private var welcomeStep: some View {
-        // 2×2 grid of pillar tiles with the headline centred above.
-        // Reads as four pillars rather than a checklist.
-        VStack(spacing: 16) {
+        // Hero entry — fuses what used to be hook + welcome into a
+        // single screen. Headline is the all-in-one promise; the 2×2
+        // grid below shows what "all" actually means.
+        VStack(spacing: 20) {
             VStack(spacing: 2) {
                 Text("Todo lo que necesites,")
-                    .font(.system(size: 26, weight: .heavy, design: .rounded))
+                    .font(.system(size: 28, weight: .heavy, design: .rounded))
                     .foregroundStyle(SimsTheme.textPrimary)
                     .tracking(-0.5)
                     .multilineTextAlignment(.center)
                 Text("en un sitio.")
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .font(.system(size: 32, weight: .heavy, design: .rounded))
                     .foregroundStyle(SimsTheme.accentPrimary)
                     .tracking(-0.6)
                     .multilineTextAlignment(.center)
@@ -319,7 +309,6 @@ struct OnboardingView: View {
                 welcomeTile(DashboardTab.agenda.icon,
                             "Agenda", "Tareas y cosas del día")
             }
-            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
     }
@@ -445,7 +434,7 @@ struct OnboardingView: View {
     // MARK: - Step 3 — Customize categories
 
     private var customizeStep: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 24) {
             VStack(spacing: 4) {
                 Text("¿Qué quieres seguir?")
                     .font(.system(size: 30, weight: .heavy, design: .rounded))
@@ -465,71 +454,205 @@ struct OnboardingView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Step 6 — Name
+    // MARK: - Step 4 — Aspirations
 
-    private var nameStep: some View {
-        // Centered layout — the input field reads best when it sits
-        // squarely in the middle of the screen instead of pushed to one
-        // side. Plumbob is also centered for this step (offset=0).
-        VStack(spacing: 18) {
-            VStack(spacing: 6) {
-                Text("¿Cómo te llamo?")
-                    .font(.system(size: 32, weight: .heavy, design: .rounded))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                    .tracking(-0.6)
-                    .multilineTextAlignment(.center)
-                Text("Aparece cuando abres la app. Solo lo verás tú.")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-                    .multilineTextAlignment(.center)
+    private var aspirationsStep: some View {
+        // Show the whole curated 6. They were filtered by enabled need
+        // before but that collapsed the list to 3 on the Esencial plan
+        // and left the user thinking the screen was broken. Aspirations
+        // are goals, not need-tracking — they don't have to match.
+        let available = Self.aspirationCatalog
+
+        return VStack(spacing: 20) {
+            VStack(spacing: 12) {
+                moduleBadge(DashboardTab.aspirations.icon)
+                VStack(spacing: 4) {
+                    Text("Algunas metas para empezar.")
+                        .font(.system(size: 26, weight: .heavy, design: .rounded))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                        .tracking(-0.5)
+                        .multilineTextAlignment(.center)
+                    Text("Marca las que te van. O sigue sin nada.")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
-            TextField("", text: $name,
-                      prompt: Text("Tu nombre").foregroundStyle(SimsTheme.textSecondary))
-                .textFieldStyle(.plain)
-                .font(.system(.title2, design: .rounded, weight: .heavy))
-                .multilineTextAlignment(.center)
-                .padding(.vertical, 16)
-                .padding(.horizontal, 18)
-                .foregroundStyle(SimsTheme.textPrimary)
-                .simsFieldStyle(cornerRadius: 16, selected: nameFocused)
-                .focused($nameFocused)
-                .submitLabel(.continue)
-                .onSubmit { advance() }
-
-            HStack(spacing: 8) {
-                Image(systemName: "lock.fill")
-                    .font(.system(.footnote, weight: .heavy))
-                Text("Privado en tu iCloud.")
-                    .font(.system(.footnote, design: .rounded, weight: .bold))
-                    .tracking(0.2)
+            scrollMaskedList {
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 10),
+                              GridItem(.flexible(), spacing: 10)],
+                    spacing: 10
+                ) {
+                    ForEach(available) { preset in
+                        multiselectCard(
+                            title: preset.name,
+                            emoji: preset.emoji,
+                            trailing: "+\(preset.xp)",
+                            isOn: selectedAspirations.contains(preset.id)
+                        ) {
+                            haptic(.light)
+                            toggle(preset.id, in: &selectedAspirations)
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 6)
             }
-            .foregroundStyle(SimsTheme.textPrimary)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(Color.white.opacity(0.55))
-                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.45), lineWidth: 1))
-            )
         }
-        .onAppear { nameFocused = true }
+    }
+
+    // MARK: - Step 5 — Treatments
+
+    private var treatmentsStep: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 12) {
+                moduleBadge(DashboardTab.botiquin.icon)
+                VStack(spacing: 4) {
+                    Text("¿Tomas algo a diario?")
+                        .font(.system(size: 26, weight: .heavy, design: .rounded))
+                        .foregroundStyle(SimsTheme.textPrimary)
+                        .tracking(-0.5)
+                        .multilineTextAlignment(.center)
+                    Text("Marca lo que tomas. Si no, salta.")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundStyle(SimsTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            scrollMaskedList {
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 10),
+                              GridItem(.flexible(), spacing: 10)],
+                    spacing: 10
+                ) {
+                    ForEach(Self.treatmentCatalog) { preset in
+                        multiselectCard(
+                            title: preset.name,
+                            emoji: preset.emoji,
+                            trailing: nil,
+                            isOn: selectedTreatments.contains(preset.id)
+                        ) {
+                            haptic(.light)
+                            toggle(preset.id, in: &selectedTreatments)
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 6)
+            }
+        }
+    }
+
+    /// Module identifier — just the navy-outlined white symbol with no
+    /// tile/capsule behind it, so it sits cleanly above the headline.
+    private func moduleBadge(_ icon: String) -> some View {
+        ZStack {
+            Image(systemName: icon)
+                .font(.system(size: 38, weight: .black))
+                .foregroundStyle(SimsTheme.frame)
+            Image(systemName: icon)
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(Color.white)
+        }
+    }
+
+    // MARK: - Multi-select card (mirrors AspirationCard / TreatmentCard
+    // visual language so the onboarding previews what the dashboard
+    // will actually look like).
+
+    private func multiselectCard(title: String,
+                                 emoji: String,
+                                 trailing: String? = nil,
+                                 isOn: Bool,
+                                 action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top) {
+                    Text(emoji).font(.system(size: 22))
+                    Spacer(minLength: 0)
+                    if isOn {
+                        ZStack {
+                            Circle()
+                                .fill(SimsTheme.frame.opacity(0.18))
+                                .frame(width: 20, height: 20)
+                                .overlay(Circle().stroke(SimsTheme.frame, lineWidth: 1))
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundStyle(SimsTheme.frame)
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    } else if let trailing {
+                        Text(trailing)
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(SimsTheme.textPrimary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.55))
+                                    .overlay(Capsule().stroke(SimsTheme.frame.opacity(0.4), lineWidth: 0.8))
+                            )
+                    }
+                }
+                Text(title)
+                    .font(.system(.footnote, design: .rounded, weight: .heavy))
+                    .tracking(0.2)
+                    .foregroundStyle(SimsTheme.textPrimary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white.opacity(isOn ? 0.65 : 0.40))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(isOn ? SimsTheme.accentPrimary
+                                         : SimsTheme.frame, lineWidth: 1.5)
+                    )
+            )
+            .scaleEffect(isOn ? 1.02 : 1.0)
+            .simsAnimation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func scrollMaskedList<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ScrollView { content() }
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .black, location: 0.0),
+                        .init(color: .black, location: 0.92),
+                        .init(color: .clear, location: 1.0)
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+            )
+    }
+
+    private func toggle<T: Hashable>(_ id: T, in set: inout Set<T>) {
+        if set.contains(id) { set.remove(id) } else { set.insert(id) }
     }
 
     // MARK: - Step 5 — Sleep
 
     private var sleepStep: some View {
         VStack(spacing: 14) {
-            VStack(spacing: 4) {
-                Text("Hola, \(displayName).")
-                    .font(.system(size: 26, weight: .heavy, design: .rounded))
-                    .foregroundStyle(SimsTheme.textPrimary)
-                    .tracking(-0.5)
-                    .multilineTextAlignment(.center)
-                Text("Empieza por lo primero.")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundStyle(SimsTheme.textSecondary)
-            }
+            Text("Empezamos.")
+                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                .foregroundStyle(SimsTheme.textPrimary)
+                .tracking(-0.5)
+                .multilineTextAlignment(.center)
 
             Text("¿Cuántas horas dormiste anoche?")
                 .font(.system(.headline, design: .rounded, weight: .heavy))
@@ -617,26 +740,18 @@ struct OnboardingView: View {
     }
 
     private var primaryLabel: LocalizedStringKey {
-        // Same word everywhere except the very first tap, so users
-        // never have to wonder if "Listo" vs "Casi listo" means
-        // anything different — it's just one button repeated.
         switch step {
-        case .hook:    return "Empezar"
-        case .sleep:   return "Entrar"   // hidden until they pick an hour
-        default:       return "Continuar"
+        case .welcome:                                       return "Empezar"
+        case .sleep:                                         return "Entrar"
+        case .aspirations where selectedAspirations.isEmpty: return "Omitir"
+        case .treatments  where selectedTreatments.isEmpty:  return "Omitir"
+        default:                                             return "Continuar"
         }
     }
     private var primaryIcon: String {
         step == .sleep ? "checkmark" : "arrow.right"
     }
-    private var isPrimaryDisabled: Bool {
-        switch step {
-        case .name:
-            return name.trimmingCharacters(in: .whitespaces).isEmpty
-        default:
-            return false
-        }
-    }
+    private var isPrimaryDisabled: Bool { false }
 
     // MARK: - Confetti
 
@@ -654,18 +769,58 @@ struct OnboardingView: View {
         haptic(.light)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
             switch step {
-            case .hook:    step = .welcome
             case .welcome: step = .model
             case .model:
-                // Seed customize with the essential plan applied so the
-                // user lands on a sensible baseline they can extend.
-                store.applyPlan(plan.needPlan)
+                store.applyPlan(.essential)
                 step = .customize
-            case .customize: step = .name
-            case .name:      commitName()
-            case .sleep:     onFinish()
+            case .customize:   step = .aspirations
+            case .aspirations:
+                commitAspirations()
+                step = .treatments
+            case .treatments:
+                commitTreatments()
+                step = .sleep
+            case .sleep:       onFinish()
             }
         }
+    }
+
+    /// Insert the user's selected aspiration presets as real `Aspiration`
+    /// rows on the SwiftData context. They land on the dashboard ready
+    /// to be ticked off — no separate "first run" code path needed.
+    private func commitAspirations() {
+        // Skip names that already exist — guards against duplicate rows if a
+        // second device runs onboarding before CloudKit has synced (the
+        // mirrored `onboardingComplete` flag is the primary guard).
+        let existing = Set(((try? modelContext.fetch(FetchDescriptor<Aspiration>())) ?? []).map(\.name))
+        for preset in Self.aspirationCatalog
+        where selectedAspirations.contains(preset.id) && !existing.contains(preset.name) {
+            let a = Aspiration(
+                name: preset.name,
+                emoji: preset.emoji,
+                kind: .dailySimple,
+                hue: preset.hue,
+                xp: preset.xp
+            )
+            modelContext.insert(a)
+        }
+        try? modelContext.save()
+    }
+
+    private func commitTreatments() {
+        let existing = Set(((try? modelContext.fetch(FetchDescriptor<Treatment>())) ?? []).map(\.name))
+        for preset in Self.treatmentCatalog
+        where selectedTreatments.contains(preset.id) && !existing.contains(preset.name) {
+            let t = Treatment(
+                name: preset.name,
+                emoji: preset.emoji,
+                hue: preset.hue,
+                unit: preset.unit,
+                defaultDose: preset.defaultDose
+            )
+            modelContext.insert(t)
+        }
+        try? modelContext.save()
     }
 
     private func goBack() {
@@ -674,16 +829,6 @@ struct OnboardingView: View {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
             step = prev
         }
-    }
-
-    private func commitName() {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        savedName = trimmed
-        // Plan + individual customisations were already applied via
-        // applyPlan and CategoriesEditor in the previous steps, so the
-        // dashboard is ready as soon as the user lands on it.
-        step = .sleep
     }
 
     private func selectSleep(_ h: SleepHours) {
@@ -703,25 +848,17 @@ struct OnboardingView: View {
         if h == .seven || h == .eight {
             confettiBurst &+= 1
         }
-        // Hand off to the dashboard quickly…
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-            onFinish()
-            // …then trigger the log slightly after the crossfade so the
-            // user lands, sees the bar at zero for a beat, and then
-            // watches it animate up to the right value while the
-            // "Dormí Xh" chip slides in below.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                store.logAction(action, for: .energy)
-            }
+        // Crossfade to the dashboard immediately — no extra delay.
+        onFinish()
+        // Log slightly after the crossfade so the user lands, sees the
+        // bar at zero for a beat, then watches it animate up while the
+        // "Dormí Xh" chip slides in below.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            store.logAction(action, for: .energy)
         }
     }
 
     // MARK: - Helpers
-
-    private var displayName: String {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        return trimmed.isEmpty ? String(localized: "hola") : trimmed
-    }
 
     private enum HapticKind { case light, success }
     private func haptic(_ kind: HapticKind) {

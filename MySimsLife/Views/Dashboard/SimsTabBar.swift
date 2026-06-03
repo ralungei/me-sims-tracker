@@ -18,7 +18,7 @@ enum DashboardTab: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .needs:        return "brain.filled.head.profile"
+        case .needs:        return "chart.bar.xaxis"
         case .aspirations:  return "flag.pattern.checkered"
         case .agenda:       return "checklist"
         case .botiquin:     return "pills.fill"

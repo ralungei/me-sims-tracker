@@ -23,9 +23,6 @@
         }
       }
     },
-    "¿Cómo te llamo?" : {
-
-    },
     "¿Cuántas horas dormiste anoche?" : {
 
     },
@@ -62,7 +59,6 @@
       }
     },
     "¿Qué quieres seguir?" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -92,6 +88,9 @@
           }
         }
       }
+    },
+    "¿Tomas algo a diario?" : {
+
     },
     "%@" : {
       "localizations" : {
@@ -141,16 +140,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ cat."
-          }
-        }
-      }
-    },
-    "%@ categorías · %@" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ categorías · %2$@"
           }
         }
       }
@@ -455,9 +444,6 @@
         }
       }
     },
-    "⭐ recomendado" : {
-
-    },
     "💊" : {
       "localizations" : {
         "en" : {
@@ -644,6 +630,9 @@
         }
       }
     },
+    "Algunas metas para empezar." : {
+
+    },
     "Almacenamiento" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -736,10 +725,8 @@
         }
       }
     },
-    "Aparece cuando abres la app. Solo lo verás tú." : {
-
-    },
     "Aparece en el saludo cuando abres la app." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -930,6 +917,7 @@
       }
     },
     "Buenas noches," : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -940,6 +928,7 @@
       }
     },
     "Buenas tardes," : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -961,6 +950,7 @@
       }
     },
     "Buenos días," : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1022,6 +1012,7 @@
       }
     },
     "Cambiar nombre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1631,9 +1622,6 @@
         }
       }
     },
-    "El rombo de arriba te avisa de un vistazo. Las barras bajan solas con el día — tú las subes registrando lo que has hecho." : {
-
-    },
     "Elige un plan o ajusta categoría a categoría. Puedes cambiarlo cuando quieras." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1726,6 +1714,9 @@
         }
       }
     },
+    "Empezamos." : {
+
+    },
     "Empezar" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1767,9 +1758,6 @@
         }
       }
     },
-    "Empieza por lo primero." : {
-
-    },
     "en %lld días" : {
       "localizations" : {
         "en" : {
@@ -1789,6 +1777,9 @@
           }
         }
       }
+    },
+    "en un sitio." : {
+
     },
     "Energía" : {
       "localizations" : {
@@ -2088,9 +2079,6 @@
         }
       }
     },
-    "Hola, %@." : {
-
-    },
     "Hola." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2279,9 +2267,6 @@
         }
       }
     },
-    "Lo que sueles olvidar.\nLo que sueles dejar a medias." : {
-
-    },
     "Logro semanal — postear, terminar un proyecto, salir con gente" : {
       "localizations" : {
         "en" : {
@@ -2322,6 +2307,15 @@
           }
         }
       }
+    },
+    "Marca las que te van. O sigue sin nada." : {
+
+    },
+    "Marca lo que importa. Puedes ajustarlo cuando quieras." : {
+
+    },
+    "Marca lo que tomas. Si no, salta." : {
+
     },
     "Marcar todo a neutro" : {
       "localizations" : {
@@ -2701,17 +2695,8 @@
         }
       }
     },
-    "Paso %@ de %@" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Paso %1$@ de %2$@"
-          }
-        }
-      }
-    },
     "Paso %lld de %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3124,9 +3109,6 @@
         }
       }
     },
-    "Si te cansas de medir, también puedes anotar:" : {
-
-    },
     "Si una semana no está cubierta, se usa la cantidad por defecto." : {
       "localizations" : {
         "en" : {
@@ -3249,9 +3231,6 @@
           }
         }
       }
-    },
-    "Solo tú lo ves. Tus datos viven en tu iCloud." : {
-
     },
     "Sueño, siestas, cansancio" : {
       "extractionState" : "manual",
@@ -3502,7 +3481,7 @@
         }
       }
     },
-    "Todo en un sitio." : {
+    "Todo lo que necesites," : {
 
     },
     "tomado hoy" : {
@@ -3581,6 +3560,7 @@
       }
     },
     "Tu nombre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3620,9 +3600,6 @@
           }
         }
       }
-    },
-    "Una app para todo." : {
-
     },
     "Una vez al día (ej: creatina)" : {
       "extractionState" : "stale",
@@ -3689,9 +3666,6 @@
         }
       }
     },
-    "Vas a empezar suave." : {
-
-    },
     "vas tirando" : {
       "localizations" : {
         "en" : {
@@ -3748,9 +3722,6 @@
       }
     },
     "VITAL" : {
-
-    },
-    "Y hay más." : {
 
     },
     "Zona peligrosa" : {
