@@ -330,14 +330,12 @@ struct TreatmentEditor: View {
         try? modelContext.save()
 
         if resolvedNotify, let r = resolvedReminder {
-            let comps = Calendar.current.dateComponents([.hour, .minute], from: r)
-            if let hour = comps.hour, let minute = comps.minute {
-                let today = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) ?? r
-                NotificationManager.shared.scheduleTreatmentReminder(
-                    treatmentID: treatment.id,
-                    title: trimmedName,
-                    at: today)
-            }
+            // The daily trigger only reads hour/minute from the date, so the
+            // stored reminder time can be passed straight through.
+            NotificationManager.shared.scheduleTreatmentReminder(
+                treatmentID: treatment.id,
+                title: trimmedName,
+                at: r)
         } else {
             NotificationManager.shared.cancelTreatmentReminder(treatmentID: treatment.id)
         }

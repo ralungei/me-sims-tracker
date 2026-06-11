@@ -10,6 +10,7 @@ import UIKit
 struct OnboardingView: View {
     @Environment(NeedStore.self) private var store
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var step: Step = {
         let args = ProcessInfo.processInfo.arguments
@@ -840,8 +841,9 @@ struct OnboardingView: View {
         )
         // Good nights earn a confetti burst — hold the crossfade just long
         // enough for it to play (it used to fire and unmount on the same
-        // frame, so it was never actually visible).
-        let celebrate = h == .seven || h == .eight
+        // frame, so it was never actually visible). Skipped entirely under
+        // Reduce Motion: a particle burst is exactly what it asks to avoid.
+        let celebrate = (h == .seven || h == .eight) && !reduceMotion
         let finishDelay: TimeInterval = celebrate ? 0.9 : 0
         if celebrate { confettiBurst &+= 1 }
         DispatchQueue.main.asyncAfter(deadline: .now() + finishDelay) {

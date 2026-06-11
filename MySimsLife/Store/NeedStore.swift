@@ -165,8 +165,24 @@ final class NeedStore {
             values[need] = needs[need]
             rates[need]  = calibration.effectiveDecayRate(for: need)
         }
+        #if os(iOS)
+        // Hold a background assertion while the requests are queued — the
+        // scheduling Task races app suspension otherwise, and a suspended
+        // app never gets to call `center.add`.
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+        bgTask = UIApplication.shared.beginBackgroundTask {
+            UIApplication.shared.endBackgroundTask(bgTask)
+            bgTask = .invalid
+        }
+        #endif
         Task { @MainActor in
             await NotificationManager.shared.scheduleBackgroundLowAlerts(values: values, rates: rates)
+            #if os(iOS)
+            if bgTask != .invalid {
+                UIApplication.shared.endBackgroundTask(bgTask)
+                bgTask = .invalid
+            }
+            #endif
         }
     }
 
@@ -509,6 +525,9 @@ final class NeedStore {
         for need in NeedType.allCases {
             hasher.combine(need.rawValue)
             hasher.combine(Int(((needs[need] ?? 0) * 20).rounded()))
+            // Alert rules treat disabled needs as satisfied, so toggling a
+            // category must bust the cache even when no value changed.
+            hasher.combine(enabledNeeds.contains(need))
         }
         return hasher.finalize()
     }

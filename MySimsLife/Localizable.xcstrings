@@ -875,22 +875,22 @@
         }
       }
     },
-    "Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tu nombre y prefs. Esta acción no se puede deshacer." : {
+    "Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tus preferencias. Esta acción no se puede deshacer." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deletes aspirations, tasks, medicine cabinet, and history — both locally and in the cloud. Your name and prefs are kept. This cannot be undone."
+            "value" : "Deletes aspirations, tasks, medicine cabinet, and history — both locally and in the cloud. Your preferences are kept. This cannot be undone."
           }
         }
       }
     },
-    "Borra aspiraciones, tareas, botiquín y todo el historial. Mantiene tu nombre y prefs." : {
+    "Borra aspiraciones, tareas, botiquín y todo el historial. Mantiene tus preferencias." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deletes aspirations, tasks, medicine cabinet, and all history. Your name and prefs are kept."
+            "value" : "Deletes aspirations, tasks, medicine cabinet, and all history. Your preferences are kept."
           }
         }
       }
