@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import UserNotifications
 
 /// Drill-down detail screen for everything notification-related: master
@@ -7,6 +8,8 @@ import UserNotifications
 /// main Ajustes list) so the main screen stays a clean overview — same
 /// pattern as iOS Health / Settings.app.
 struct NotificationsDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @AppStorage(NotificationsPrefs.masterEnabledKey)     private var masterEnabled: Bool = false
     @AppStorage(NotificationsPrefs.needsLowEnabledKey)   private var needsLowEnabled: Bool = true
     @AppStorage(NotificationsPrefs.tasksEnabledKey)      private var tasksEnabled: Bool = true
@@ -62,7 +65,16 @@ struct NotificationsDetailView: View {
                 if on {
                     Task {
                         let granted = await NotificationManager.shared.requestPermission()
-                        if !granted { masterEnabled = false }
+                        if granted {
+                            // Turning the master off cancelled every pending
+                            // reminder — re-create them from the models, or
+                            // items with "Recordármelo" stay silent until each
+                            // one is re-saved by hand.
+                            rescheduleTaskReminders()
+                            rescheduleTreatmentReminders()
+                        } else {
+                            masterEnabled = false
+                        }
                         await refreshPermission()
                     }
                 } else {
@@ -103,7 +115,9 @@ struct NotificationsDetailView: View {
                 isOn: $tasksEnabled
             )
             .onChange(of: tasksEnabled) { _, on in
-                if !on {
+                if on {
+                    rescheduleTaskReminders()
+                } else {
                     Task { await NotificationManager.shared.cancelAllTaskReminders() }
                 }
             }
@@ -116,7 +130,9 @@ struct NotificationsDetailView: View {
                 isOn: $treatmentsEnabled
             )
             .onChange(of: treatmentsEnabled) { _, on in
-                if !on {
+                if on {
+                    rescheduleTreatmentReminders()
+                } else {
                     Task { await NotificationManager.shared.cancelAllTreatmentReminders() }
                 }
             }
@@ -233,6 +249,29 @@ struct NotificationsDetailView: View {
     @MainActor
     private func refreshPermission() async {
         permissionStatus = await NotificationManager.shared.currentAuthorizationStatus()
+    }
+
+    // MARK: - Re-scheduling (when a toggle comes back on)
+
+    private func rescheduleTaskReminders() {
+        let tasks = (try? modelContext.fetch(FetchDescriptor<LifeTask>())) ?? []
+        for task in tasks where task.notify && !task.isDone && task.hasSpecificTime {
+            if let due = task.dueDate {
+                // scheduleTaskReminder ignores past dates on its own.
+                NotificationManager.shared.scheduleTaskReminder(
+                    taskID: task.id, title: task.title, at: due)
+            }
+        }
+    }
+
+    private func rescheduleTreatmentReminders() {
+        let treatments = (try? modelContext.fetch(FetchDescriptor<Treatment>())) ?? []
+        for t in treatments where t.notify && t.isActive {
+            if let time = t.reminderTime {
+                NotificationManager.shared.scheduleTreatmentReminder(
+                    treatmentID: t.id, title: t.name, at: time)
+            }
+        }
     }
 }
 

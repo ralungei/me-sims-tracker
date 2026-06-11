@@ -28,12 +28,11 @@ final class LifeTask {
 
     var isOverdue: Bool {
         guard let due = dueDate, !isDone else { return false }
-        return due < Date()
-    }
-
-    var isToday: Bool {
-        guard let due = dueDate else { return true }   // no date → "today" bucket
-        return Calendar.current.isDateInToday(due)
+        // Date-only tasks are due "sometime today": they only read as overdue
+        // once the whole day has passed (stored as startOfDay, so comparing
+        // against `Date()` would flag them from the day's first second).
+        if hasSpecificTime { return due < Date() }
+        return due < Calendar.current.startOfDay(for: Date())
     }
 
     /// Whether `dueDate` has a meaningful hour/minute (i.e. the user set a

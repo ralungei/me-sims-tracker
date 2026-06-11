@@ -44,7 +44,7 @@ struct SettingsView: View {
                     }
                 }
             } message: {
-                Text("Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tu nombre y prefs. Esta acción no se puede deshacer.")
+                Text("Borra aspiraciones, tareas, botiquín e historial — local y en la nube. Mantiene tus preferencias. Esta acción no se puede deshacer.")
             }
         }
     }
@@ -136,7 +136,7 @@ struct SettingsView: View {
             }
             .disabled(isResetting)
             .opacity(isResetting ? 0.6 : 1)
-            Text("Borra aspiraciones, tareas, botiquín y todo el historial. Mantiene tu nombre y prefs.")
+            Text("Borra aspiraciones, tareas, botiquín y todo el historial. Mantiene tus preferencias.")
                 .font(.system(.caption2, design: .rounded))
                 .foregroundStyle(SimsTheme.textSecondary)
         }

@@ -66,8 +66,14 @@ final class NeedStore {
     func setEnabled(_ enabled: Bool, for need: NeedType) {
         if enabled { enabledNeeds.insert(need) }
         else       { enabledNeeds.remove(need) }
-        upsertAnchor(for: need, enabled: enabled, bumpTimestamp: false)
-        lastUpdated[need] = Date()
+        // Write the currently displayed value and re-anchor the clock in BOTH
+        // directions: disabling stores the decayed value (freeze), re-enabling
+        // resumes from it. Keeping the old `anchoredAt` used to apply the whole
+        // backlog of decay on re-enable — the bar reappeared slammed to 0%.
+        let now = Date()
+        upsertAnchor(for: need, value: needs[need], enabled: enabled, bumpTimestamp: true)
+        lastUpdated[need] = now
+        lastDecayTick[need] = now
     }
 
     /// Applies a preset plan from the onboarding's category step.
@@ -80,7 +86,9 @@ final class NeedStore {
         enabledNeeds = target
         for need in changed {
             lastUpdated[need] = now
-            upsertAnchor(for: need, enabled: target.contains(need), bumpTimestamp: false)
+            lastDecayTick[need] = now
+            // Same freeze/resume semantics as `setEnabled` — see comment there.
+            upsertAnchor(for: need, value: needs[need], enabled: target.contains(need), bumpTimestamp: true)
         }
     }
 
@@ -135,14 +143,31 @@ final class NeedStore {
         refreshRecentActionsCache()
         startDecayTimer()
         recalibrate()
-        #if os(iOS)
-        UIApplication.shared.isIdleTimerDisabled = true
-        #endif
+        // Hand low-need alerting back to the live decay timer: anything the
+        // background path delivered marks its cooldown first (so the next
+        // tick doesn't double-notify), then the still-pending ones go away.
+        Task { @MainActor in
+            await NotificationManager.shared.reconcileDeliveredLowAlerts()
+            await NotificationManager.shared.cancelBackgroundLowAlerts()
+        }
     }
 
     func onEnterBackground() {
         decayTimer?.invalidate()
         decayTimer = nil
+        // The decay timer doesn't run while suspended, so threshold crossings
+        // would never be detected with the phone in the pocket. Pre-schedule
+        // one local notification per tracked need at its predicted crossing
+        // time; `onBecomeActive` cancels them when the live timer takes over.
+        var values: [NeedType: Double] = [:]
+        var rates:  [NeedType: Double] = [:]
+        for need in enabledNeeds where need.decaysAutomatically {
+            values[need] = needs[need]
+            rates[need]  = calibration.effectiveDecayRate(for: need)
+        }
+        Task { @MainActor in
+            await NotificationManager.shared.scheduleBackgroundLowAlerts(values: values, rates: rates)
+        }
     }
 
     // MARK: - Actions
@@ -325,7 +350,13 @@ final class NeedStore {
     /// "slightly negative". Visible bug at app launch with default state.
     var vitalScore: Int {
         let base = overallMood * 100.0
-        let donesToday = aspirations.filter { $0.isDoneNow() }.count
+        // Completions from TODAY only. `isDoneNow()` would be wrong here: for
+        // .oneTime it stays true forever, which made the bonus permanent.
+        let cal = Calendar.current
+        let donesToday = aspirations.filter { asp in
+            guard asp.kind != .treatment, let done = asp.lastCompletedAt else { return false }
+            return cal.isDateInToday(done)
+        }.count
         let bonus = min(10.0, Double(donesToday) * 3.0)
         return Int(min(100.0, base + bonus).rounded())
     }
@@ -511,11 +542,14 @@ final class NeedStore {
     func toggleAspiration(_ aspiration: Aspiration) {
         guard let context = modelContext else { return }
         if aspiration.isDoneNow() {
-            aspiration.lastCompletedAt = nil
-            if let last = aspiration.completionsLog.last,
-               Calendar.current.isDateInToday(last) {
+            // Drop the matching log entry (not just "today's") so un-ticking a
+            // weekly later in the week keeps completionsLog consistent with
+            // lastCompletedAt.
+            if let last = aspiration.lastCompletedAt,
+               aspiration.completionsLog.last == last {
                 aspiration.completionsLog.removeLast()
             }
+            aspiration.lastCompletedAt = nil
         } else {
             let now = Date()
             aspiration.lastCompletedAt = now

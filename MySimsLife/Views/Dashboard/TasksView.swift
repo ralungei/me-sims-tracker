@@ -151,7 +151,10 @@ struct TaskCard: View {
                         }
                     }
                     Spacer(minLength: 0)
-                    if let due = task.dueDate {
+                    // Only render the time chip when the user picked an actual
+                    // time — date-only tasks store startOfDay and would show
+                    // a meaningless "0:00".
+                    if let due = task.dueDate, task.hasSpecificTime {
                         Text(due, format: .dateTime.hour().minute())
                             .font(.system(size: 11, weight: .heavy, design: .rounded))
                             .foregroundStyle(task.isOverdue && !task.isDone

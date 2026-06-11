@@ -116,28 +116,25 @@ struct OnboardingView: View {
     }
 
     /// Aspiration preset shown as a multi-select chip in the aspirations
-    /// step. `need` filters: the preset only surfaces if its need is
-    /// active on the user's plan (after customize), so the list stays
-    /// relevant.
+    /// step.
     struct AspirationPreset: Identifiable, Hashable {
         let id = UUID()
         let name: String
         let emoji: String
         let hue: Double
         let xp: Int
-        let need: NeedType
     }
 
     /// Curated to 6 picks max — onboarding shouldn't be a full catalog,
     /// only the most universally useful starters. The rest live in
     /// "Nueva aspiración" inside the app for power users.
     static let aspirationCatalog: [AspirationPreset] = [
-        .init(name: "10.000 pasos al día",       emoji: "👟", hue: 38,  xp: 25, need: .exercise),
-        .init(name: "5 piezas de fruta o verdura", emoji: "🥗", hue: 158, xp: 25, need: .nutrition),
-        .init(name: "1,5 L de agua al día",      emoji: "💧", hue: 195, xp: 25, need: .hydration),
-        .init(name: "Meditar 10 min",            emoji: "🧘", hue: 280, xp: 25, need: .mentalHealth),
-        .init(name: "Acostarme antes de las 23h", emoji: "🌙", hue: 38, xp: 25, need: .energy),
-        .init(name: "Llamar a familia",          emoji: "📞", hue: 295, xp: 25, need: .social)
+        .init(name: "10.000 pasos al día",        emoji: "👟", hue: 38,  xp: 25),
+        .init(name: "5 piezas de fruta o verdura", emoji: "🥗", hue: 158, xp: 25),
+        .init(name: "1,5 L de agua al día",       emoji: "💧", hue: 195, xp: 25),
+        .init(name: "Meditar 10 min",             emoji: "🧘", hue: 280, xp: 25),
+        .init(name: "Acostarme antes de las 23h", emoji: "🌙", hue: 38,  xp: 25),
+        .init(name: "Llamar a familia",           emoji: "📞", hue: 295, xp: 25)
     ]
 
     /// Treatment preset for the supplements step. Catálogo agnóstico a
@@ -457,10 +454,6 @@ struct OnboardingView: View {
     // MARK: - Step 4 — Aspirations
 
     private var aspirationsStep: some View {
-        // Show the whole curated 6. They were filtered by enabled need
-        // before but that collapsed the list to 3 on the Esencial plan
-        // and left the user thinking the screen was broken. Aspirations
-        // are goals, not need-tracking — they don't have to match.
         let available = Self.aspirationCatalog
 
         return VStack(spacing: 20) {
@@ -845,15 +838,19 @@ struct OnboardingView: View {
             boost: h.boost,
             needType: .energy
         )
-        if h == .seven || h == .eight {
-            confettiBurst &+= 1
+        // Good nights earn a confetti burst — hold the crossfade just long
+        // enough for it to play (it used to fire and unmount on the same
+        // frame, so it was never actually visible).
+        let celebrate = h == .seven || h == .eight
+        let finishDelay: TimeInterval = celebrate ? 0.9 : 0
+        if celebrate { confettiBurst &+= 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + finishDelay) {
+            onFinish()
         }
-        // Crossfade to the dashboard immediately — no extra delay.
-        onFinish()
         // Log slightly after the crossfade so the user lands, sees the
         // bar at zero for a beat, then watches it animate up while the
         // "Dormí Xh" chip slides in below.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + finishDelay + 0.55) {
             store.logAction(action, for: .energy)
         }
     }

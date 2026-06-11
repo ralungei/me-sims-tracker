@@ -137,6 +137,70 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         scheduleImmediate(need: need, value: currentValue)
     }
 
+    // MARK: - Background "needs low" pre-scheduling
+
+    /// While the app is suspended the decay timer doesn't run, so
+    /// `notifyIfLow` can never fire — without this, low-need alerts only
+    /// worked with the app on screen. Decay is deterministic (value + rate →
+    /// crossing time), so on backgrounding we pre-schedule one local
+    /// notification per tracked need at its predicted threshold crossing.
+    /// Foregrounding cancels the pending ones (the live timer takes over).
+    private static let needLowScheduledPrefix = "notif.needlow.scheduled."
+
+    func scheduleBackgroundLowAlerts(values: [NeedType: Double],
+                                     rates: [NeedType: Double]) async {
+        await cancelBackgroundLowAlerts()
+        guard NotificationsPrefs.masterEnabled,
+              NotificationsPrefs.needsLowEnabled else { return }
+        let threshold = NotificationsPrefs.threshold
+        let now = Date()
+        for (need, value) in values {
+            // Bars already below the threshold were handled (or cooled down)
+            // by the foreground path before backgrounding.
+            guard let rate = rates[need], rate > 0, value > threshold else { continue }
+            let hoursToCross = (value - threshold) * 100.0 / rate
+            var fireDate = now.addingTimeInterval(max(hoursToCross * 3600, 60))
+            // Respect an active cooldown: push the alert to the cooldown's
+            // end if that lands after the predicted crossing.
+            if let lastFired = UserDefaults.standard.object(forKey: cooldownKey(need)) as? Date {
+                let cooldownEnd = lastFired.addingTimeInterval(NotificationsPrefs.cooldownHours * 3600)
+                fireDate = max(fireDate, cooldownEnd)
+            }
+            let content = UNMutableNotificationContent()
+            content.title = need.displayName
+            let pct = Int((threshold * 100).rounded())
+            content.body  = String(localized: "Está al \(pct)%. Hora de cuidarlo.")
+            content.sound = .default
+            let trigger = UNTimeIntervalNotificationTrigger(
+                timeInterval: max(fireDate.timeIntervalSince(now), 60),
+                repeats: false
+            )
+            let req = UNNotificationRequest(
+                identifier: "\(Self.needLowScheduledPrefix)\(need.rawValue)",
+                content: content,
+                trigger: trigger
+            )
+            try? await center.add(req)
+        }
+    }
+
+    func cancelBackgroundLowAlerts() async {
+        await cancelAllPending(withPrefix: Self.needLowScheduledPrefix)
+    }
+
+    /// Marks the cooldown for any background-scheduled low alert that was
+    /// delivered while suspended, so the foreground path doesn't immediately
+    /// re-notify the same need on the next decay tick.
+    func reconcileDeliveredLowAlerts() async {
+        let delivered = await center.deliveredNotifications()
+        for note in delivered where note.request.identifier.hasPrefix(Self.needLowScheduledPrefix) {
+            let raw = String(note.request.identifier.dropFirst(Self.needLowScheduledPrefix.count))
+            if let need = NeedType(rawValue: raw) {
+                markFired(for: need)
+            }
+        }
+    }
+
     // MARK: - Task reminders
 
     /// Schedule a one-shot local notification for a task at the given date.
