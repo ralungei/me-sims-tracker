@@ -19,15 +19,9 @@ enum SimsTheme {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    /// Translucent surface for cards and pills sitting on top of `background`.
-    static let cardBackground   = Color.white.opacity(0.05)
-    static let surfaceHighlight = Color.white.opacity(0.08)
     /// Navy outline (#0E135B) — the unified border colour for cards, tiles,
     /// chips, fields and pills across the app.
     static let frame            = Color(red: 0.055, green: 0.075, blue: 0.357)
-    /// Slightly darker overlay used inside sheets/list rows when something
-    /// needs to read as "panel on the surface". Kept opt-in.
-    static let panelBackground  = Color.black.opacity(0.18)
 
     // MARK: - Foreground
 
@@ -53,9 +47,7 @@ enum SimsTheme {
 
     // MARK: - Negative / Moodlet (dusty rose, not crimson)
 
-    static let negativeTint        = Color(hue: 345/360, saturation: 0.45, brightness: 0.68)
-    static let moodletBackground   = Color(hue: 345/360, saturation: 0.30, brightness: 0.18)
-    static let moodletActiveBorder = Color(hue: 345/360, saturation: 0.40, brightness: 0.55)
+    static let negativeTint = Color(hue: 345/360, saturation: 0.45, brightness: 0.68)
 
     // MARK: - Per-need helpers — bar color follows VALUE (sims-style indicative)
 
@@ -74,8 +66,6 @@ enum SimsTheme {
     static let simsYellow      = Color(red: 0.957, green: 0.878, blue: 0.157)   // #F4E028 — regular
     static let simsOrange      = Color(red: 0.941, green: 0.502, blue: 0.125)   // #F08020 — mal
     static let simsRed         = Color(red: 0.878, green: 0.188, blue: 0.125)   // #E03020 — fatal
-    /// "Platino" — reserved for completion / aspiración cumplida.
-    static let simsPlatinum    = Color.white
 
     /// Boost text colours — darker than the moodlet greens/reds so they
     /// read clearly against the periwinkle panel bg. Use these for the
@@ -98,26 +88,11 @@ enum SimsTheme {
         }
     }
 
-    static func needTileGradient(hue: Double) -> LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(hue: hue/360, saturation: 0.55, brightness: 0.30),
-                Color(hue: hue/360, saturation: 0.45, brightness: 0.20)
-            ],
-            startPoint: .top, endPoint: .bottom
-        )
-    }
-
     // MARK: - Per-hue helpers (need / aspiration identity colours)
     //
     // Each need (or aspiration) has a `hue` in degrees (0…360). These helpers
     // produce coherent variants — keep all hue-based saturations/brightnesses
     // here so a future palette change only needs to touch this file.
-
-    /// Bright, saturated tint used for a hue's icon on dark backgrounds.
-    static func hueIconColor(_ hueDeg: Double) -> Color {
-        Color(hue: hueDeg/360, saturation: 0.50, brightness: 0.95)
-    }
 
     /// Muted version used as the body of an aspiration card or similar.
     static func hueBody(_ hueDeg: Double) -> Color {
@@ -129,29 +104,10 @@ enum SimsTheme {
         Color(hue: hueDeg/360, saturation: 0.55, brightness: 0.62)
     }
 
-    /// Top stop of a per-hue card gradient.
-    static func hueGradientTop(_ hueDeg: Double) -> Color {
-        Color(hue: hueDeg/360, saturation: 0.65, brightness: 0.30)
-    }
-
-    /// Bottom stop of a per-hue card gradient.
-    static func hueGradientBottom(_ hueDeg: Double) -> Color {
-        Color(hue: hueDeg/360, saturation: 0.55, brightness: 0.20)
-    }
-
-    /// Stroke colour for a per-hue card / chip border.
-    static func hueStroke(_ hueDeg: Double, opacity: Double = 0.5) -> Color {
-        Color(hue: hueDeg/360, saturation: 0.65, brightness: 0.55).opacity(opacity)
-    }
-
     // MARK: - Mood / VITAL color (indicative — same scale as bars)
 
     static func plumbobColor(for mood: Double) -> Color {
         valueColor(for: mood)
-    }
-
-    static func vitalColor(for vital: Int) -> Color {
-        valueColor(for: Double(vital) / 100.0)
     }
 
     static func vitalLabel(for vital: Int) -> String {
@@ -166,8 +122,6 @@ enum SimsTheme {
 
     // MARK: - Bar gradient (built from valueColor for coherence)
 
-    static func barColor(for value: Double) -> Color { valueColor(for: value) }
-
     static func barGradient(for value: Double) -> LinearGradient {
         let base = valueColor(for: value)
         return LinearGradient(
@@ -179,17 +133,12 @@ enum SimsTheme {
 
     // MARK: - Typography
 
-    static let titleFont    = Font.system(.title2, design: .rounded, weight: .bold)
-    static let headlineFont = Font.system(.headline, design: .rounded, weight: .semibold)
-    static let labelFont    = Font.system(.caption, design: .rounded, weight: .medium)
-    static let valueFont    = Font.system(.caption2, design: .rounded, weight: .bold)
+    static let valueFont = Font.system(.caption2, design: .rounded, weight: .bold)
 
     // MARK: - Dimensions (adaptive)
 
-    static func barHeight(compact: Bool) -> CGFloat { compact ? 14 : 22 }
     static func barSpacing(compact: Bool) -> CGFloat { compact ? 8 : 14 }
     static let cornerRadius: CGFloat = 28
-    static let panelPadding: CGFloat = 22
 
     // MARK: - Form field styling
 

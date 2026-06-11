@@ -102,22 +102,6 @@ enum NeedType: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var emoji: String {
-        switch self {
-        case .health:        return "🩺"
-        case .mentalHealth:  return "🧠"
-        case .energy:        return "⚡"
-        case .nutrition:     return "🍽"
-        case .hydration:     return "💧"
-        case .bladder:       return "🚽"
-        case .exercise:      return "🏃"
-        case .hygiene:       return "🚿"
-        case .environment:   return "🏠"
-        case .social:        return "👥"
-        case .leisure:       return "🎮"
-        }
-    }
-
     var sortOrder: Int {
         switch self {
         case .health:        return 0

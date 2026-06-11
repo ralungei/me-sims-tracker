@@ -86,14 +86,6 @@ final class Treatment {
         return min(max(1, diff + 1), total)
     }
 
-    /// Pluralise `unit` naively for Spanish display (sobres, cápsulas).
-    static func pluralize(_ unit: String) -> String {
-        guard !unit.isEmpty else { return unit }
-        let last = unit.last!
-        if "aeiouAEIOU".contains(last) { return unit + "s" }
-        return unit + "es"
-    }
-
     /// How many doses to take this week, considering the schedule overrides.
     func currentDose(reference: Date = Date()) -> Int {
         guard let day = currentDay(reference: reference) else { return defaultDose }
@@ -111,7 +103,7 @@ final class Treatment {
     func currentDoseLabel(reference: Date = Date()) -> String? {
         guard !unit.isEmpty else { return nil }
         let n = currentDose(reference: reference)
-        return "\(n) \(n == 1 ? unit : Self.pluralize(unit))"
+        return "\(n) \(n == 1 ? unit : unit.pluralizedUnit)"
     }
 
     /// Did the user log today's dose?

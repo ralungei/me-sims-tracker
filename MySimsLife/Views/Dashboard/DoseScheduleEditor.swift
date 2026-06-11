@@ -11,9 +11,6 @@ struct DoseScheduleEditor: View {
     @Binding var schedule: [DoseStep]
     let defaultDose: Int
     let unit: String
-    /// Caller-provided pluralisation (different domain types own their own
-    /// static pluralize fn — `Aspiration.pluralize` vs `Treatment.pluralize`).
-    let pluralize: (String) -> String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -86,7 +83,7 @@ struct DoseScheduleEditor: View {
                     .labelsHidden()
                 }
                 Stepper(value: $schedule[index].count, in: 1...20) {
-                    Text("\(step.count) \(step.count == 1 ? unit : pluralize(unit))")
+                    Text("\(step.count) \(step.count == 1 ? unit : unit.pluralizedUnit)")
                         .font(.system(.caption, design: .rounded, weight: .semibold))
                         .foregroundStyle(SimsTheme.textPrimary)
                 }

@@ -224,15 +224,7 @@ final class Aspiration {
     func currentDoseLabel(reference: Date = Date()) -> String? {
         guard let unit, !unit.isEmpty,
               let count = currentDoseCount(reference: reference) else { return nil }
-        return "\(count) \(count == 1 ? unit : Aspiration.pluralize(unit))"
-    }
-
-    /// Spanish: vowel-ending → +s, consonant → +es. Good enough for "sobre",
-    /// "cápsula", "comprimido", "ml". Static so views (the editor's preview
-    /// label) can reuse it without instantiating a model.
-    static func pluralize(_ word: String) -> String {
-        guard let last = word.last?.lowercased().first else { return word }
-        return "aeiouáéíóú".contains(last) ? word + "s" : word + "es"
+        return "\(count) \(count == 1 ? unit : unit.pluralizedUnit)"
     }
 
     var dosingMoment: DosingMoment? {
@@ -284,3 +276,14 @@ final class Aspiration {
 
 // `var id: UUID = UUID()` is already defined above; conformance is a one-liner.
 extension Aspiration: Identifiable {}
+
+extension String {
+    /// Spanish unit pluraliser: vowel-ending → +s, consonant → +es. Good
+    /// enough for "sobre", "cápsula", "comprimido", "ml". Shared by the
+    /// Aspiration and Treatment dose labels (it used to live duplicated on
+    /// both models, with diverging vowel sets).
+    var pluralizedUnit: String {
+        guard let last = self.last?.lowercased().first else { return self }
+        return "aeiouáéíóú".contains(last) ? self + "s" : self + "es"
+    }
+}

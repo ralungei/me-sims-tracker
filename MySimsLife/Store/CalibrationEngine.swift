@@ -10,8 +10,7 @@ import SwiftData
 //
 // Phase 1 — Observe (days 1–7):
 //   The system uses hardcoded default rates while it collects data on
-//   how often you log each need, how much total boost you give yourself
-//   per day, and the average interval between consecutive actions.
+//   how much total boost you give yourself per day for each need.
 //
 // Phase 2 — Learn (days 7–14):
 //   From the data, it computes an "ideal" decay rate for each need.
@@ -46,23 +45,11 @@ final class CalibrationEngine {
     struct PersonalRhythm {
         let need: NeedType
         let avgDailyBoost: Double        // total positive boost / day
-        let avgActionsPerDay: Double     // positive actions / day
-        let avgIntervalHours: Double     // hours between consecutive actions
         let idealDecayRate: Double       // computed optimal decay %/h
         let confidence: Double           // 0.0 – 1.0
-        let dataPoints: Int              // total positive actions analyzed
     }
 
     var rhythms: [NeedType: PersonalRhythm] = [:]
-    var lastCalibration: Date?
-    var daysOfData: Int = 0
-
-    /// Overall calibration confidence (0–100%).
-    var overallConfidence: Double {
-        guard !rhythms.isEmpty else { return 0 }
-        let sum = rhythms.values.reduce(0.0) { $0 + $1.confidence }
-        return sum / Double(rhythms.count) * 100
-    }
 
     // MARK: - Constants
 
@@ -83,23 +70,18 @@ final class CalibrationEngine {
 
         // How many unique days have data
         let uniqueDays = Set(recentLogs.map { Calendar.current.startOfDay(for: $0.timestamp) })
-        daysOfData = uniqueDays.count
+        let daysOfData = uniqueDays.count
 
         for need in NeedType.allCases {
-            let needLogs = recentLogs
-                .filter { $0.needType == need.rawValue }
-                .sorted { $0.timestamp < $1.timestamp }
+            let needLogs = recentLogs.filter { $0.needType == need.rawValue }
 
             guard !needLogs.isEmpty else {
                 // No data for this need — no personalization
                 rhythms[need] = PersonalRhythm(
                     need: need,
                     avgDailyBoost: 0,
-                    avgActionsPerDay: 0,
-                    avgIntervalHours: 0,
                     idealDecayRate: need.decayRatePerHour,
-                    confidence: 0,
-                    dataPoints: 0
+                    confidence: 0
                 )
                 continue
             }
@@ -108,17 +90,6 @@ final class CalibrationEngine {
             let totalBoost = needLogs.reduce(0.0) { $0 + $1.boostAmount }
             let days = max(1, Double(daysOfData))
             let avgDailyBoost = totalBoost / days
-            let avgActionsPerDay = Double(needLogs.count) / days
-
-            // Average interval between consecutive actions
-            var intervals: [Double] = []
-            for i in 1..<needLogs.count {
-                let hours = needLogs[i].timestamp.timeIntervalSince(needLogs[i - 1].timestamp) / 3600
-                if hours > 0.05 && hours < 24 {  // skip duplicates and cross-day gaps
-                    intervals.append(hours)
-                }
-            }
-            let avgInterval = intervals.isEmpty ? 0 : intervals.reduce(0, +) / Double(intervals.count)
 
             // Compute ideal decay rate
             // The goal: avgDailyBoost sustains the bar across active hours
@@ -141,15 +112,10 @@ final class CalibrationEngine {
             rhythms[need] = PersonalRhythm(
                 need: need,
                 avgDailyBoost: avgDailyBoost,
-                avgActionsPerDay: avgActionsPerDay,
-                avgIntervalHours: avgInterval,
                 idealDecayRate: clampedIdeal,
-                confidence: confidence,
-                dataPoints: needLogs.count
+                confidence: confidence
             )
         }
-
-        lastCalibration = Date()
     }
 
     // MARK: - Get Effective Rate
@@ -161,24 +127,5 @@ final class CalibrationEngine {
             return defaultRate
         }
         return defaultRate * (1 - rhythm.confidence) + rhythm.idealDecayRate * rhythm.confidence
-    }
-
-    // MARK: - Human-readable summaries
-
-    func rhythmSummary(for need: NeedType) -> String? {
-        guard let r = rhythms[need], r.dataPoints >= 3 else { return nil }
-        let actionsStr = String(format: "%.1f", r.avgActionsPerDay)
-        if r.avgIntervalHours > 0.5 {
-            let intervalStr = String(format: "%.1f", r.avgIntervalHours)
-            return "\(actionsStr)×/día, cada ~\(intervalStr)h"
-        }
-        return "\(actionsStr)×/día"
-    }
-
-    func calibrationLabel(for need: NeedType) -> String {
-        guard let r = rhythms[need] else { return "Sin datos" }
-        if r.confidence < 0.1 { return "Sin datos" }
-        if r.confidence < 0.5 { return "Aprendiendo..." }
-        return "Calibrado \(Int(r.confidence * 100))%"
     }
 }

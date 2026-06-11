@@ -21,7 +21,6 @@
 		44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */; };
 		47EA5490E43745F4D5623412 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138DC9B9C1F133F5234DEA6E /* HistoryView.swift */; };
 		4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4563091E7EDE5B5728153629 /* Date+TimeAgo.swift */; };
-		5D17DB49EBE8F3442244032F /* SimsTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */; };
 		67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A5A982143D3B5A7FD2D41 /* SimsTheme.swift */; };
 		714096688C4A7CF61C6DEA0C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4224F0E544F1A45EA415CF89 /* AboutView.swift */; };
 		80EAB2B05373AB71363A857F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05123DDA91452D04ECF598 /* OnboardingView.swift */; };
@@ -29,6 +28,7 @@
 		8BB5895C9C89A4C15A10DCEA /* DoseScheduleEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4345818E44B8424BFD0778 /* DoseScheduleEditor.swift */; };
 		8C0C9937E403A788C536EDD0 /* AlertCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC155C25C61EB8794EFEA59 /* AlertCardView.swift */; };
 		949101EABF2E4FBC5DAC1640 /* NotificationsDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727963FD62BC53F40E985542 /* NotificationsDetailView.swift */; };
+		99B0549A659CFFD2DED8C2D6 /* DashboardTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01518F93126E5145665D877A /* DashboardTab.swift */; };
 		AE444B53A708CB61858095F3 /* AspirationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B910D402E23B4129BCEA86 /* AspirationsView.swift */; };
 		BD7BC47F6FF372252AFD9F7F /* UDKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57DCED5A61E939CC137C6996 /* UDKeys.swift */; };
 		BDDAD58B7DEEC6C7870D4463 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89EBC43D813E16A28F59F91 /* NotificationManager.swift */; };
@@ -49,6 +49,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		01518F93126E5145665D877A /* DashboardTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTab.swift; sourceTree = "<group>"; };
 		0871D1480693A5894BC104A7 /* TreatmentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreatmentsView.swift; sourceTree = "<group>"; };
 		11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditor.swift; sourceTree = "<group>"; };
 		138DC9B9C1F133F5234DEA6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -90,7 +91,6 @@
 		DB05123DDA91452D04ECF598 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		EC9110DB76EDC23748047200 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
 		EF2C15A6F5633EC3A8AFDAD6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimsTabBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -101,12 +101,12 @@
 				A3A843AA5D51F3B1B1989335 /* AspirationEditor.swift */,
 				94B910D402E23B4129BCEA86 /* AspirationsView.swift */,
 				B23304E01401252603966EA4 /* CustomActionSheet.swift */,
+				01518F93126E5145665D877A /* DashboardTab.swift */,
 				D3CF46933BBA8EC924A16469 /* DashboardView.swift */,
 				8C4345818E44B8424BFD0778 /* DoseScheduleEditor.swift */,
 				1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */,
 				BE0206ECCA122D5D143687FA /* PlumbobView.swift */,
 				16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */,
-				F0358219C4262B59DDF1AAE8 /* SimsTabBar.swift */,
 				11043F6E3ADAFA1B0556ECD7 /* TaskEditor.swift */,
 				EC9110DB76EDC23748047200 /* TasksView.swift */,
 				76D1C12DE2272D8389C2C95B /* TreatmentEditor.swift */,
@@ -315,6 +315,7 @@
 				D1EFC08D687C34BB6D9B28B8 /* CloudPrefsMirror.swift in Sources */,
 				44E2EDE4BEC362EC22D81DE0 /* ContentView.swift in Sources */,
 				C3EE1BDE7BE5AC46EBE4B29F /* CustomActionSheet.swift in Sources */,
+				99B0549A659CFFD2DED8C2D6 /* DashboardTab.swift in Sources */,
 				E26BC7925DC82A389BA5D982 /* DashboardView.swift in Sources */,
 				4967C613B9D264590B808AE1 /* Date+TimeAgo.swift in Sources */,
 				8BB5895C9C89A4C15A10DCEA /* DoseScheduleEditor.swift in Sources */,
@@ -332,7 +333,6 @@
 				C9B7D61A9F942BA49529562B /* PlumbobView.swift in Sources */,
 				2072C7A7343072FCBC12A716 /* QuickActionsSheet.swift in Sources */,
 				ED427AEE763517E2DD3F6BFD /* SettingsView.swift in Sources */,
-				5D17DB49EBE8F3442244032F /* SimsTabBar.swift in Sources */,
 				67D56342BE8954A23D275F00 /* SimsTheme.swift in Sources */,
 				0A3CACE567E105002E4D8555 /* TaskEditor.swift in Sources */,
 				247F296E0D62040182133FA2 /* TasksView.swift in Sources */,

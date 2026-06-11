@@ -49,8 +49,7 @@ struct TreatmentEditor: View {
                 SimsSection("Variación por semanas (opcional)") {
                     DoseScheduleEditor(schedule: $schedule,
                                        defaultDose: defaultDose,
-                                       unit: unit,
-                                       pluralize: Treatment.pluralize)
+                                       unit: unit)
                 }
             }
             SimsSection("Cuándo tomarla (opcional)") { dosingField }
@@ -163,7 +162,7 @@ struct TreatmentEditor: View {
 
     private var defaultDoseField: some View {
         Stepper(value: $defaultDose, in: 1...20) {
-            Text("\(defaultDose) \(defaultDose == 1 ? unit : Treatment.pluralize(unit))")
+            Text("\(defaultDose) \(defaultDose == 1 ? unit : unit.pluralizedUnit)")
                 .font(.system(.body, design: .rounded, weight: .semibold))
                 .foregroundStyle(SimsTheme.textPrimary)
         }

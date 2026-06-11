@@ -104,7 +104,7 @@ Hay un harness reproducible en `Tools/CalibrationCheck.swift`.
 swift Tools/CalibrationCheck.swift
 ```
 
-34 checks pasan en estado base. Si añado algo que rompe alguno, o lo
+35 checks pasan en estado base. Si añado algo que rompe alguno, o lo
 arreglo o justifico el cambio en `docs/CALIBRATION.md` y ajusto la
 expectativa allí mismo. Nunca silenciar un FAIL sin documentar.
 
