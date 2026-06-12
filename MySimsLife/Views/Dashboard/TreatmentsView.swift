@@ -8,6 +8,10 @@ struct TreatmentsRow: View {
     /// una fila secundaria "PRÓXIMAMENTE" — tap abre el editor para cambiar
     /// la fecha si quieres adelantarlo.
     var upcoming: [Treatment] = []
+    /// Tratamientos con `isActive == false`. Viven en su propia fila "EN
+    /// PAUSA" — fuera del carrusel activo y del contador del día. Tap en la
+    /// capsule = reanudar.
+    var paused: [Treatment] = []
     var outerEscape: CGFloat = 32
     var cardInset: CGFloat = 16
     var onTap: (Treatment) -> Void
@@ -15,6 +19,7 @@ struct TreatmentsRow: View {
     var onEdit: (Treatment) -> Void = { _ in }
     var onDelete: (Treatment) -> Void = { _ in }
     var onMove: (UUID, UUID) -> Void = { _, _ in }
+    var onTogglePause: (Treatment) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -28,7 +33,11 @@ struct TreatmentsRow: View {
                     ForEach(treatments) { t in
                         TreatmentCard(treatment: t) { onTap(t) }
                             .simsCardMenu(onEdit: { onEdit(t) },
-                                          onDelete: { onDelete(t) })
+                                          onDelete: { onDelete(t) },
+                                          extras: [SimsCardMenuAction(
+                                            title: String(localized: "Pausar"),
+                                            systemImage: "pause.circle",
+                                            action: { onTogglePause(t) })])
                             // Long-press drag to reorder, same gesture as TasksRow.
                             .draggable(t.id.uuidString) {
                                 TreatmentCard(treatment: t) {}
@@ -51,7 +60,61 @@ struct TreatmentsRow: View {
             if !upcoming.isEmpty {
                 upcomingRow
             }
+            if !paused.isEmpty {
+                pausedRow
+            }
         }
+    }
+
+    /// Capsules for paused courses — one tap resumes. Mirrors the
+    /// "PRÓXIMAMENTE" row's look so secondary states read consistently.
+    private var pausedRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("EN PAUSA")
+                .font(.system(.caption2, design: .rounded, weight: .heavy))
+                .tracking(1.2)
+                .foregroundStyle(SimsTheme.textSecondary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(paused) { t in
+                        Button {
+                            onTogglePause(t)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(SimsTheme.frame)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(t.name)
+                                        .font(.system(.caption, design: .rounded, weight: .bold))
+                                        .foregroundStyle(SimsTheme.textPrimary)
+                                        .lineLimit(1)
+                                    Text("toca para reanudar")
+                                        .font(.system(size: 9, weight: .medium, design: .rounded))
+                                        .foregroundStyle(SimsTheme.textDim)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.30))
+                                    .overlay(Capsule().stroke(
+                                        SimsTheme.frame.opacity(0.5),
+                                        style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(t.name))
+                        .accessibilityHint(Text("Toca dos veces para reanudar el tratamiento"))
+                    }
+                }
+                .padding(.horizontal, cardInset)
+            }
+            .scrollClipDisabled()
+            .padding(.horizontal, -outerEscape)
+        }
+        .padding(.top, 4)
     }
 
     private var upcomingRow: some View {

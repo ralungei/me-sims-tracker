@@ -197,8 +197,9 @@ struct DashboardView: View {
                 iconButton("plus", "Nueva tarea") { showNewTask = true }
             }
         case .botiquin:
-            let hasAny = treatments.contains(where: \.isActive)
-            if hasAny {
+            // Any row at all (active, upcoming or paused) moves the CTA to
+            // the header "+" — the big dashed card only owns the empty state.
+            if !treatments.isEmpty {
                 iconButton("plus", "Nuevo tratamiento") { showNewTreatment = true }
             }
         }
@@ -925,9 +926,11 @@ struct DashboardView: View {
         let active = treatments.filter { $0.isActive && !$0.isScheduledForFuture() }
         let upcoming = treatments.filter { $0.isActive && $0.isScheduledForFuture() }
             .sorted { ($0.startedAt ?? Date.distantFuture) < ($1.startedAt ?? Date.distantFuture) }
+        let paused = treatments.filter { !$0.isActive }
         return TreatmentsRow(
             treatments: active,
             upcoming: upcoming,
+            paused: paused,
             outerEscape: isCompact ? 16 : 32,
             cardInset: isCompact ? 16 : 32,
             onTap: { t in
@@ -952,6 +955,22 @@ struct DashboardView: View {
             onMove: { dragged, target in
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                     moveTreatment(withID: dragged, toBefore: target)
+                }
+            },
+            onTogglePause: { t in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    t.isActive.toggle()
+                    try? modelContext.save()
+                }
+                // A paused course shouldn't keep reminding; resuming brings
+                // the daily reminder back if it was configured.
+                if t.isActive {
+                    if t.notify, let r = t.reminderTime {
+                        NotificationManager.shared.scheduleTreatmentReminder(
+                            treatmentID: t.id, title: t.name, at: r)
+                    }
+                } else {
+                    NotificationManager.shared.cancelTreatmentReminder(treatmentID: t.id)
                 }
             }
         )

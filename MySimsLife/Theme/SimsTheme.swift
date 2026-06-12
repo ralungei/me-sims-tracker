@@ -200,14 +200,25 @@ extension View {
     /// Stacks the menu as a sibling of the receiver in a ZStack so it gets
     /// its own hit area and doesn't trigger the underlying card's tap.
     func simsCardMenu(onEdit: @escaping () -> Void,
-                      onDelete: @escaping () -> Void) -> some View {
-        modifier(SimsCardMenuModifier(onEdit: onEdit, onDelete: onDelete))
+                      onDelete: @escaping () -> Void,
+                      extras: [SimsCardMenuAction] = []) -> some View {
+        modifier(SimsCardMenuModifier(onEdit: onEdit, onDelete: onDelete, extras: extras))
     }
+}
+
+/// Extra entry for `simsCardMenu` between Editar and Eliminar — e.g. the
+/// botiquín's "Pausar". Plain data so call sites stay declarative.
+struct SimsCardMenuAction: Identifiable {
+    let id = UUID()
+    let title: String
+    let systemImage: String
+    let action: () -> Void
 }
 
 private struct SimsCardMenuModifier: ViewModifier {
     let onEdit: () -> Void
     let onDelete: () -> Void
+    var extras: [SimsCardMenuAction] = []
 
     func body(content: Content) -> some View {
         ZStack(alignment: .bottomTrailing) {
@@ -219,6 +230,11 @@ private struct SimsCardMenuModifier: ViewModifier {
                     Button { onEdit() } label: {
                         Label("Editar", systemImage: "pencil")
                     }
+                    ForEach(extras) { extra in
+                        Button { extra.action() } label: {
+                            Label(extra.title, systemImage: extra.systemImage)
+                        }
+                    }
                     Button(role: .destructive) { onDelete() } label: {
                         Label("Eliminar", systemImage: "trash")
                     }
@@ -226,6 +242,11 @@ private struct SimsCardMenuModifier: ViewModifier {
             Menu {
                 Button { onEdit() } label: {
                     Label("Editar", systemImage: "pencil")
+                }
+                ForEach(extras) { extra in
+                    Button { extra.action() } label: {
+                        Label(extra.title, systemImage: extra.systemImage)
+                    }
                 }
                 Button(role: .destructive) { onDelete() } label: {
                     Label("Eliminar", systemImage: "trash")
