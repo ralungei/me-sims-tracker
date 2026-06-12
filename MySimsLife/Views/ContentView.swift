@@ -51,6 +51,21 @@ struct ContentView: View {
             // Match the panel colour so there's no visible gap between the
             // panel's bottom rounded edge and the tab bar.
             appearance.backgroundColor = UIColor(SimsTheme.panelPeriwinkle)
+            // Unselected items default to the system grey, which reads dirty
+            // on the periwinkle bar — use translucent navy like the rest of
+            // the chrome.
+            let items = UITabBarItemAppearance()
+            items.normal.iconColor = UIColor(SimsTheme.frame).withAlphaComponent(0.45)
+            items.normal.titleTextAttributes = [
+                .foregroundColor: UIColor(SimsTheme.frame).withAlphaComponent(0.45)
+            ]
+            items.selected.iconColor = UIColor(SimsTheme.frame)
+            items.selected.titleTextAttributes = [
+                .foregroundColor: UIColor(SimsTheme.frame)
+            ]
+            appearance.stackedLayoutAppearance = items
+            appearance.inlineLayoutAppearance = items
+            appearance.compactInlineLayoutAppearance = items
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
             #endif
