@@ -272,6 +272,29 @@ final class Aspiration {
         return min(max(1, diff + 1), total)
     }
 
+    /// Consecutive-day completion streak for daily aspirations, computed
+    /// from `completionsLog`. The chain may end today OR yesterday, so the
+    /// streak doesn't read 0 in the morning before today's tick. Returns 0
+    /// for non-daily kinds.
+    func currentStreak(reference: Date = Date()) -> Int {
+        guard kind == .dailySimple || kind == .dailyTimed else { return 0 }
+        let cal = Calendar.current
+        let days = Set(completionsLog.map { cal.startOfDay(for: $0) }).sorted(by: >)
+        guard let newest = days.first else { return 0 }
+        let today = cal.startOfDay(for: reference)
+        guard let gap = cal.dateComponents([.day], from: newest, to: today).day,
+              gap <= 1 else { return 0 }
+        var streak = 1
+        var cursor = newest
+        for day in days.dropFirst() {
+            guard let expected = cal.date(byAdding: .day, value: -1, to: cursor),
+                  cal.isDate(day, inSameDayAs: expected) else { break }
+            streak += 1
+            cursor = day
+        }
+        return streak
+    }
+
 }
 
 // `var id: UUID = UUID()` is already defined above; conformance is a one-liner.

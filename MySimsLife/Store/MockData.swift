@@ -76,7 +76,10 @@ enum MockData {
             notes: nil
         )
         a1.lastCompletedAt = todayMorning
-        a1.completionsLog = [todayMorning]
+        // 5-day chain so screenshots show the "🔥 5 días seguidos" streak.
+        a1.completionsLog = (0..<5).compactMap {
+            cal.date(byAdding: .day, value: -$0, to: todayMorning)
+        }.reversed()
 
         let a2 = Aspiration(
             name: copy.steps,

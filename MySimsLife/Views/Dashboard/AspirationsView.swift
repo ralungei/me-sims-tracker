@@ -228,6 +228,9 @@ struct AspirationCard: View {
         } else {
             parts.append(String(localized: "+\(aspiration.xp) XP"))
         }
+        if streak >= 2 {
+            parts.append(String(localized: "racha de \(streak) días"))
+        }
         if let dosing = dosingLabel {
             parts.append(dosing.text)
         }
@@ -318,14 +321,37 @@ struct AspirationCard: View {
         }
     }
 
+    private var streak: Int { aspiration.currentStreak() }
+
+    /// "🔥 N días seguidos" — replaces the static kind label once a daily
+    /// aspiration has at least a 2-day chain going.
+    private func streakLabel(_ n: Int) -> some View {
+        HStack(spacing: 4) {
+            Text("🔥").font(.system(size: 10))
+            Text(String(localized: "\(n) días seguidos"))
+                .font(.system(.caption2, design: .rounded, weight: .bold))
+                .foregroundStyle(SimsTheme.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
     @ViewBuilder
     private var kindDetail: some View {
         switch aspiration.kind {
         case .dailySimple:
-            label(String(localized: "Diario"), systemImage: "sun.max.fill")
+            if streak >= 2 {
+                streakLabel(streak)
+            } else {
+                label(String(localized: "Diario"), systemImage: "sun.max.fill")
+            }
         case .dailyTimed:
             let mins = aspiration.durationMinutes ?? 0
-            label(String(localized: "\(mins) min · diario"), systemImage: "timer")
+            if streak >= 2 {
+                streakLabel(streak)
+            } else {
+                label(String(localized: "\(mins) min · diario"), systemImage: "timer")
+            }
         case .weekly:
             label(String(localized: "Esta semana"), systemImage: "calendar")
         case .oneTime:
