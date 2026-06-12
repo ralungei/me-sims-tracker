@@ -74,12 +74,13 @@ struct OnboardingView: View {
 
                 Group {
                     switch step {
-                    case .welcome:     welcomeStep
-                    case .model:       modelStep
-                    case .customize:   customizeStep
-                    case .aspirations: aspirationsStep
-                    case .treatments:  treatmentsStep
-                    case .sleep:       sleepStep
+                    case .welcome:       welcomeStep
+                    case .model:         modelStep
+                    case .customize:     customizeStep
+                    case .aspirations:   aspirationsStep
+                    case .treatments:    treatmentsStep
+                    case .notifications: notificationsStep
+                    case .sleep:         sleepStep
                     }
                 }
                 .frame(maxWidth: 480)
@@ -102,7 +103,27 @@ struct OnboardingView: View {
 
                 primaryButton
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, step == .notifications ? 0 : 32)
+
+                // Secondary skip — only the permission step earns one: every
+                // other step's "skip" semantics live in the primary label.
+                if step == .notifications {
+                    Button {
+                        haptic(.light)
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                            step = .sleep
+                        }
+                    } label: {
+                        Text("Ahora no")
+                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                            .foregroundStyle(SimsTheme.textSecondary)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 12)
+                }
             }
 
             confettiOverlay
@@ -113,7 +134,7 @@ struct OnboardingView: View {
     // MARK: - Step model
 
     enum Step: Int, CaseIterable {
-        case welcome, model, customize, aspirations, treatments, sleep
+        case welcome, model, customize, aspirations, treatments, notifications, sleep
     }
 
     /// Aspiration preset shown as a multi-select chip in the aspirations
@@ -210,12 +231,13 @@ struct OnboardingView: View {
     /// the steps that NEED the headroom (hook intro, final reveal) grow it.
     private var plumbobSize: CGFloat {
         switch step {
-        case .welcome:     return 200   // hero entry — replaces the old hook
-        case .model:       return 175
-        case .customize:   return 0
-        case .aspirations: return 0
-        case .treatments:  return 0
-        case .sleep:       return 200
+        case .welcome:       return 200   // hero entry — replaces the old hook
+        case .model:         return 175
+        case .customize:     return 0
+        case .aspirations:   return 0
+        case .treatments:    return 0
+        case .notifications: return 160   // the gem IS who will nudge you
+        case .sleep:         return 200
         }
     }
     private var plumbobOffsetX: CGFloat {
@@ -235,9 +257,10 @@ struct OnboardingView: View {
     /// at calm levels that don't fight the text.
     private var plumbobMood: Double {
         switch step {
-        case .welcome, .sleep: return 0.92
-        case .model:           return demoValue
-        default:               return 0.7
+        case .welcome, .sleep:  return 0.92
+        case .model:            return demoValue
+        case .notifications:    return 0.85
+        default:                return 0.7
         }
     }
 
@@ -638,6 +661,28 @@ struct OnboardingView: View {
         if set.contains(id) { set.remove(id) } else { set.insert(id) }
     }
 
+    // MARK: - Step — Notifications opt-in
+
+    /// Soft pre-permission ask right before the final step. Without this the
+    /// master toggle only lived in Ajustes and almost nobody found it — the
+    /// background low-need alerts never got a chance to fire.
+    private var notificationsStep: some View {
+        VStack(spacing: 14) {
+            Text("¿Te aviso si algo anda bajo?")
+                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                .foregroundStyle(SimsTheme.textPrimary)
+                .tracking(-0.5)
+                .multilineTextAlignment(.center)
+
+            Text("Un toque cuando una barra caiga de verdad, y recordatorios del botiquín y la agenda si los configuras. Sin spam.")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(SimsTheme.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     // MARK: - Step 5 — Sleep
 
     private var sleepStep: some View {
@@ -737,13 +782,18 @@ struct OnboardingView: View {
         switch step {
         case .welcome:                                       return "Empezar"
         case .sleep:                                         return "Entrar"
+        case .notifications:                                 return "Avisarme"
         case .aspirations where selectedAspirations.isEmpty: return "Omitir"
         case .treatments  where selectedTreatments.isEmpty:  return "Omitir"
         default:                                             return "Continuar"
         }
     }
     private var primaryIcon: String {
-        step == .sleep ? "checkmark" : "arrow.right"
+        switch step {
+        case .sleep:         return "checkmark"
+        case .notifications: return "bell.badge.fill"
+        default:             return "arrow.right"
+        }
     }
     private var isPrimaryDisabled: Bool { false }
 
@@ -761,6 +811,18 @@ struct OnboardingView: View {
 
     private func advance() {
         haptic(.light)
+        if step == .notifications {
+            // The system prompt is async — transition once it resolves so
+            // the sheet doesn't fight the step animation.
+            Task { @MainActor in
+                let granted = await NotificationManager.shared.requestPermission()
+                if granted { NotificationsPrefs.masterEnabled = true }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                    step = .sleep
+                }
+            }
+            return
+        }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
             switch step {
             case .welcome: step = .model
@@ -773,7 +835,9 @@ struct OnboardingView: View {
                 step = .treatments
             case .treatments:
                 commitTreatments()
-                step = .sleep
+                step = .notifications
+            case .notifications:
+                break   // handled above
             case .sleep:       onFinish()
             }
         }
