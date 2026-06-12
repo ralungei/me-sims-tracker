@@ -33,6 +33,7 @@
 		BD7BC47F6FF372252AFD9F7F /* UDKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57DCED5A61E939CC137C6996 /* UDKeys.swift */; };
 		BDDAD58B7DEEC6C7870D4463 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89EBC43D813E16A28F59F91 /* NotificationManager.swift */; };
 		BF13F631DDBC4DB01BD82309 /* MockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686074965E7A0D214C77731C /* MockData.swift */; };
+		C04D2D8D6A0F61060D804B7E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 230070E977904D44F1672677 /* PrivacyInfo.xcprivacy */; };
 		C08DD4DEDC99BD434C16853D /* TreatmentEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D1C12DE2272D8389C2C95B /* TreatmentEditor.swift */; };
 		C3EE1BDE7BE5AC46EBE4B29F /* CustomActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23304E01401252603966EA4 /* CustomActionSheet.swift */; };
 		C78366FA7DD4D26CC5FA6DC1 /* Treatment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95A8CFD47EF453D32342EF08 /* Treatment.swift */; };
@@ -56,6 +57,7 @@
 		16355EE083C1440315B70AA2 /* QuickActionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsSheet.swift; sourceTree = "<group>"; };
 		19B7E317406B92C357536FFC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1BF3C1BF20FF7CA8C81315CB /* NeedBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedBarView.swift; sourceTree = "<group>"; };
+		230070E977904D44F1672677 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2A65C7D05674205E9F4C67BE /* Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Accessibility.swift; sourceTree = "<group>"; };
 		3D97F1CFA575B954764AF883 /* CloudPrefsMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudPrefsMirror.swift; sourceTree = "<group>"; };
 		3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				4B7ADED8B3E503A40AAA5725 /* Info.plist */,
 				3E54642B60C4FA78D7CEE4DA /* Localizable.xcstrings */,
 				B36217A6E8D215AC785077A5 /* MySimsLife.entitlements */,
+				230070E977904D44F1672677 /* PrivacyInfo.xcprivacy */,
 				D25F0B0FBBA6216B5E2A7C1B /* App */,
 				8B8950864803BD5681407477 /* Models */,
 				CF4A6D7E68704DB4F1B2EEA8 /* Store */,
@@ -293,6 +296,7 @@
 			files = (
 				2A38A864B8FC38CF0CBFFEA0 /* Assets.xcassets in Resources */,
 				0C80EAAC8C0650FF9027AE97 /* Localizable.xcstrings in Resources */,
+				C04D2D8D6A0F61060D804B7E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

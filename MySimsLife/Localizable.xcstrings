@@ -1,119 +1,12 @@
 {
   "sourceLanguage" : "es",
   "strings" : {
-    "¡Todo por encima del 60%! Gran momento" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything above 60%! Great moment"
-          }
-        }
-      }
-    },
-    "¿Cómo te llamas?" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What's your name?"
-          }
-        }
-      }
-    },
-    "¿Cuántas horas dormiste anoche?" : {
-
-    },
-    "¿Empezar de cero?" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start from scratch?"
-          }
-        }
-      }
-    },
-    "¿Has cenado? Tu nutrición está baja" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Have you had dinner? Your nutrition is low"
-          }
-        }
-      }
-    },
-    "¿Marcar todo como estable?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mark everything as stable?"
-          }
-        }
-      }
-    },
-    "¿Qué quieres seguir?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What do you want to track?"
-          }
-        }
-      }
-    },
-    "¿Qué tan grande es?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "How big is it?"
-          }
-        }
-      }
-    },
-    "¿Te duchaste hoy? Tu higiene está baja" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Did you shower today? Your hygiene is low"
-          }
-        }
-      }
-    },
-    "¿Tomas algo a diario?" : {
-
-    },
     "%@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@"
-          }
-        }
-      }
-    },
-    "%@ · +%@%%" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ · +%@%%"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · +%2$@%%"
           }
         }
       }
@@ -146,6 +39,12 @@
     },
     "%@ de %@ completadas hoy" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of %@ completed today"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "new",
@@ -156,6 +55,12 @@
     },
     "%@ de %@ tareas completadas" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of %@ tasks completed"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "new",
@@ -166,6 +71,12 @@
     },
     "%@ de %@ tomados hoy" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of %@ taken today"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "new",
@@ -220,8 +131,72 @@
         }
       }
     },
+    "%@ · +%@%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · +%@%%"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · +%2$@%%"
+          }
+        }
+      }
+    },
+    "%@%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%%"
+          }
+        }
+      }
+    },
+    "%@%@ por ciento, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%@ percent, %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@ por ciento, %3$@"
+          }
+        }
+      }
+    },
+    "%@%@%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%@%%"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@%%"
+          }
+        }
+      }
+    },
     "%@, %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, %@"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "new",
@@ -266,42 +241,6 @@
         }
       }
     },
-    "%@%@ por ciento, %@" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@%2$@ por ciento, %3$@"
-          }
-        }
-      }
-    },
-    "%@%@%%" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@%@%%"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@%2$@%%"
-          }
-        }
-      }
-    },
-    "%@%%" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@%%"
-          }
-        }
-      }
-    },
     "%lld de %lld completadas hoy" : {
       "localizations" : {
         "en" : {
@@ -328,6 +267,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld of %lld taken today"
+          }
+        }
+      }
+    },
+    "%lld días seguidos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld-day streak"
           }
         }
       }
@@ -410,56 +359,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "+%lld XP"
-          }
-        }
-      }
-    },
-    "⚠" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "⚠"
-          }
-        }
-      }
-    },
-    "⚡ RÁPIDO" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "⚡ QUICK"
-          }
-        }
-      }
-    },
-    "✨" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "✨"
-          }
-        }
-      }
-    },
-    "💊" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "💊"
-          }
-        }
-      }
-    },
-    "a" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "to"
           }
         }
       }
@@ -557,24 +456,12 @@
         }
       }
     },
-    "ahora" : {
-      "extractionState" : "manual",
+    "Ahora no" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "now"
-          }
-        }
-      }
-    },
-    "ahora mismo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "right now"
+            "value" : "Not now"
           }
         }
       }
@@ -631,7 +518,14 @@
       }
     },
     "Algunas metas para empezar." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A few goals to get you started."
+          }
+        }
+      }
     },
     "Almacenamiento" : {
       "extractionState" : "manual",
@@ -650,47 +544,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lunch"
-          }
-        }
-      }
-    },
-    "Añadir" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add"
-          }
-        }
-      }
-    },
-    "Añadir hora" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add time"
-          }
-        }
-      }
-    },
-    "Añadir personalizada" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add custom"
-          }
-        }
-      }
-    },
-    "Añadir tramo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add range"
           }
         }
       }
@@ -746,17 +599,6 @@
         }
       }
     },
-    "aspiración" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "aspiration"
-          }
-        }
-      }
-    },
     "Aspiraciones" : {
       "localizations" : {
         "en" : {
@@ -777,16 +619,6 @@
         }
       }
     },
-    "atrasada" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "overdue"
-          }
-        }
-      }
-    },
     "Avisar cuando una necesidad esté baja" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -798,15 +630,63 @@
         }
       }
     },
-    "Bajan solas. Tú las subes." : {
-
-    },
-    "bajo" : {
+    "Avisarme" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "low"
+            "value" : "Notify me"
+          }
+        }
+      }
+    },
+    "Añadir" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "Añadir hora" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add time"
+          }
+        }
+      }
+    },
+    "Añadir personalizada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add custom"
+          }
+        }
+      }
+    },
+    "Añadir tramo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add range"
+          }
+        }
+      }
+    },
+    "Bajan solas. Tú las subes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They drop on their own. You bring them back up."
           }
         }
       }
@@ -832,17 +712,6 @@
         }
       }
     },
-    "Baño" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bathroom"
-          }
-        }
-      }
-    },
     "Barras que bajan con el tiempo. Toca una y registra lo que hiciste." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -854,6 +723,17 @@
         }
       }
     },
+    "Baño" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bathroom"
+          }
+        }
+      }
+    },
     "Bebe agua — llevas demasiado sin hidratarte" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -861,16 +741,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drink water — you've gone too long without hydration"
-          }
-        }
-      }
-    },
-    "bien" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "good"
           }
         }
       }
@@ -1145,26 +1015,6 @@
         }
       }
     },
-    "completada" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "done"
-          }
-        }
-      }
-    },
-    "completado hoy" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "completed today"
-          }
-        }
-      }
-    },
     "Completo" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1217,32 +1067,12 @@
         }
       }
     },
-    "crítico" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "critical"
-          }
-        }
-      }
-    },
     "Crítico" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Critical"
-          }
-        }
-      }
-    },
-    "Cuándo tomarla (opcional)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When to take (optional)"
           }
         }
       }
@@ -1274,6 +1104,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finite course with progress (e.g. probiotics 30 days)"
+          }
+        }
+      }
+    },
+    "Cuándo tomarla (opcional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When to take (optional)"
           }
         }
       }
@@ -1382,68 +1222,12 @@
         }
       }
     },
-    "Día %@ de %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Day %@ of %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Día %1$@ de %2$@"
-          }
-        }
-      }
-    },
-    "día %lld de %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "day %lld of %lld"
-          }
-        }
-      }
-    },
-    "Día %lld de %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Day %lld of %lld"
-          }
-        }
-      }
-    },
-    "Día sedentario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sedentary day"
-          }
-        }
-      }
-    },
     "Diario" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Daily"
-          }
-        }
-      }
-    },
-    "Diario · sesión" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daily · session"
           }
         }
       }
@@ -1480,13 +1264,12 @@
         }
       }
     },
-    "Días totales" : {
-      "extractionState" : "stale",
+    "Diario · sesión" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Total days"
+            "value" : "Daily · session"
           }
         }
       }
@@ -1548,6 +1331,63 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duration"
+          }
+        }
+      }
+    },
+    "Día %@ de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day %@ of %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Día %1$@ de %2$@"
+          }
+        }
+      }
+    },
+    "Día %lld de %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day %lld of %lld"
+          }
+        }
+      }
+    },
+    "Día sedentario" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sedentary day"
+          }
+        }
+      }
+    },
+    "Días totales" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total days"
+          }
+        }
+      }
+    },
+    "EN PAUSA" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAUSED"
           }
         }
       }
@@ -1715,7 +1555,14 @@
       }
     },
     "Empezamos." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's go."
+          }
+        }
+      }
     },
     "Empezar" : {
       "extractionState" : "stale",
@@ -1738,32 +1585,12 @@
         }
       }
     },
-    "empieza %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "starts %@"
-          }
-        }
-      }
-    },
     "Empieza el" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Starts on"
-          }
-        }
-      }
-    },
-    "en %lld días" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "in %lld days"
           }
         }
       }
@@ -1777,9 +1604,6 @@
           }
         }
       }
-    },
-    "en un sitio." : {
-
     },
     "Energía" : {
       "localizations" : {
@@ -1797,16 +1621,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Environment"
-          }
-        }
-      }
-    },
-    "Épica" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Epic"
           }
         }
       }
@@ -1865,16 +1679,6 @@
         }
       }
     },
-    "Está al %lld%%. Hora de cuidarlo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "It's at %lld%%. Time to take care of it."
-          }
-        }
-      }
-    },
     "Esta semana" : {
       "localizations" : {
         "en" : {
@@ -1891,16 +1695,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Status"
-          }
-        }
-      }
-    },
-    "estás bien" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "you're doing well"
           }
         }
       }
@@ -1932,6 +1726,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "I'm healthy"
+          }
+        }
+      }
+    },
+    "Está al %lld%%. Hora de cuidarlo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's at %lld%%. Time to take care of it."
           }
         }
       }
@@ -2131,17 +1935,6 @@
         }
       }
     },
-    "hoy" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "today"
-          }
-        }
-      }
-    },
     "Icono" : {
       "localizations" : {
         "en" : {
@@ -2224,16 +2017,6 @@
         }
       }
     },
-    "lleno" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "full"
-          }
-        }
-      }
-    },
     "Lleva el tracking de tu día como en Los Sims.\nNecesidades, retos y agenda en un sitio." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2297,25 +2080,35 @@
         }
       }
     },
-    "mañana" : {
-      "extractionState" : "manual",
+    "Marca las que te van. O sigue sin nada." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tomorrow"
+            "value" : "Pick the ones that fit. Or skip for now."
           }
         }
       }
     },
-    "Marca las que te van. O sigue sin nada." : {
-
-    },
     "Marca lo que importa. Puedes ajustarlo cuando quieras." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick what matters. You can adjust it anytime."
+          }
+        }
+      }
     },
     "Marca lo que tomas. Si no, salta." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tick what you take. If none, skip."
+          }
+        }
+      }
     },
     "Marcar todo a neutro" : {
       "localizations" : {
@@ -2323,16 +2116,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mark everything as neutral"
-          }
-        }
-      }
-    },
-    "más %lld por ciento" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "plus %lld percent"
           }
         }
       }
@@ -2367,16 +2150,6 @@
         }
       }
     },
-    "menos %lld por ciento" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "minus %lld percent"
-          }
-        }
-      }
-    },
     "Migraña" : {
       "localizations" : {
         "en" : {
@@ -2393,16 +2166,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mini"
-          }
-        }
-      }
-    },
-    "Mínimo entre avisos para la misma necesidad." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minimum between alerts for the same need."
           }
         }
       }
@@ -2428,6 +2191,16 @@
         }
       }
     },
+    "Mínimo entre avisos para la misma necesidad." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum between alerts for the same need."
+          }
+        }
+      }
+    },
     "Necesidades" : {
       "localizations" : {
         "en" : {
@@ -2449,32 +2222,12 @@
         }
       }
     },
-    "necesitas cuidarte" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "take care of yourself"
-          }
-        }
-      }
-    },
     "Negativa" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Negative"
-          }
-        }
-      }
-    },
-    "ninguno" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "none"
           }
         }
       }
@@ -2644,16 +2397,6 @@
         }
       }
     },
-    "ojo, andas bajo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "heads up, you're low"
-          }
-        }
-      }
-    },
     "Ok" : {
       "localizations" : {
         "en" : {
@@ -2695,6 +2438,16 @@
         }
       }
     },
+    "PRÓXIMAMENTE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UPCOMING"
+          }
+        }
+      }
+    },
     "Paso %lld de %lld" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2716,12 +2469,12 @@
         }
       }
     },
-    "pendiente" : {
+    "Pausar" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pending"
+            "value" : "Pause"
           }
         }
       }
@@ -2753,17 +2506,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permission denied"
-          }
-        }
-      }
-    },
-    "personalizada" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "custom"
           }
         }
       }
@@ -2880,16 +2622,6 @@
         }
       }
     },
-    "PRÓXIMAMENTE" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UPCOMING"
-          }
-        }
-      }
-    },
     "Puntual" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2912,16 +2644,6 @@
         }
       }
     },
-    "Recibirás avisos según las categorías que actives debajo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You'll get alerts based on the categories you enable below."
-          }
-        }
-      }
-    },
     "RECIENTES" : {
       "localizations" : {
         "en" : {
@@ -2932,12 +2654,23 @@
         }
       }
     },
-    "Recordármelo" : {
+    "REGISTRAR NEGATIVO" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Remind me"
+            "value" : "RECORD NEGATIVE"
+          }
+        }
+      }
+    },
+    "Recibirás avisos según las categorías que actives debajo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You'll get alerts based on the categories you enable below."
           }
         }
       }
@@ -2964,6 +2697,16 @@
         }
       }
     },
+    "Recordármelo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind me"
+          }
+        }
+      }
+    },
     "Recuperándome" : {
       "localizations" : {
         "en" : {
@@ -2980,27 +2723,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Register"
-          }
-        }
-      }
-    },
-    "REGISTRAR NEGATIVO" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RECORD NEGATIVE"
-          }
-        }
-      }
-    },
-    "regular" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "okay"
           }
         }
       }
@@ -3119,39 +2841,6 @@
         }
       }
     },
-    "Sí, al 50%" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yes, set to 50%"
-          }
-        }
-      }
-    },
-    "Sí, borrar todo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yes, delete everything"
-          }
-        }
-      }
-    },
-    "Sí, todo al 50%%" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yes, everything at 50%%"
-          }
-        }
-      }
-    },
     "Siesta" : {
       "localizations" : {
         "en" : {
@@ -3212,16 +2901,6 @@
         }
       }
     },
-    "sobre, cápsula, ml..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "sachet, capsule, ml…"
-          }
-        }
-      }
-    },
     "Social" : {
       "localizations" : {
         "en" : {
@@ -3243,23 +2922,45 @@
         }
       }
     },
+    "Sí, al 50%" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, set to 50%"
+          }
+        }
+      }
+    },
+    "Sí, borrar todo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, delete everything"
+          }
+        }
+      }
+    },
+    "Sí, todo al 50%%" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes, everything at 50%%"
+          }
+        }
+      }
+    },
     "Tamaño" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Size"
-          }
-        }
-      }
-    },
-    "tarea" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "task"
           }
         }
       }
@@ -3286,16 +2987,6 @@
         }
       }
     },
-    "Té" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tea"
-          }
-        }
-      }
-    },
     "Te avisamos cuando una barra cruza por debajo." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3314,16 +3005,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "We'll notify you when a need is low."
-          }
-        }
-      }
-    },
-    "te ves genial" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "you look great"
           }
         }
       }
@@ -3409,6 +3090,16 @@
         }
       }
     },
+    "Toca dos veces para reanudar el tratamiento" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double tap to resume the treatment"
+          }
+        }
+      }
+    },
     "Toca dos veces para registrar" : {
       "localizations" : {
         "en" : {
@@ -3482,14 +3173,11 @@
       }
     },
     "Todo lo que necesites," : {
-
-    },
-    "tomado hoy" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "taken today"
+            "value" : "Everything you need,"
           }
         }
       }
@@ -3570,12 +3258,12 @@
         }
       }
     },
-    "Última acción: %@ %@" : {
+    "Té" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Last action: %@ %@"
+            "value" : "Tea"
           }
         }
       }
@@ -3586,6 +3274,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Threshold"
+          }
+        }
+      }
+    },
+    "Un toque cuando una barra caiga de verdad, y recordatorios del botiquín y la agenda si los configuras. Sin spam." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A nudge when a bar truly drops, plus medicine cabinet and agenda reminders if you set them. No spam."
           }
         }
       }
@@ -3656,22 +3354,22 @@
         }
       }
     },
+    "VITAL" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VITAL"
+          }
+        }
+      }
+    },
     "Variación por semanas (opcional)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Weekly variation (optional)"
-          }
-        }
-      }
-    },
-    "vas tirando" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "getting by"
           }
         }
       }
@@ -3698,7 +3396,14 @@
       }
     },
     "Verde si vas bien. Rojo si te toca cuidarte." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Green when you're fine. Red when it's time to care."
+          }
+        }
+      }
     },
     "Versión %@" : {
       "localizations" : {
@@ -3721,9 +3426,6 @@
         }
       }
     },
-    "VITAL" : {
-
-    },
     "Zona peligrosa" : {
       "localizations" : {
         "en" : {
@@ -3740,6 +3442,518 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Juice"
+          }
+        }
+      }
+    },
+    "a" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to"
+          }
+        }
+      }
+    },
+    "ahora" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "now"
+          }
+        }
+      }
+    },
+    "ahora mismo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "right now"
+          }
+        }
+      }
+    },
+    "aspiración" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aspiration"
+          }
+        }
+      }
+    },
+    "atrasada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "overdue"
+          }
+        }
+      }
+    },
+    "bajo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low"
+          }
+        }
+      }
+    },
+    "bien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "good"
+          }
+        }
+      }
+    },
+    "completada" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "done"
+          }
+        }
+      }
+    },
+    "completado hoy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "completed today"
+          }
+        }
+      }
+    },
+    "crítico" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "critical"
+          }
+        }
+      }
+    },
+    "día %lld de %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "day %lld of %lld"
+          }
+        }
+      }
+    },
+    "empieza %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "starts %@"
+          }
+        }
+      }
+    },
+    "en %lld días" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in %lld days"
+          }
+        }
+      }
+    },
+    "en un sitio." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in one place."
+          }
+        }
+      }
+    },
+    "estás bien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you're doing well"
+          }
+        }
+      }
+    },
+    "hoy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "today"
+          }
+        }
+      }
+    },
+    "lleno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "full"
+          }
+        }
+      }
+    },
+    "mañana" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tomorrow"
+          }
+        }
+      }
+    },
+    "menos %lld por ciento" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "minus %lld percent"
+          }
+        }
+      }
+    },
+    "más %lld por ciento" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "plus %lld percent"
+          }
+        }
+      }
+    },
+    "necesitas cuidarte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "take care of yourself"
+          }
+        }
+      }
+    },
+    "ninguno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        }
+      }
+    },
+    "ojo, andas bajo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heads up, you're low"
+          }
+        }
+      }
+    },
+    "pendiente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pending"
+          }
+        }
+      }
+    },
+    "personalizada" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "custom"
+          }
+        }
+      }
+    },
+    "racha de %lld días" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld-day streak"
+          }
+        }
+      }
+    },
+    "regular" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "okay"
+          }
+        }
+      }
+    },
+    "sobre, cápsula, ml..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sachet, capsule, ml…"
+          }
+        }
+      }
+    },
+    "tarea" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "task"
+          }
+        }
+      }
+    },
+    "te ves genial" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you look great"
+          }
+        }
+      }
+    },
+    "toca para reanudar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tap to resume"
+          }
+        }
+      }
+    },
+    "tomado hoy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "taken today"
+          }
+        }
+      }
+    },
+    "vas tirando" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "getting by"
+          }
+        }
+      }
+    },
+    "¡Todo por encima del 60%! Gran momento" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything above 60%! Great moment"
+          }
+        }
+      }
+    },
+    "¿Cuántas horas dormiste anoche?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many hours did you sleep last night?"
+          }
+        }
+      }
+    },
+    "¿Cómo te llamas?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's your name?"
+          }
+        }
+      }
+    },
+    "¿Empezar de cero?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from scratch?"
+          }
+        }
+      }
+    },
+    "¿Has cenado? Tu nutrición está baja" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Have you had dinner? Your nutrition is low"
+          }
+        }
+      }
+    },
+    "¿Marcar todo como estable?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark everything as stable?"
+          }
+        }
+      }
+    },
+    "¿Qué quieres seguir?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you want to track?"
+          }
+        }
+      }
+    },
+    "¿Qué tan grande es?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How big is it?"
+          }
+        }
+      }
+    },
+    "¿Te aviso si algo anda bajo?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Want a heads-up when something runs low?"
+          }
+        }
+      }
+    },
+    "¿Te duchaste hoy? Tu higiene está baja" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Did you shower today? Your hygiene is low"
+          }
+        }
+      }
+    },
+    "¿Tomas algo a diario?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take anything daily?"
+          }
+        }
+      }
+    },
+    "Épica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Epic"
+          }
+        }
+      }
+    },
+    "Última acción: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last action: %@ %@"
+          }
+        }
+      }
+    },
+    "⚠" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠"
+          }
+        }
+      }
+    },
+    "⚡ RÁPIDO" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚡ QUICK"
+          }
+        }
+      }
+    },
+    "✨" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✨"
+          }
+        }
+      }
+    },
+    "💊" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "💊"
           }
         }
       }
