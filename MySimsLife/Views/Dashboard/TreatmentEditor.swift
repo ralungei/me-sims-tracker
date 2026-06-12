@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 // MARK: - Treatment Editor (Botiquín — pills, supplements, vitamins)
 
@@ -136,6 +137,13 @@ struct TreatmentEditor: View {
                       prompt: Text("sobre, cápsula, ml...")
                                 .foregroundStyle(SimsTheme.textSecondary))
                 .textFieldStyle(.plain)
+                // Units are lowercase by convention ("g", "ml", "sobre") —
+                // without this the keyboard capitalises the first letter and
+                // every card ends up reading "5 G".
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
                 .padding(12)
                 .simsFieldStyle()
                 .foregroundStyle(SimsTheme.textPrimary)
@@ -325,6 +333,10 @@ struct TreatmentEditor: View {
                                   reminderTime: resolvedReminder,
                                   notify: resolvedNotify,
                                   notes: resolvedNotes)
+            // New cards land at the end of the row (drag-to-reorder later).
+            let maxOrder = ((try? modelContext.fetch(FetchDescriptor<Treatment>())) ?? [])
+                .map(\.sortOrder).max() ?? -1
+            treatment.sortOrder = maxOrder + 1
             modelContext.insert(treatment)
         }
         try? modelContext.save()

@@ -42,6 +42,9 @@ final class Treatment {
     /// Whether the course is active (paused/resumed without deletion).
     var isActive: Bool = true
     var createdAt: Date = Date()
+    /// Manual position in the botiquín row (drag to reorder). New rows get
+    /// max+1; ties fall back to `createdAt`.
+    var sortOrder: Int = 0
 
     init(name: String,
          emoji: String = "💊",

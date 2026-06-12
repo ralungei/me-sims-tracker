@@ -786,9 +786,12 @@ struct OnboardingView: View {
         // Skip names that already exist — guards against duplicate rows if a
         // second device runs onboarding before CloudKit has synced (the
         // mirrored `onboardingComplete` flag is the primary guard).
-        let existing = Set(((try? modelContext.fetch(FetchDescriptor<Aspiration>())) ?? []).map(\.name))
+        let existing = (try? modelContext.fetch(FetchDescriptor<Aspiration>())) ?? []
+        let existingNames = Set(existing.map(\.name))
+        var order = existing.map(\.sortOrder).max() ?? -1
         for preset in Self.aspirationCatalog
-        where selectedAspirations.contains(preset.id) && !existing.contains(preset.name) {
+        where selectedAspirations.contains(preset.id) && !existingNames.contains(preset.name) {
+            order += 1
             let a = Aspiration(
                 name: preset.name,
                 emoji: preset.emoji,
@@ -796,15 +799,19 @@ struct OnboardingView: View {
                 hue: preset.hue,
                 xp: preset.xp
             )
+            a.sortOrder = order
             modelContext.insert(a)
         }
         try? modelContext.save()
     }
 
     private func commitTreatments() {
-        let existing = Set(((try? modelContext.fetch(FetchDescriptor<Treatment>())) ?? []).map(\.name))
+        let existing = (try? modelContext.fetch(FetchDescriptor<Treatment>())) ?? []
+        let existingNames = Set(existing.map(\.name))
+        var order = existing.map(\.sortOrder).max() ?? -1
         for preset in Self.treatmentCatalog
-        where selectedTreatments.contains(preset.id) && !existing.contains(preset.name) {
+        where selectedTreatments.contains(preset.id) && !existingNames.contains(preset.name) {
+            order += 1
             let t = Treatment(
                 name: preset.name,
                 emoji: preset.emoji,
@@ -812,6 +819,7 @@ struct OnboardingView: View {
                 unit: preset.unit,
                 defaultDose: preset.defaultDose
             )
+            t.sortOrder = order
             modelContext.insert(t)
         }
         try? modelContext.save()

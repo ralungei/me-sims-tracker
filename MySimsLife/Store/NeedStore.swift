@@ -600,6 +600,25 @@ final class NeedStore {
         refreshAspirations()
     }
 
+    /// Drag-to-reorder, same semantics as `moveTask`. Indices are resolved on
+    /// the full `aspirations` array, so dragging between visible (active)
+    /// cards stays correct even with upcoming/legacy rows interleaved.
+    func moveAspiration(withID draggedID: UUID, toBefore targetID: UUID) {
+        guard let context = modelContext,
+              let from = aspirations.firstIndex(where: { $0.id == draggedID }),
+              let to = aspirations.firstIndex(where: { $0.id == targetID }),
+              from != to else { return }
+        var reordered = aspirations
+        let moved = reordered.remove(at: from)
+        let insertIndex = to > from ? to - 1 : to
+        reordered.insert(moved, at: insertIndex)
+        for (i, asp) in reordered.enumerated() {
+            asp.sortOrder = i
+        }
+        try? context.save()
+        refreshAspirations()
+    }
+
     // MARK: - Tasks (one-off agenda items)
 
     private func refreshTasks() {

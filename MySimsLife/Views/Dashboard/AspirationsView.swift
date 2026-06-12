@@ -16,6 +16,7 @@ struct AspirationsRow: View {
     var onAdd: () -> Void = {}
     var onEdit: (Aspiration) -> Void = { _ in }
     var onDelete: (Aspiration) -> Void = { _ in }
+    var onMove: (UUID, UUID) -> Void = { _, _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,6 +34,18 @@ struct AspirationsRow: View {
                         }
                         .simsCardMenu(onEdit: { onEdit(asp) },
                                       onDelete: { onDelete(asp) })
+                        // Long-press drag to reorder, same gesture as TasksRow.
+                        .draggable(asp.id.uuidString) {
+                            AspirationCard(aspiration: asp) {}
+                                .opacity(0.85)
+                        }
+                        .dropDestination(for: String.self) { droppedIds, _ in
+                            guard let droppedRaw = droppedIds.first,
+                                  let dragged = UUID(uuidString: droppedRaw),
+                                  dragged != asp.id else { return false }
+                            onMove(dragged, asp.id)
+                            return true
+                        }
                     }
                 }
                 .padding(.horizontal, cardInset)

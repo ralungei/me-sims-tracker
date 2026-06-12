@@ -6,7 +6,8 @@ struct DashboardView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \Treatment.createdAt, order: .reverse)
+    @Query(sort: [SortDescriptor(\Treatment.sortOrder),
+                  SortDescriptor(\Treatment.createdAt)])
     private var treatments: [Treatment]
 
     @State private var selectedNeed: NeedType?
@@ -880,6 +881,11 @@ struct DashboardView: View {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     store.deleteAspiration(asp)
                 }
+            },
+            onMove: { dragged, target in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    store.moveAspiration(withID: dragged, toBefore: target)
+                }
             }
         )
     }
@@ -942,8 +948,30 @@ struct DashboardView: View {
                     modelContext.delete(t)
                     try? modelContext.save()
                 }
+            },
+            onMove: { dragged, target in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    moveTreatment(withID: dragged, toBefore: target)
+                }
             }
         )
+    }
+
+    /// Drag-to-reorder for botiquín cards — mirrors `NeedStore.moveTask` but
+    /// operates on the local `@Query` results (treatments don't go through
+    /// the store).
+    private func moveTreatment(withID draggedID: UUID, toBefore targetID: UUID) {
+        var reordered = Array(treatments)
+        guard let from = reordered.firstIndex(where: { $0.id == draggedID }),
+              let to = reordered.firstIndex(where: { $0.id == targetID }),
+              from != to else { return }
+        let moved = reordered.remove(at: from)
+        let insertIndex = to > from ? to - 1 : to
+        reordered.insert(moved, at: insertIndex)
+        for (i, t) in reordered.enumerated() {
+            t.sortOrder = i
+        }
+        try? modelContext.save()
     }
 
 }

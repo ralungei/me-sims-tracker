@@ -14,6 +14,7 @@ struct TreatmentsRow: View {
     var onAdd: () -> Void = {}
     var onEdit: (Treatment) -> Void = { _ in }
     var onDelete: (Treatment) -> Void = { _ in }
+    var onMove: (UUID, UUID) -> Void = { _, _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -28,6 +29,18 @@ struct TreatmentsRow: View {
                         TreatmentCard(treatment: t) { onTap(t) }
                             .simsCardMenu(onEdit: { onEdit(t) },
                                           onDelete: { onDelete(t) })
+                            // Long-press drag to reorder, same gesture as TasksRow.
+                            .draggable(t.id.uuidString) {
+                                TreatmentCard(treatment: t) {}
+                                    .opacity(0.85)
+                            }
+                            .dropDestination(for: String.self) { droppedIds, _ in
+                                guard let droppedRaw = droppedIds.first,
+                                      let dragged = UUID(uuidString: droppedRaw),
+                                      dragged != t.id else { return false }
+                                onMove(dragged, t.id)
+                                return true
+                            }
                     }
                 }
                 .padding(.horizontal, cardInset)

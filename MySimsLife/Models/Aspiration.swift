@@ -283,6 +283,11 @@ extension String {
     /// Aspiration and Treatment dose labels (it used to live duplicated on
     /// both models, with diverging vowel sets).
     var pluralizedUnit: String {
+        // Measurement abbreviations are invariant in Spanish: "5 g", "10 ml",
+        // "1000 UI" — never "ges" / "mles" / "UIs".
+        let invariant: Set<String> = ["g", "mg", "kg", "mcg", "µg", "ug",
+                                      "ml", "cl", "dl", "l", "ui", "u"]
+        if invariant.contains(lowercased()) { return self }
         guard let last = self.last?.lowercased().first else { return self }
         return "aeiouáéíóú".contains(last) ? self + "s" : self + "es"
     }
