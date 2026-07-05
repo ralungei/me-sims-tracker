@@ -20,17 +20,28 @@ struct PlumbobView: View {
     /// when the plumbob is the hero.
     var aspectRatio: CGFloat = 1.15
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var color: Color { SimsTheme.plumbobColor(for: mood) }
     private var orbSize: CGFloat { size ?? (compact ? 78 : 104) }
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        // 30 fps cap for parity with the old SCNView's
+        // preferredFramesPerSecond — the gem lives permanently on the
+        // dashboard, so free-running at ProMotion's 120 Hz would quadruple
+        // the (small) per-frame work for no visible gain. Under Reduce
+        // Motion the timeline pauses and the gem holds a fixed, well-lit
+        // pose instead of spinning.
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0,
+                                paused: reduceMotion)) { timeline in
             Canvas { ctx, canvasSize in
                 PlumbobRenderer.draw(
                     in: ctx,
                     size: canvasSize,
                     base: PlumbobRenderer.rgb(of: color),
-                    time: timeline.date.timeIntervalSinceReferenceDate
+                    time: reduceMotion
+                        ? 1.2   // static pose: mid-bob, facets angled to the key light
+                        : timeline.date.timeIntervalSinceReferenceDate
                 )
             }
         }
